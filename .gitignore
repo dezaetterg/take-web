@@ -1,0 +1,50 @@
+# Rust build target
+/target
+
+# Local scratch & benchmark scripts
+scratch/
+
+# Documentation and plan files (keep only public README.md)
+*.md
+!README.md
+
+# Local browser storage, SQLite databases & journals
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+browser.db*
+test.db*
+
+# Sessions, caches & storage
+*.session
+session.json*
+*.tmp
+cache/
+.cache/
+storage/
+data/
+local_data/
+favicons/
+offline/
+cookies/
+
+# Logs & profiling
+perf.data*
+*.log
+*.profraw
+*.profdata
+*.mp4
+
+# Editor & OS files
+**/*.rs.bk
+*.swp
+*~
+.DS_Store
+.idea
+.vscode
+
+# Environment & local credentials
+.env
+*.local

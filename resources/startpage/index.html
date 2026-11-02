@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Take Web</title>
+    <link rel="stylesheet" href="startpage.css">
+</head>
+<body>
+    <div class="wallpaper-background" id="wallpaper"></div>
+
+    <div class="content-container">
+        <!-- Search Bar Section (Pill style adapted from screenshot 3) -->
+        <section class="search-section" id="section-search">
+            <form class="search-bar" id="search-form">
+                <div class="search-engine-picker" id="search-engine-picker">
+                    <button type="button" class="search-engine-btn" id="search-engine-btn" aria-label="Выбрать поисковик" title="Выбрать поисковик на один запрос">
+                        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </button>
+                    <div class="search-engine-dropdown" id="search-engine-dropdown" hidden>
+                        <div class="search-engine-header">Искать в:</div>
+                        <div class="search-engine-list">
+                            <button type="button" class="search-engine-item" data-engine="google">Google</button>
+                            <button type="button" class="search-engine-item" data-engine="yandex">Яндекс</button>
+                            <button type="button" class="search-engine-item" data-engine="duckduckgo">DuckDuckGo</button>
+                            <button type="button" class="search-engine-item" data-engine="bing">Bing</button>
+                            <button type="button" class="search-engine-item" data-engine="wikipedia">Википедия (ru)</button>
+                            <button type="button" class="search-engine-item" data-engine="perplexity">Perplexity</button>
+                            <button type="button" class="search-engine-item" data-engine="startpage">Startpage</button>
+                            <button type="button" class="search-engine-item" data-engine="brave">Brave</button>
+                        </div>
+                    </div>
+                </div>
+                <input type="text" class="search-input" id="search-input" placeholder="Введите запрос или адрес" autocomplete="off" spellcheck="false">
+            </form>
+        </section>
+
+        <!-- Favorites Section -->
+        <section class="section" id="section-favorites">
+            <h2 class="section-title">Избранное</h2>
+            <div class="favorites-grid" id="favorites-grid">
+                <!-- Apple -->
+                <a class="favorite-item" href="https://apple.com">
+                    <div class="squircle-icon">
+                        <svg viewBox="0 0 170 170" fill="currentColor">
+                            <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.6-7.85-11.7-14.43-6.1-9.78-10.82-20.91-14.16-33.39-3.34-12.48-5.01-24.16-5.01-35.04 0-14.45 3.69-26.66 11.07-36.63 7.38-9.97 16.79-15.08 28.23-15.34 5.34 0 11.19 1.45 17.55 4.35 6.36 2.91 10.15 4.41 11.37 4.51 1.02 0 4.96-1.55 11.83-4.65 6.87-3.1 12.83-4.49 17.89-4.17 13.29.83 23.97 5.75 32.05 14.76-11.64 7.05-17.34 16.74-17.11 29.07.24 9.94 4.07 18.23 11.5 24.87 7.42 6.64 16.14 10.35 26.15 11.13-2.18 6.74-4.85 13.43-8.01 20.08zM119.22 31.84c0-7.39 2.65-14.28 7.95-20.67 5.3-6.39 11.85-10.45 19.65-12.17.26 1.08.39 2.21.39 3.39 0 7.39-2.73 14.37-8.19 20.95-5.46 6.58-12.15 10.45-20.08 11.6-.3-1.07-.45-2.1-.45-3.1z"/>
+                        </svg>
+                    </div>
+                    <span class="favorite-label">Apple</span>
+                </a>
+
+                <!-- Google -->
+                <a class="favorite-item" href="https://google.com">
+                    <div class="squircle-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                        </svg>
+                    </div>
+                    <span class="favorite-label">Google</span>
+                </a>
+
+                <!-- GitHub -->
+                <a class="favorite-item" href="https://github.com">
+                    <div class="squircle-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                        </svg>
+                    </div>
+                    <span class="favorite-label">GitHub</span>
+                </a>
+
+                <!-- DuckDuckGo -->
+                <a class="favorite-item" href="https://duckduckgo.com">
+                    <div class="squircle-icon" style="background: linear-gradient(135deg, rgba(222,88,51,0.7) 0%, rgba(232,113,64,0.7) 100%);">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                        </svg>
+                    </div>
+                    <span class="favorite-label">DuckDuckGo</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- Privacy Report Section (Safari style) -->
+        <section class="section" id="section-privacy">
+            <h2 class="section-title">Отчет о конфиденциальности</h2>
+            <div class="glass-card privacy-card" id="privacy-card">
+                <div class="shield-badge">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12v4.7c0 4.67-3.13 9.04-7 10.19-3.87-1.15-7-5.52-7-10.19V6.3l7-3.12z"/>
+                        <path d="M12 6a4 4 0 00-4 4c0 2.21 1.79 4 4 4s4-1.79 4-4a4 4 0 00-4-4z"/>
+                    </svg>
+                    <span id="tracker-count">0</span>
+                </div>
+                <div class="privacy-description" id="privacy-text">
+                    Трекеры пока не блокировались.
+                </div>
+            </div>
+        </section>
+
+        <!-- Reading List Section (Safari style) -->
+        <section class="section" id="section-reading">
+            <h2 class="section-title">Список для чтения</h2>
+            <div class="glass-card reading-item" id="reading-card">
+                <div class="reading-thumb">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/>
+                    </svg>
+                </div>
+                <div class="reading-details">
+                    <div class="reading-title" id="reading-title">Добро пожаловать в Take Web</div>
+                    <div class="reading-preview" id="reading-preview">Быстрый, приватный и минималистичный веб-браузер для Linux с архитектурой Safari и нативной поддержкой Wayland.</div>
+                    <div class="reading-domain" id="reading-domain">takeweb.org</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Firefox-style Customization Button (Fixed Top-Right) -->
+    <button class="customize-trigger-btn" id="customize-btn" type="button" title="Настройка начальной страницы">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
+        </svg>
+        <span>Настройка</span>
+    </button>
+
+    <!-- Customization Drawer & Backdrop (Firefox Style) -->
+    <div class="customize-backdrop" id="customize-backdrop"></div>
+    <aside class="customize-drawer" id="customize-drawer" aria-hidden="true">
+        <div class="drawer-header">
+            <div class="drawer-title-group">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+                <h3>Персонализация</h3>
+            </div>
+            <button class="drawer-close-btn" id="drawer-close-btn" type="button" title="Закрыть">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
+        <div class="drawer-content">
+            <!-- Wallpapers Section -->
+            <div class="drawer-section">
+                <div class="drawer-section-header">
+                    <h4>Обои страницы</h4>
+                    <span class="drawer-section-desc">Выберите тему или добавьте свою фотографию</span>
+                </div>
+
+                <div class="wallpaper-grid" id="wallpaper-grid">
+                    <!-- Default Theme Option -->
+                    <button class="wallpaper-card active" data-wallpaper="none" type="button" title="Без обоев">
+                        <div class="wallpaper-thumb default-thumb">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="9"></circle>
+                                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                            </svg>
+                        </div>
+                        <span class="wallpaper-card-name">Без обоев</span>
+                    </button>
+
+                    <!-- Custom Photo Upload Option -->
+                    <div class="wallpaper-card-wrapper" id="custom-wallpaper-wrapper">
+                        <input type="file" id="wallpaper-file-input" accept="image/*" style="display: none;">
+                        <button class="wallpaper-card custom-card" id="upload-custom-btn" data-wallpaper="custom" type="button" title="Загрузить свое фото">
+                            <div class="wallpaper-thumb upload-thumb" id="custom-thumb">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                            </div>
+                            <span class="wallpaper-card-name" id="custom-card-label">Свое фото</span>
+                        </button>
+                        <button class="delete-custom-btn" id="delete-custom-btn" type="button" title="Удалить свое фото" style="display: none;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Presets (Zero-network offline high-resolution gradients) -->
+                    <button class="wallpaper-card" data-wallpaper="gradient:linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #00c6ff 100%)" type="button" title="Горное озеро">
+                        <div class="wallpaper-thumb" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #00c6ff 100%);"></div>
+                        <span class="wallpaper-card-name">Горы</span>
+                    </button>
+
+                    <button class="wallpaper-card" data-wallpaper="gradient:linear-gradient(135deg, #fa709a 0%, #fee140 100%)" type="button" title="Закат">
+                        <div class="wallpaper-thumb" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);"></div>
+                        <span class="wallpaper-card-name">Закат</span>
+                    </button>
+
+                    <button class="wallpaper-card" data-wallpaper="gradient:linear-gradient(135deg, #134e5e 0%, #71b280 100%)" type="button" title="Туманный лес">
+                        <div class="wallpaper-thumb" style="background: linear-gradient(135deg, #134e5e 0%, #71b280 100%);"></div>
+                        <span class="wallpaper-card-name">Лес</span>
+                    </button>
+
+                    <button class="wallpaper-card" data-wallpaper="gradient:linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)" type="button" title="Глубокий космос">
+                        <div class="wallpaper-thumb" style="background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);"></div>
+                        <span class="wallpaper-card-name">Космос</span>
+                    </button>
+
+                    <button class="wallpaper-card" data-wallpaper="gradient:linear-gradient(135deg, #f72585 0%, #7209b7 50%, #4361ee 100%)" type="button" title="Неон">
+                        <div class="wallpaper-thumb" style="background: linear-gradient(135deg, #f72585 0%, #7209b7 50%, #4361ee 100%);"></div>
+                        <span class="wallpaper-card-name">Неон</span>
+                    </button>
+
+                    <button class="wallpaper-card" data-wallpaper="gradient:linear-gradient(135deg, #00b4db 0%, #0083b0 100%)" type="button" title="Океан">
+                        <div class="wallpaper-thumb" style="background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%);"></div>
+                        <span class="wallpaper-card-name">Океан</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Page Sections Toggle (Firefox style) -->
+            <div class="drawer-section">
+                <div class="drawer-section-header">
+                    <h4>Элементы страницы</h4>
+                    <span class="drawer-section-desc">Включение и отключение блоков</span>
+                </div>
+
+                <div class="toggle-list">
+                    <label class="toggle-row" for="toggle-search">
+                        <div class="toggle-info">
+                            <span class="toggle-title">Строка поиска</span>
+                            <span class="toggle-subtitle">Быстрый поиск в DuckDuckGo или ввод адреса</span>
+                        </div>
+                        <div class="switch">
+                            <input type="checkbox" id="toggle-search" checked>
+                            <span class="slider"></span>
+                        </div>
+                    </label>
+
+                    <label class="toggle-row" for="toggle-favorites">
+                        <div class="toggle-info">
+                            <span class="toggle-title">Избранное</span>
+                            <span class="toggle-subtitle">Быстрый доступ к закрепленным сайтам</span>
+                        </div>
+                        <div class="switch">
+                            <input type="checkbox" id="toggle-favorites" checked>
+                            <span class="slider"></span>
+                        </div>
+                    </label>
+
+                    <label class="toggle-row" for="toggle-privacy">
+                        <div class="toggle-info">
+                            <span class="toggle-title">Отчет о конфиденциальности</span>
+                            <span class="toggle-subtitle">Счетчик заблокированных трекеров Take Shield</span>
+                        </div>
+                        <div class="switch">
+                            <input type="checkbox" id="toggle-privacy" checked>
+                            <span class="slider"></span>
+                        </div>
+                    </label>
+
+                    <label class="toggle-row" for="toggle-reading">
+                        <div class="toggle-info">
+                            <span class="toggle-title">Список для чтения</span>
+                            <span class="toggle-subtitle">Сохраненные статьи и материалы</span>
+                        </div>
+                        <div class="switch">
+                            <input type="checkbox" id="toggle-reading" checked>
+                            <span class="slider"></span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <script src="startpage.js"></script>
+</body>
+</html>

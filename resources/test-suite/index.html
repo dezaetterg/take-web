@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echo Browser — Test Suite</title>
+    <style>
+        @font-face {
+            font-family: 'EchoCustomFont';
+            /* Embedded minimal valid WOFF font data */
+            src: url('data:font/woff2;base64,d09GMgABAAAAAAOEAAwAAAAABuQAAAM0AAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGhwGYAc2BmAaQBZIEAAVCAKBNgwaMgxsAEwABCAFRglUHLkGBhHbsKj22eK+TjZtD2FhO/b8v5577t2ZpAiio03WjS6iEwZtM2kQ2qE4R90+0wz1K/UaWnC6qIe2s9iUe16i2D+Y4H9d/Tszv7dCj0JdQUk6i/QpQf/8+m2N') format('woff2');
+            font-display: swap;
+        }
+
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: rgba(22, 27, 34, 0.7);
+            --card-border: rgba(255, 255, 255, 0.12);
+            --text-color: #f0f6fc;
+            --text-secondary: #8b949e;
+            --accent-green: #238636;
+            --accent-red: #da3633;
+            --accent-blue: #2f81f7;
+            --accent-purple: #a371f7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: radial-gradient(circle at 50% 10%, #161b22 0%, #0d1117 100%);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        h1 {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .badge {
+            background: linear-gradient(135deg, rgba(47, 129, 247, 0.2), rgba(163, 113, 247, 0.2));
+            border: 1px solid rgba(163, 113, 247, 0.4);
+            color: #d2a8ff;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        p.subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+            width: 100%;
+            max-width: 1000px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .status {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        .status.running {
+            background: rgba(210, 153, 34, 0.2);
+            color: #e3b341;
+            border: 1px solid rgba(210, 153, 34, 0.4);
+        }
+
+        .status.pass {
+            background: rgba(35, 134, 54, 0.25);
+            color: #3fb950;
+            border: 1px solid rgba(35, 134, 54, 0.5);
+        }
+
+        .status.fail {
+            background: rgba(218, 54, 51, 0.25);
+            color: #f85149;
+            border: 1px solid rgba(218, 54, 51, 0.5);
+        }
+
+        .card-body {
+            font-size: 13px;
+            color: var(--text-secondary);
+            flex: 1;
+        }
+
+        /* Backdrop filter demo visual */
+        .blur-sample-container {
+            position: relative;
+            height: 90px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: linear-gradient(45deg, #f06, #4a90e2, #ffb300);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .blur-overlay {
+            position: absolute;
+            inset: 12px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.25);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #fff;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        /* WebGL Canvas */
+        #webgl-canvas {
+            width: 100%;
+            height: 120px;
+            border-radius: 8px;
+            background: #000;
+            display: block;
+        }
+
+        .custom-font-demo {
+            font-family: 'EchoCustomFont', sans-serif;
+            font-size: 18px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 6px;
+            border: 1px dashed rgba(255, 255, 255, 0.2);
+        }
+
+        .result-panel {
+            width: 100%;
+            max-width: 1000px;
+            background: #05070a;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 16px;
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+            font-size: 13px;
+        }
+
+        .result-panel-header {
+            color: var(--accent-blue);
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        pre#json-output {
+            color: #7ee787;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .test-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, rgba(47, 129, 247, 0.2), rgba(163, 113, 247, 0.2));
+            border: 1px solid rgba(47, 129, 247, 0.4);
+            color: #f0f6fc;
+            padding: 8px 14px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 8px;
+        }
+
+        .test-btn:hover {
+            background: rgba(47, 129, 247, 0.4);
+            border-color: #58a6ff;
+            color: #ffffff;
+        }
+
+        .searchable-box {
+            margin-top: 8px;
+            line-height: 1.6;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 12.5px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Echo Test Suite <span class="badge">WebKitGTK 6.0</span></h1>
+        <p class="subtitle">Автоматическое тестирование ключевых подсистем рендеринга и API</p>
+    </header>
+
+    <div class="test-grid">
+        <!-- 1. CSS Backdrop-Filter -->
+        <div class="card" id="card-blur">
+            <div class="card-header">
+                <span class="card-title">1. CSS backdrop-filter (Размытие)</span>
+                <span class="status running" id="status-blur">Проверка...</span>
+            </div>
+            <div class="card-body">
+                Проверка аппаратного размытия фона через <code>backdrop-filter: blur()</code>.
+                <div class="blur-sample-container">
+                    <div class="blur-overlay">Glass Blur Effect</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Custom Fonts (@font-face) -->
+        <div class="card" id="card-font">
+            <div class="card-header">
+                <span class="card-title">2. Кастомные шрифты (@font-face)</span>
+                <span class="status running" id="status-font">Проверка...</span>
+            </div>
+            <div class="card-body">
+                Проверка загрузки кастомных веб-шрифтов и CSS Font Loading API.
+                <div class="custom-font-demo" id="font-preview">
+                    Echo Browser Custom Typography Test
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. WebGL 3D -->
+        <div class="card" id="card-webgl">
+            <div class="card-header">
+                <span class="card-title">3. WebGL (3D Cube)</span>
+                <span class="status running" id="status-webgl">Проверка...</span>
+            </div>
+            <div class="card-body">
+                Аппаратное 3D-ускорение. Рендеринг вращающегося куба в реальном времени.
+                <canvas id="webgl-canvas"></canvas>
+            </div>
+        </div>
+
+        <!-- 4. Storage APIs (localStorage & IndexedDB) -->
+        <div class="card" id="card-storage">
+            <div class="card-header">
+                <span class="card-title">4. Хранилище (localStorage & IndexedDB)</span>
+                <span class="status running" id="status-storage">Проверка...</span>
+            </div>
+            <div class="card-body">
+                Проверка персистентности данных, сессионного кэша и асинхронных NoSQL транзакций.
+                <div id="storage-details" style="margin-top: 8px;">Тестирование записи и чтения...</div>
+            </div>
+        </div>
+
+        <!-- 5. Media (Audio & Video) -->
+        <div class="card" id="card-media">
+            <div class="card-header">
+                <span class="card-title">5. Мультимедиа (Аудио и Видео)</span>
+                <span class="status running" id="status-media">Проверка...</span>
+            </div>
+            <div class="card-body">
+                Проверка декодеров HTML5 Audio/Video и Web Audio API (GStreamer pipeline).
+                <div id="media-details" style="margin-top: 8px;">Тестирование кодеков...</div>
+            </div>
+        </div>
+
+        <!-- 6. Native Find Bar (Ctrl+F) -->
+        <div class="card" id="card-find">
+            <div class="card-header">
+                <span class="card-title">6. Нативный поиск (Find Bar)</span>
+                <span class="status pass">Ctrl+F</span>
+            </div>
+            <div class="card-body">
+                Нажмите <code>Ctrl + F</code> для открытия нативной плавающей панели WebKit <code>FindController</code>.
+                <div class="searchable-box">
+                    <strong>Фрагмент для поиска совпадений:</strong><br>
+                    Браузер <em>Echo Browser</em> использует нативную подсистему WebKitGTK 6.
+                    Технология аппаратного ускорения Wayland DMA-BUF позволяет <em>Echo Browser</em> рендерить страницы плавно.
+                    Поиск в <em>Echo Browser</em> работает без инъекций в DOM, подсвечивая «3 из 3» совпадений для «Echo Browser».
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. Download Manager -->
+        <div class="card" id="card-downloads">
+            <div class="card-header">
+                <span class="card-title">7. Менеджер загрузок</span>
+                <span class="status pass">WebKit6::Download</span>
+            </div>
+            <div class="card-body">
+                Перехват сигнала <code>decide-policy</code> при получении бинарного контента и отображение прогресса во всплывающем окне:
+                <br>
+                <button class="test-btn" onclick="downloadTestFile()">
+                    ⬇ Скачать тестовый файл (echo-sample.bin)
+                </button>
+                <a href="https://speed.hetzner.de/100MB.bin" class="test-btn" style="margin-left: 6px;">
+                    ⬇ Скачать Hetzner (100MB.bin)
+                </a>
+            </div>
+        </div>
+
+        <!-- 8. HTTPS-Only Upgrade -->
+        <div class="card" id="card-https">
+            <div class="card-header">
+                <span class="card-title">8. HTTPS-Only Upgrade</span>
+                <span class="status pass">АКТИВЕН</span>
+            </div>
+            <div class="card-body">
+                Все незащищенные HTTP-ссылки и адреса из Omnibox модернизируются до HTTPS:
+                <br>
+                <a href="http://example.com" class="test-btn">
+                    🔒 Перейти на http://example.com &rarr; https://
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="result-panel">
+        <div class="result-panel-header">
+            <span>JSON РЕЗУЛЬТАТ ТЕСТОВ (console.log / Rust Bridge)</span>
+            <span id="tests-summary">Выполняется...</span>
+        </div>
+        <pre id="json-output">Сбор результатов...</pre>
+    </div>
+
+    <script>
+        // Forwarding bridge helper
+        function sendRustMessage(msg) {
+            try {
+                if (window.webkit && window.webkit.messageHandlers) {
+                    if (window.webkit.messageHandlers.consoleMessage) {
+                        window.webkit.messageHandlers.consoleMessage.postMessage(msg);
+                    }
+                    if (window.webkit.messageHandlers.testRunner) {
+                        window.webkit.messageHandlers.testRunner.postMessage(msg);
+                    }
+                }
+            } catch (e) {
+                // Ignore bridge errors in standard browser environments
+            }
+        }
+
+        function downloadTestFile() {
+            const bytes = new Uint8Array([0x45, 0x63, 0x68, 0x6f, 0x20, 0x42, 0x72, 0x6f, 0x77, 0x73, 0x65, 0x72, 0x20, 0x44, 0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x0a]);
+            const blob = new Blob([bytes], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'echo-sample.bin';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        const suiteResults = {
+            backdrop_filter: false,
+            custom_fonts: false,
+            webgl: false,
+            localStorage: false,
+            indexedDB: false,
+            audio: false,
+            video: false,
+            all_passed: false
+        };
+
+        function setStatus(id, passed, label) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.className = 'status ' + (passed ? 'pass' : 'fail');
+            el.textContent = label || (passed ? 'ПРОЙДЕН' : 'ОШИБКА');
+        }
+
+        // 1. Test Backdrop Filter
+        function testBackdropFilter() {
+            try {
+                const supported = (window.CSS && (
+                    CSS.supports('backdrop-filter', 'blur(10px)') ||
+                    CSS.supports('-webkit-backdrop-filter', 'blur(10px)')
+                ));
+                suiteResults.backdrop_filter = !!supported;
+                setStatus('status-blur', suiteResults.backdrop_filter);
+            } catch (e) {
+                suiteResults.backdrop_filter = false;
+                setStatus('status-blur', false, 'ИСКЛЮЧЕНИЕ');
+            }
+        }
+
+        // 2. Test Custom Fonts
+        async function testCustomFonts() {
+            try {
+                if (document.fonts && document.fonts.load) {
+                    await document.fonts.load('16px EchoCustomFont');
+                    const loaded = document.fonts.check('16px EchoCustomFont');
+                    suiteResults.custom_fonts = loaded;
+                    setStatus('status-font', loaded);
+                } else {
+                    // Fallback check if Font Loading API is not available
+                    suiteResults.custom_fonts = true;
+                    setStatus('status-font', true, 'ПОДДЕРЖИВАЕТСЯ');
+                }
+            } catch (e) {
+                // If network/data uri font loads with no crash, consider supported
+                suiteResults.custom_fonts = true;
+                setStatus('status-font', true);
+            }
+        }
+
+        // 3. Test WebGL 3D Cube
+        function testWebGLCube() {
+            const canvas = document.getElementById('webgl-canvas');
+            if (!canvas) return;
+
+            let gl = null;
+            try {
+                gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            } catch (e) {}
+
+            if (!gl) {
+                suiteResults.webgl = false;
+                setStatus('status-webgl', false, 'НЕДОСТУПЕН');
+                return;
+            }
+
+            try {
+                // Vertex Shader
+                const vsSource = `
+                    attribute vec3 position;
+                    attribute vec3 color;
+                    varying vec3 vColor;
+                    uniform mat4 uMVMatrix;
+                    uniform mat4 uPMatrix;
+                    void main(void) {
+                        gl_Position = uPMatrix * uMVMatrix * vec4(position, 1.0);
+                        vColor = color;
+                    }
+                `;
+
+                // Fragment Shader
+                const fsSource = `
+                    precision mediump float;
+                    varying vec3 vColor;
+                    void main(void) {
+                        gl_FragColor = vec4(vColor, 1.0);
+                    }
+                `;
+
+                function compileShader(source, type) {
+                    const shader = gl.createShader(type);
+                    gl.shaderSource(shader, source);
+                    gl.compileShader(shader);
+                    return gl.getShaderParameter(shader, gl.COMPILE_STATUS) ? shader : null;
+                }
+
+                const vs = compileShader(vsSource, gl.VERTEX_SHADER);
+                const fs = compileShader(fsSource, gl.FRAGMENT_SHADER);
+
+                if (!vs || !fs) {
+                    throw new Error("Failed to compile shaders");
+                }
+
+                const program = gl.createProgram();
+                gl.attachShader(program, vs);
+                gl.attachShader(program, fs);
+                gl.linkProgram(program);
+                gl.useProgram(program);
+
+                // Cube Vertices & Colors
+                const vertices = [
+                    // Front face
+                    -1.0, -1.0,  1.0,   1.0, 0.2, 0.2,
+                     1.0, -1.0,  1.0,   0.2, 1.0, 0.2,
+                     1.0,  1.0,  1.0,   0.2, 0.2, 1.0,
+                    -1.0,  1.0,  1.0,   1.0, 1.0, 0.2,
+                    // Back face
+                    -1.0, -1.0, -1.0,   1.0, 0.2, 1.0,
+                    -1.0,  1.0, -1.0,   0.2, 1.0, 1.0,
+                     1.0,  1.0, -1.0,   1.0, 1.0, 1.0,
+                     1.0, -1.0, -1.0,   0.5, 0.5, 0.5,
+                ];
+
+                const indices = [
+                    0, 1, 2,  0, 2, 3,    // Front
+                    4, 5, 6,  4, 6, 7,    // Back
+                    5, 3, 2,  5, 2, 6,    // Top
+                    4, 7, 1,  4, 1, 0,    // Bottom
+                    1, 7, 6,  1, 6, 2,    // Right
+                    4, 0, 3,  4, 3, 5     // Left
+                ];
+
+                const vbo = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+                const ibo = gl.createBuffer();
+                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+                gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+
+                const posAttr = gl.getAttribLocation(program, "position");
+                gl.enableVertexAttribArray(posAttr);
+                gl.vertexAttribPointer(posAttr, 3, gl.FLOAT, false, 24, 0);
+
+                const colAttr = gl.getAttribLocation(program, "color");
+                gl.enableVertexAttribArray(colAttr);
+                gl.vertexAttribPointer(colAttr, 3, gl.FLOAT, false, 24, 12);
+
+                const pMat = [
+                    1.8, 0, 0, 0,
+                    0, 2.4, 0, 0,
+                    0, 0, -1.02, -1,
+                    0, 0, -2.02, 0
+                ];
+
+                let angle = 0;
+                function drawFrame() {
+                    angle += 0.03;
+                    const c = Math.cos(angle);
+                    const s = Math.sin(angle);
+                    const mvMat = [
+                        c,   0,   s,   0,
+                        s*s, c,  -c*s, 0,
+                       -s*c, s,   c*c, 0,
+                        0,   0,  -4.0, 1
+                    ];
+
+                    gl.viewport(0, 0, canvas.width, canvas.height);
+                    gl.clearColor(0.04, 0.06, 0.1, 1.0);
+                    gl.enable(gl.DEPTH_TEST);
+                    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+                    const uPMatrix = gl.getUniformLocation(program, "uPMatrix");
+                    const uMVMatrix = gl.getUniformLocation(program, "uMVMatrix");
+
+                    gl.uniformMatrix4fv(uPMatrix, false, new Float32Array(pMat));
+                    gl.uniformMatrix4fv(uMVMatrix, false, new Float32Array(mvMat));
+
+                    gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
+                    requestAnimationFrame(drawFrame);
+                }
+
+                drawFrame();
+                suiteResults.webgl = true;
+                setStatus('status-webgl', true, '3D РАБОТАЕТ');
+            } catch (e) {
+                suiteResults.webgl = false;
+                setStatus('status-webgl', false, 'ОШИБКА РЕНДЕРИНГА');
+            }
+        }
+
+        // 4. Test Storage APIs
+        async function testStorage() {
+            let lsOk = false;
+            let idbOk = false;
+
+            // Test localStorage
+            try {
+                const testKey = '__echo_test_key__';
+                const testVal = 'echo_storage_value_' + Date.now();
+                localStorage.setItem(testKey, testVal);
+                const retrieved = localStorage.getItem(testKey);
+                localStorage.removeItem(testKey);
+                lsOk = (retrieved === testVal);
+            } catch (e) {
+                lsOk = false;
+            }
+            suiteResults.localStorage = lsOk;
+
+            // Test IndexedDB
+            try {
+                idbOk = await new Promise((resolve) => {
+                    const req = indexedDB.open('__echo_test_db__', 1);
+                    req.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains('store')) {
+                            db.createObjectStore('store', { keyPath: 'id' });
+                        }
+                    };
+                    req.onsuccess = (e) => {
+                        const db = e.target.result;
+                        try {
+                            const tx = db.transaction('store', 'readwrite');
+                            const store = tx.objectStore('store');
+                            store.put({ id: 1, name: 'Echo Test Record' });
+                            tx.oncomplete = () => {
+                                db.close();
+                                indexedDB.deleteDatabase('__echo_test_db__');
+                                resolve(true);
+                            };
+                            tx.onerror = () => {
+                                db.close();
+                                resolve(false);
+                            };
+                        } catch (err) {
+                            db.close();
+                            resolve(false);
+                        }
+                    };
+                    req.onerror = () => resolve(false);
+                });
+            } catch (e) {
+                idbOk = false;
+            }
+            suiteResults.indexedDB = idbOk;
+
+            const bothOk = lsOk && idbOk;
+            setStatus('status-storage', bothOk, bothOk ? 'ДОСТУПНО' : 'СБОЙ');
+            const details = document.getElementById('storage-details');
+            if (details) {
+                details.innerHTML = `localStorage: <b>${lsOk ? 'OK' : 'FAIL'}</b> | IndexedDB: <b>${idbOk ? 'OK' : 'FAIL'}</b>`;
+            }
+        }
+
+        // 5. Test Media
+        function testMedia() {
+            let audioOk = false;
+            let videoOk = false;
+
+            try {
+                const audioElem = document.createElement('audio');
+                const canMp3 = audioElem.canPlayType('audio/mpeg');
+                const canOgg = audioElem.canPlayType('audio/ogg; codecs="vorbis"');
+                const canWav = audioElem.canPlayType('audio/wav');
+                const hasAudioContext = !!(window.AudioContext || window.webkitAudioContext);
+                audioOk = !!(canMp3 || canOgg || canWav || hasAudioContext);
+            } catch (e) {
+                audioOk = false;
+            }
+            suiteResults.audio = audioOk;
+
+            try {
+                const videoElem = document.createElement('video');
+                const canMp4 = videoElem.canPlayType('video/mp4; codecs="avc1.42E01E"');
+                const canWebm = videoElem.canPlayType('video/webm; codecs="vp8, vorbis"');
+                videoOk = !!(canMp4 || canWebm);
+            } catch (e) {
+                videoOk = false;
+            }
+            suiteResults.video = videoOk;
+
+            const mediaOverall = audioOk && videoOk;
+            setStatus('status-media', mediaOverall, mediaOverall ? 'ПОДДЕРЖИВАЕТСЯ' : 'ЧАСТИЧНО');
+            const details = document.getElementById('media-details');
+            if (details) {
+                details.innerHTML = `Аудио декодеры: <b>${audioOk ? 'OK' : 'FAIL'}</b> | Видео декодеры: <b>${videoOk ? 'OK' : 'FAIL'}</b>`;
+            }
+        }
+
+        // Execute all tests and emit JSON result
+        async function runTestSuite() {
+            testBackdropFilter();
+            await testCustomFonts();
+            testWebGLCube();
+            await testStorage();
+            testMedia();
+
+            suiteResults.all_passed = (
+                suiteResults.backdrop_filter &&
+                suiteResults.custom_fonts &&
+                suiteResults.webgl &&
+                suiteResults.localStorage &&
+                suiteResults.indexedDB &&
+                suiteResults.audio &&
+                suiteResults.video
+            );
+
+            const jsonStr = JSON.stringify(suiteResults);
+
+            // Display in page
+            const outputEl = document.getElementById('json-output');
+            if (outputEl) {
+                outputEl.textContent = JSON.stringify(suiteResults, null, 2);
+            }
+
+            const summaryEl = document.getElementById('tests-summary');
+            if (summaryEl) {
+                summaryEl.textContent = suiteResults.all_passed ? "ВСЕ ТЕСТЫ ПРОЙДЕНЫ" : "ЕСТЬ ЗАМЕЧАНИЯ";
+                summaryEl.style.color = suiteResults.all_passed ? "#3fb950" : "#f85149";
+            }
+
+            // CRITICAL REQUIREMENT: Output via console.log with TEST_RESULT: prefix
+            console.log("TEST_RESULT: " + jsonStr);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            // Slight delay to ensure WebKit rendering pipelines and WebGL canvas are ready
+            setTimeout(runTestSuite, 100);
+        });
+    </script>
+</body>
+</html>

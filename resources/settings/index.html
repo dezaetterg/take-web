@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки - Take Web</title>
+    <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+    <div class="settings-app">
+        <!-- Sidebar Navigation -->
+        <aside class="settings-sidebar">
+            <div class="sidebar-header">
+                <div class="brand-badge">
+                    <img src="raccoon.png" alt="TakeWeb Raccoon" class="brand-raccoon-img">
+                    <span>Настройки</span>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <button class="nav-item active" data-tab="general">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    <span>Основные</span>
+                </button>
+
+                <button class="nav-item" data-tab="privacy">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                    <span>Приватность и Защита</span>
+                </button>
+
+                <button class="nav-item" data-tab="appearance">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 2a10 10 0 0 1 0 20v-20z"></path>
+                    </svg>
+                    <span>Внешний вид</span>
+                </button>
+
+                <button class="nav-item" data-tab="downloads">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Загрузки</span>
+                </button>
+
+                <button class="nav-item" data-tab="about">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    <span>О браузере</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="settings-content">
+            <header class="content-header">
+                <h1 class="page-title" id="section-title">Основные настройки</h1>
+                <div class="search-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="settings-search" placeholder="Поиск в настройках..." autocomplete="off">
+                </div>
+            </header>
+
+            <div class="sections-container">
+                <!-- Section: General -->
+                <section class="settings-section active" id="general-section">
+                    <div class="settings-card">
+                        <h2 class="card-title">Поиск в интернете</h2>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">Поисковая система по умолчанию</span>
+                                <span class="setting-desc">Используется при вводе поисковых запросов в умной адресной строке и на стартовой странице</span>
+                            </div>
+                            <div class="setting-control">
+                                <div class="custom-select" id="select-default-search-engine" data-setting-key="default_search_engine" data-value="duckduckgo">
+                                    <div class="custom-select-trigger" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+                                        <div class="select-selected-content">
+                                            <span class="selected-text">DuckDuckGo</span>
+                                        </div>
+                                        <svg class="dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </div>
+                                    <div class="custom-select-menu" role="listbox">
+                                        <div class="custom-select-option" role="option" data-value="startpage">
+                                            <div class="option-main">
+                                                <div class="option-text-group">
+                                                    <span class="option-name">Startpage</span>
+                                                    <span class="option-description">Конфиденциальный поиск Google без профилирования и слежки</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="custom-select-option" role="option" data-value="duckduckgo">
+                                            <div class="option-main">
+                                                <div class="option-text-group">
+                                                    <span class="option-name">DuckDuckGo</span>
+                                                    <span class="option-description">Защита конфиденциальности и приватные результаты</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="custom-select-option" role="option" data-value="google">
+                                            <div class="option-main">
+                                                <div class="option-text-group">
+                                                    <span class="option-name">Google</span>
+                                                    <span class="option-description">Мировой эталон полноты и точности ответов</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="custom-select-option" role="option" data-value="yandex">
+                                            <div class="option-main">
+                                                <div class="option-text-group">
+                                                    <span class="option-name">Яндекс</span>
+                                                    <span class="option-description">Оптимизирован для русскоязычного сегмента и сервисов</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="custom-select-option" role="option" data-value="brave">
+                                            <div class="option-main">
+                                                <div class="option-text-group">
+                                                    <span class="option-name">Brave Search</span>
+                                                    <span class="option-description">Собственный независимый поисковый индекс</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="custom-select-option" role="option" data-value="bing">
+                                            <div class="option-main">
+                                                <div class="option-text-group">
+                                                    <span class="option-name">Microsoft Bing</span>
+                                                    <span class="option-description">Интеллектуальная поисковая система Microsoft</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="custom-select-option" role="option" data-value="ecosia">
+                                            <div class="option-main">
+                                                <div class="option-text-group">
+                                                    <span class="option-name">Ecosia</span>
+                                                    <span class="option-description">Финансирует посадку деревьев за счет поисковых запросов</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="custom-select-option" role="option" data-value="qwant">
+                                            <div class="option-main">
+                                                <div class="option-text-group">
+                                                    <span class="option-name">Qwant</span>
+                                                    <span class="option-description">Европейский приватный поиск с соблюдением GDPR</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">Поисковые подсказки в Omnibox</span>
+                                <span class="setting-desc">Отображать подсказки из истории и закладок при вводе</span>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="omnibox-suggestions" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h2 class="card-title">Запуск и вкладки</h2>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">При запуске браузера</span>
+                                <span class="setting-desc">Выберите страницу или действие при открытии Take Web</span>
+                            </div>
+                            <div class="setting-control">
+                                <div class="custom-select" id="select-startup-action" data-setting-key="startup_action" data-value="startpage">
+                                    <div class="custom-select-trigger" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+                                        <div class="select-selected-content">
+                                            <svg class="startup-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                                            <span class="selected-text">Открыть начальную страницу (echo://start)</span>
+                                        </div>
+                                        <svg class="dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </div>
+                                    <div class="custom-select-menu" role="listbox">
+                                        <div class="custom-select-option" role="option" data-value="startpage">
+                                            <div class="option-main">
+                                                <svg class="startup-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                                                <div class="option-text-group">
+                                                    <span class="option-name">Начальная страница</span>
+                                                    <span class="option-description">Открыть кастомизируемый экран echo://start</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="custom-select-option" role="option" data-value="restore">
+                                            <div class="option-main">
+                                                <svg class="startup-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+                                                <div class="option-text-group">
+                                                    <span class="option-name">Восстановить предыдущую сессию</span>
+                                                    <span class="option-description">Открыть вкладки и группы, которые были активны</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="custom-select-option" role="option" data-value="blank">
+                                            <div class="option-main">
+                                                <svg class="startup-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                                <div class="option-text-group">
+                                                    <span class="option-name">Пустая страница</span>
+                                                    <span class="option-description">Мгновенный старт с чистым экраном about:blank</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">Открывать новые вкладки рядом с текущей</span>
+                                <span class="setting-desc">Связанные страницы помещаются в древовидной иерархии</span>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="open-tabs-related" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">Закрывать браузер при закрытии последней вкладки</span>
+                                <span class="setting-desc">Если выключено, закрытие последней вкладки открывает начальную страницу</span>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="close-window-with-last-tab" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Privacy & Shield -->
+                <section class="settings-section" id="privacy-section">
+                    <div class="settings-card">
+                        <h2 class="card-title">Take Shield & Конфиденциальность</h2>
+
+                        <div class="setting-row privacy-slider-row" id="privacy-slider-row">
+                            <div class="setting-info">
+                                <div class="privacy-row-header">
+                                    <span class="setting-name">Уровень приватности</span>
+                                </div>
+                                <span class="setting-desc" id="privacy-level-desc">Оптимальный баланс защиты от трекеров без нарушения работы сайтов</span>
+                            </div>
+                            <div class="privacy-slider-control">
+                                <input type="range" id="privacy-level-slider" min="1" max="4" step="1" value="2" class="privacy-range-slider" aria-label="Уровень приватности">
+                                <div class="slider-stops-labels">
+                                    <span class="slider-stop-label" data-level="1">Базовый</span>
+                                    <span class="slider-stop-label active" data-level="2">Баланс</span>
+                                    <span class="slider-stop-label" data-level="3">Строгий</span>
+                                    <span class="slider-stop-label" data-level="4">Максимум</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">Блокировка рекламы и трекеров</span>
+                                <span class="setting-desc">Аппаратная фильтрация через движок WebKit Content Blocker Store</span>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="shield-adblock" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">Режим HTTPS-Only</span>
+                                <span class="setting-desc">Автоматическое повышение всех небезопасных соединений http:// до https://</span>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="shield-https-only" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">Защита от цифрового отпечатка (Fingerprinting)</span>
+                                <span class="setting-desc">Стандартизация заголовка User-Agent и изоляция системных шрифтов</span>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="shield-fingerprint" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">Интеллектуальное предотвращение отслеживания (ITP)</span>
+                                <span class="setting-desc">Ограничение межсайтовых cookie-файлов и сторонних аналитических скриптов</span>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="shield-itp" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">Политика сохранения файлов cookie</span>
+                                <span class="setting-desc">Контроль сторонних cookie-файлов для защиты от межсайтового отслеживания</span>
+                            </div>
+                            <div class="setting-control">
+                                <div class="custom-select" id="select-cookie-policy" data-setting-key="cookie_policy" data-value="no_third_party">
+                                    <div class="custom-select-trigger" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+                                        <div class="select-selected-content">
+                                            <svg class="cookie-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5z"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"/></svg>
+                                            <span class="selected-text">Блокировать сторонние cookie</span>
+                                        </div>
+                                        <svg class="dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </div>
+                                    <div class="custom-select-menu" role="listbox">
+                                        <div class="custom-select-option" role="option" data-value="no_third_party">
+                                            <div class="option-main">
+                                                <svg class="cookie-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5z"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"/></svg>
+                                                <div class="option-text-group">
+                                                    <span class="option-name">Блокировать сторонние cookie</span>
+                                                    <span class="option-description">Оптимальный баланс: защита от слежки без нарушения работы сайтов</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="custom-select-option" role="option" data-value="always">
+                                            <div class="option-main">
+                                                <svg class="cookie-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8m-4-4h8"/></svg>
+                                                <div class="option-text-group">
+                                                    <span class="option-name">Разрешать все cookie</span>
+                                                    <span class="option-description">Полная совместимость со старыми сайтами и сервисами авторизации</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="custom-select-option" role="option" data-value="never">
+                                            <div class="option-main">
+                                                <svg class="cookie-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                                                <div class="option-text-group">
+                                                    <span class="option-name">Блокировать все cookie</span>
+                                                    <span class="option-description">Максимальная изоляция (может нарушить вход в аккаунты)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">Блокировка автовоспроизведения медиа</span>
+                                <span class="setting-desc">Запрещает видео и аудио запускаться автоматически без нажатия пользователем</span>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="block-autoplay">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">Защита WebRTC от утечек IP</span>
+                                <span class="setting-desc">Блокирует прямые P2P-соединения WebRTC, предотвращая раскрытие реального IP через VPN</span>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="webrtc-protection">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">Выполнение JavaScript</span>
+                                <span class="setting-desc">Разрешить веб-сайтам выполнять сценарии JavaScript</span>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="enable-javascript" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h2 class="card-title">Данные веб-серфинга</h2>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">Очистить историю посещений</span>
+                                <span class="setting-desc">Удалить записи о переходах, журнал и поисковые индексы FTS5</span>
+                            </div>
+                            <div class="setting-control">
+                                <button class="btn btn-danger" id="clear-history-btn">Очистить историю</button>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">Очистить кэш браузера</span>
+                                <span class="setting-desc">Удалить временные файлы страниц, изображений и сетевой дисковый кэш</span>
+                            </div>
+                            <div class="setting-control">
+                                <button class="btn btn-secondary" id="clear-cache-btn">Очистить кэш</button>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">Сбросить статистику трекеров</span>
+                                <span class="setting-desc">Обнулить накопленные счетчики заблокированных жучков и рекламных скриптов</span>
+                            </div>
+                            <div class="setting-control">
+                                <button class="btn btn-secondary" id="clear-trackers-btn">Сбросить счетчики</button>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">Сбросить разрешения сайтов</span>
+                                <span class="setting-desc">Очистить сохраненные разрешения к геолокации, камере, микрофону и уведомлениям</span>
+                            </div>
+                            <div class="setting-control">
+                                <button class="btn btn-secondary" id="clear-permissions-btn">Сбросить разрешения</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Appearance -->
+                <section class="settings-section" id="appearance-section">
+                    <div class="settings-card">
+                        <h2 class="card-title">Интерфейс</h2>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">Цветовая тема</span>
+                                <span class="setting-desc">Адаптация оформления браузера под окружение рабочего стола</span>
+                            </div>
+                            <div class="setting-control">
+                                <div class="custom-select" id="select-theme-mode" data-setting-key="theme" data-value="system">
+                                    <div class="custom-select-trigger" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+                                        <div class="select-selected-content">
+                                            <svg class="theme-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                                            <span class="selected-text">Системная (Adwaita)</span>
+                                        </div>
+                                        <svg class="dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </div>
+                                    <div class="custom-select-menu" role="listbox">
+                                        <div class="custom-select-option" role="option" data-value="system">
+                                            <div class="option-main">
+                                                <svg class="theme-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                                                <div class="option-text-group">
+                                                    <span class="option-name">Системная (Adwaita)</span>
+                                                    <span class="option-description">Следовать оформлению рабочего стола GNOME / Linux</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="custom-select-option" role="option" data-value="dark">
+                                            <div class="option-main">
+                                                <svg class="theme-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                                                <div class="option-text-group">
+                                                    <span class="option-name">Тёмная (Dark Liquid)</span>
+                                                    <span class="option-description">Глубокие тона, снижающие усталость глаз</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="custom-select-option" role="option" data-value="light">
+                                            <div class="option-main">
+                                                <svg class="theme-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                                                <div class="option-text-group">
+                                                    <span class="option-name">Светлая</span>
+                                                    <span class="option-description">Контрастный, чистый светлый дневной интерфейс</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">Боковая панель по умолчанию</span>
+                                <span class="setting-desc">Автоматически показывать вертикальную панель вкладок и групп</span>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="sidebar-default-visible" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">Масштаб страниц</span>
+                                <span class="setting-desc">Размер содержимого по умолчанию для открываемых веб-страниц</span>
+                            </div>
+                            <div class="setting-control">
+                                <div class="custom-select select-compact" id="select-default-zoom" data-setting-key="default_zoom" data-value="100">
+                                    <div class="custom-select-trigger" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+                                        <div class="select-selected-content">
+                                            <span class="selected-text">100% (По умолчанию)</span>
+                                        </div>
+                                        <svg class="dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </div>
+                                    <div class="custom-select-menu select-menu-compact" role="listbox">
+                                        <div class="custom-select-option" role="option" data-value="90"><span class="option-name">90%</span></div>
+                                        <div class="custom-select-option" role="option" data-value="100"><span class="option-name">100% (По умолчанию)</span></div>
+                                        <div class="custom-select-option" role="option" data-value="110"><span class="option-name">110%</span></div>
+                                        <div class="custom-select-option" role="option" data-value="125"><span class="option-name">125%</span></div>
+                                        <div class="custom-select-option" role="option" data-value="150"><span class="option-name">150%</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">Аппаратное ускорение (GPU)</span>
+                                <span class="setting-desc">Использовать графический процессор для рендеринга страниц и ускорения графики</span>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="hardware-acceleration" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">Плавная прокрутка</span>
+                                <span class="setting-desc">Анимировать прокрутку веб-страниц для более плавного визуального отклика</span>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="smooth-scrolling" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Downloads -->
+                <section class="settings-section" id="downloads-section">
+                    <div class="settings-card">
+                        <h2 class="card-title">Файлы и Загрузки</h2>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">Папка загрузок</span>
+                                <span class="setting-desc" id="download-dir-desc">~/Загрузки</span>
+                            </div>
+                            <div class="setting-control">
+                                <button class="btn btn-secondary" id="choose-download-dir">Изменить...</button>
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <span class="setting-name">Всегда запрашивать место сохранения</span>
+                                <span class="setting-desc">Показывать диалог выбора пути перед началом каждой загрузки</span>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="ask-download-location">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: About -->
+                <section class="settings-section" id="about-section">
+                    <div class="settings-card about-card">
+                        <div class="about-hero">
+                            <div class="about-logo">
+                                <img src="raccoon.png" alt="Take Web Raccoon" class="about-raccoon-logo">
+                            </div>
+                            <div class="about-text">
+                                <h2 class="about-title">Take Web</h2>
+                                <p class="about-version">Версия 0.1.0 Alpha (64-bit Linux)</p>
+                                <p class="about-tagline">Быстрый, приватный и минималистичный браузер с нативным стеком Libadwaita & WebKitGTK 6.0.</p>
+                            </div>
+                        </div>
+
+                        <div class="tech-spec-grid">
+                            <div class="spec-item">
+                                <span class="spec-label">Движок рендеринга</span>
+                                <span class="spec-value">WebKitGTK 6.0 (Hardware Accelerated)</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label">Протокол дисплея</span>
+                                <span class="spec-value">Wayland Native / X11 Fallback</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label">Графический тулкит</span>
+                                <span class="spec-value">GTK4 / Libadwaita 1.5+</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label">Локальное хранилище</span>
+                                <span class="spec-value">SQLite 3 с FTS5 & WAL-журналированием</span>
+                            </div>
+                        </div>
+
+                        <div class="about-actions">
+                            <a href="https://github.com/echo-linux" class="btn btn-secondary" target="_blank">Репозиторий проекта</a>
+                            <a href="echo://start" class="btn btn-primary">Начальная страница</a>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="settings-toast" id="settings-toast">Настройки сохранены</div>
+
+    <script src="settings.js"></script>
+</body>
+</html>

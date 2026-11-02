@@ -1,0 +1,26 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=TakeWeb
+GenericName=Веб-браузер
+GenericName[en]=Web Browser
+Comment=Быстрый, приватный и безопасный веб-браузер
+Comment[en]=Fast, private, and secure web browser
+Exec=takeweb %u
+Icon=takeweb
+Terminal=false
+StartupNotify=true
+Categories=Network;WebBrowser;
+MimeType=x-scheme-handler/http;x-scheme-handler/https;text/html;text/xml;application/xhtml+xml;application/xml;application/rss+xml;image/png;image/jpeg;image/webp;image/svg+xml;x-scheme-handler/take;x-scheme-handler/echo;
+StartupWMClass=takeweb
+Actions=NewWindow;NewPrivateWindow;
+
+[Desktop Action NewWindow]
+Name=Новое окно
+Name[en]=New Window
+Exec=takeweb --new-window
+
+[Desktop Action NewPrivateWindow]
+Name=Новое приватное окно
+Name[en]=New Private Window
+Exec=takeweb --private

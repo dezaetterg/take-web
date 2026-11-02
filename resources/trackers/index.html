@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отчет о защите приватности - Take Web</title>
+    <link rel="stylesheet" href="trackers.css">
+</head>
+<body>
+    <div class="privacy-app">
+        <!-- Top Navigation / Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <a href="echo://start" class="back-link" title="На главную">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    <span>Главная</span>
+                </a>
+                <div class="brand-divider"></div>
+                <div class="brand-info">
+                    <div class="shield-icon-container">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            <polyline points="9 12 11 14 15 10"></polyline>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="page-title">Отчет о защите приватности</h1>
+                        <p class="page-subtitle">Встроенная система конфиденциальности Take Shield</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <button class="btn btn-secondary" id="export-json-btn">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Экспорт JSON</span>
+                </button>
+                <button class="btn btn-danger" id="clear-stats-btn">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    <span>Очистить статистику приватности</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="content-scroll">
+            <div class="content-container">
+                <!-- KPI Metric Cards -->
+                <section class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <span class="kpi-label">За 7 дней</span>
+                        </div>
+                        <div class="kpi-value" id="kpi-7d">0</div>
+                        <div class="kpi-subtext">Попыток сбора профиля остановлено</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <span class="kpi-label">Сетевые трекеры</span>
+                            <span class="kpi-badge">Все время</span>
+                        </div>
+                        <div class="kpi-value" id="kpi-all">0</div>
+                        <div class="kpi-subtext">Заблокировано сетевых запросов</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <span class="kpi-label">Фингерпринтинг</span>
+                        </div>
+                        <div class="kpi-value" id="kpi-fp">0</div>
+                        <div class="kpi-subtext">Отражено попыток снятия отпечатка</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <span class="kpi-label">Сэкономлено трафика</span>
+                            <span class="kpi-badge">Оценка</span>
+                        </div>
+                        <div class="kpi-value" id="kpi-saved">0 КБ</div>
+                        <div class="kpi-subtext">За счет отсечения скриптов и баннеров</div>
+                    </div>
+                </section>
+
+                <!-- Anti-Fingerprinting Defense Shields Grid -->
+                <section class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Щиты защиты от снятия отпечатков</h2>
+                        <span class="section-hint">Изоляция первого лица и нейтрализация векторов фингерпринтинга</span>
+                    </div>
+
+                    <div class="shields-grid">
+                        <!-- Canvas Farbling -->
+                        <div class="shield-card">
+                            <div class="shield-card-top">
+                                <div class="shield-card-icon-box">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                        <polyline points="21 15 16 10 5 21"></polyline>
+                                    </svg>
+                                </div>
+                                <div class="shield-card-title-group">
+                                    <span class="shield-title">Canvas Farbling</span>
+                                    <span class="shield-status-pill">Активен</span>
+                                </div>
+                            </div>
+                            <p class="shield-desc">Детерминированный микрошум в 2D и WebGL холстах для изоляции первого лица.</p>
+                            <div class="shield-counter-box">
+                                <span class="shield-counter-num" id="cnt-canvas">0</span>
+                                <span class="shield-counter-label">отраженных попыток</span>
+                            </div>
+                        </div>
+
+                        <!-- WebGL Masking -->
+                        <div class="shield-card">
+                            <div class="shield-card-top">
+                                <div class="shield-card-icon-box">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                    </svg>
+                                </div>
+                                <div class="shield-card-title-group">
+                                    <span class="shield-title">WebGL Masking</span>
+                                    <span class="shield-status-pill">Активен</span>
+                                </div>
+                            </div>
+                            <p class="shield-desc">Маскировка вендора и рендерера GPU под типовой стандарт Apple GPU.</p>
+                            <div class="shield-counter-box">
+                                <span class="shield-counter-num" id="cnt-webgl">0</span>
+                                <span class="shield-counter-label">отраженных попыток</span>
+                            </div>
+                        </div>
+
+                        <!-- AudioContext Noise -->
+                        <div class="shield-card">
+                            <div class="shield-card-top">
+                                <div class="shield-card-icon-box">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M9 18V5l12-2v13"></path>
+                                        <circle cx="6" cy="18" r="3"></circle>
+                                        <circle cx="18" cy="16" r="3"></circle>
+                                    </svg>
+                                </div>
+                                <div class="shield-card-title-group">
+                                    <span class="shield-title">AudioContext Noise</span>
+                                    <span class="shield-status-pill">Активен</span>
+                                </div>
+                            </div>
+                            <p class="shield-desc">Микрофазовый джиттер аудио-буферов против акустического снятия слепка.</p>
+                            <div class="shield-counter-box">
+                                <span class="shield-counter-num" id="cnt-audio">0</span>
+                                <span class="shield-counter-label">отраженных попыток</span>
+                            </div>
+                        </div>
+
+                        <!-- Font Probing Shield -->
+                        <div class="shield-card">
+                            <div class="shield-card-top">
+                                <div class="shield-card-icon-box">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="4 7 4 4 20 4 20 7"></polyline>
+                                        <line x1="9" y1="20" x2="15" y2="20"></line>
+                                        <line x1="12" y1="4" x2="12" y2="20"></line>
+                                    </svg>
+                                </div>
+                                <div class="shield-card-title-group">
+                                    <span class="shield-title">Font Probing Shield</span>
+                                    <span class="shield-status-pill">Активен</span>
+                                </div>
+                            </div>
+                            <p class="shield-desc">Блокировка зондирования локальных системных шрифтов через DOM и Canvas.</p>
+                            <div class="shield-counter-box">
+                                <span class="shield-counter-num" id="cnt-fonts">0</span>
+                                <span class="shield-counter-label">отраженных попыток</span>
+                            </div>
+                        </div>
+
+                        <!-- WebRTC Local IP Shield -->
+                        <div class="shield-card">
+                            <div class="shield-card-top">
+                                <div class="shield-card-icon-box">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                                    </svg>
+                                </div>
+                                <div class="shield-card-title-group">
+                                    <span class="shield-title">WebRTC IP Shield</span>
+                                    <span class="shield-status-pill">Активен</span>
+                                </div>
+                            </div>
+                            <p class="shield-desc">Скрытие реального LAN IP в SDP и подавление host ICE-кандидатов.</p>
+                            <div class="shield-counter-box">
+                                <span class="shield-counter-num" id="cnt-webrtc">0</span>
+                                <span class="shield-counter-label">отраженных попыток</span>
+                            </div>
+                        </div>
+
+                        <!-- Precision Timers Shield -->
+                        <div class="shield-card">
+                            <div class="shield-card-top">
+                                <div class="shield-card-icon-box">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                    </svg>
+                                </div>
+                                <div class="shield-card-title-group">
+                                    <span class="shield-title">Precision Timers</span>
+                                    <span class="shield-status-pill">Активен</span>
+                                </div>
+                            </div>
+                            <p class="shield-desc">Огрубление таймеров performance.now() до 20 мс против Spectre-атак.</p>
+                            <div class="shield-counter-box">
+                                <span class="shield-counter-num" id="cnt-timers">0</span>
+                                <span class="shield-counter-label">отраженных попыток</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Empty State Block (shown when no blocked trackers yet) -->
+                <section class="dashboard-section empty-state-box" id="empty-state-box" style="display: none;">
+                    <div class="empty-state-inner">
+                        <div class="empty-state-icon">
+                            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.75">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                <polyline points="9 12 11 14 15 10"></polyline>
+                            </svg>
+                        </div>
+                        <h3>Ваш веб чист. Трекеры не обнаружены</h3>
+                        <p>Все защитные механизмы Take Shield активны. По мере веб-серфинга заблокированные аналитические трекеры и рекламные сети отобразятся здесь.</p>
+                    </div>
+                </section>
+
+                <!-- Detailed Trackers Sections Container -->
+                <div id="trackers-details-container">
+                    <!-- Top Trackers Breakdown Section -->
+                    <section class="dashboard-section" id="top-trackers-section">
+                        <div class="section-header">
+                            <h2>Основные заблокированные трекеры</h2>
+                            <span class="section-hint">Наиболее частые попытки сбора профиля и сетевой слежки</span>
+                        </div>
+
+                        <div class="top-trackers-grid" id="top-trackers-container">
+                            <div class="empty-hint">Данные собираются во время веб-серфинга...</div>
+                        </div>
+                    </section>
+
+                    <!-- Detailed Table Section -->
+                    <section class="dashboard-section" id="detailed-table-section">
+                        <div class="section-header-split">
+                            <div>
+                                <h2>Журнал заблокированных попыток</h2>
+                                <span class="section-hint">Полный список нейтрализованных трекеров</span>
+                            </div>
+                            <div class="search-box">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                <input type="text" id="filter-input" placeholder="Поиск по домену или категории..." autocomplete="off">
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Домен трекера</th>
+                                        <th>Категория / Правило</th>
+                                        <th>Блокировок</th>
+                                        <th>Последняя попытка</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="trackers-table-body">
+                                    <tr>
+                                        <td colspan="4" class="table-empty">Загрузка данных...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+
+        <!-- Clear Confirmation Modal -->
+        <div class="modal-backdrop" id="confirm-modal">
+            <div class="modal-window">
+                <div class="modal-header">
+                    <h3>Очистить статистику приватности?</h3>
+                </div>
+                <div class="modal-body">
+                    <p>Вся накопленная статистика заблокированных сетевых трекеров и отраженных попыток фингерпринтинга будет сброшена. Защита продолжит работать в реальном времени.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="modal-cancel-btn">Отмена</button>
+                    <button class="btn btn-danger" id="modal-confirm-btn">Очистить всё</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="trackers.js"></script>
+</body>
+</html>
