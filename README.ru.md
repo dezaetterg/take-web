@@ -12,8 +12,6 @@
 
 [English](README.md) | **Русский**
 
-<img src="assets/screenshots/startpage_dark.png" alt="Стартовая страница, тёмная тема" width="850">
-
 </div>
 
 ## Зачем он нужен

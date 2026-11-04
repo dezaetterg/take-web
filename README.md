@@ -12,8 +12,6 @@ A lightweight Linux browser built with GTK4, Libadwaita, and WebKitGTK. Vertical
 
 **English** | [Русский](README.ru.md)
 
-<img src="assets/screenshots/startpage_dark.png" alt="Start page, dark theme" width="850">
-
 </div>
 
 ## Why I Built It
