@@ -9,7 +9,14 @@ use super::models::{
     PrivacySummary, ReadingItem, TabGroup, TrackerStat,
 };
 
-pub const FAVORITES_FOLDER: &str = "Избранное";
+pub const FAVORITES_FOLDER: &str = "Favorites";
+pub const LEGACY_FAVORITES_FOLDER: &str = "Избранное";
+
+pub fn is_favorites_folder(name: &str) -> bool {
+    name == FAVORITES_FOLDER
+        || name == LEGACY_FAVORITES_FOLDER
+        || name.eq_ignore_ascii_case("favorites")
+}
 
 const DEFAULT_FAVORITES: [(&str, &str); 4] = [
     ("Apple", "https://apple.com"),
@@ -190,6 +197,12 @@ impl BrowserDatabase {
         let _ = self
             .conn
             .execute("ALTER TABLE reading_list ADD COLUMN offline_path TEXT;", []);
+
+        // Migration: canonicalize legacy favorites folder name
+        let _ = self.conn.execute(
+            "UPDATE bookmarks SET folder = ?1 WHERE folder = ?2;",
+            params![FAVORITES_FOLDER, LEGACY_FAVORITES_FOLDER],
+        );
 
         Ok(())
     }
@@ -380,6 +393,13 @@ impl BrowserDatabase {
     }
 
     pub fn add_bookmark(&self, title: &str, url: &str, folder: Option<&str>) -> Result<i64> {
+        let canonical_folder = folder.map(|f| {
+            if is_favorites_folder(f) {
+                FAVORITES_FOLDER
+            } else {
+                f
+            }
+        });
         self.conn.execute(
             r#"
             INSERT INTO bookmarks (title, url, folder, created_at)
@@ -388,7 +408,7 @@ impl BrowserDatabase {
                 title = excluded.title,
                 folder = excluded.folder
             "#,
-            params![title, url, folder, Self::now_ts()],
+            params![title, url, canonical_folder, Self::now_ts()],
         )?;
         // last_insert_rowid() is not updated by the DO UPDATE branch, so look the row up.
         self.conn.query_row(
@@ -412,11 +432,20 @@ impl BrowserDatabase {
 
         match folder {
             Some(name) => {
-                let mut stmt = self.conn.prepare(
-                    "SELECT id, title, url, favicon_url, folder, created_at FROM bookmarks WHERE folder = ?1 ORDER BY id ASC",
-                )?;
-                let rows = stmt.query_map(params![name], map_row)?;
-                rows.collect()
+                if is_favorites_folder(name) {
+                    let mut stmt = self.conn.prepare(
+                        "SELECT id, title, url, favicon_url, folder, created_at FROM bookmarks WHERE folder = ?1 OR folder = ?2 ORDER BY id ASC",
+                    )?;
+                    let rows = stmt
+                        .query_map(params![FAVORITES_FOLDER, LEGACY_FAVORITES_FOLDER], map_row)?;
+                    rows.collect()
+                } else {
+                    let mut stmt = self.conn.prepare(
+                        "SELECT id, title, url, favicon_url, folder, created_at FROM bookmarks WHERE folder = ?1 ORDER BY id ASC",
+                    )?;
+                    let rows = stmt.query_map(params![name], map_row)?;
+                    rows.collect()
+                }
             }
             None => {
                 let mut stmt = self.conn.prepare(
@@ -1099,15 +1128,24 @@ mod tests {
     #[test]
     fn bookmarks_crud_and_folder_filter() -> Result<()> {
         let db = BrowserDatabase::in_memory()?;
-        let apple = db.add_bookmark("Apple", "https://apple.com", Some("Избранное"))?;
+        let apple = db.add_bookmark("Apple", "https://apple.com", Some(FAVORITES_FOLDER))?;
         db.add_bookmark("Rust", "https://rust-lang.org", None)?;
 
         assert_eq!(db.get_bookmarks(None)?.len(), 2);
-        let favorites = db.get_bookmarks(Some("Избранное"))?;
+        let favorites = db.get_bookmarks(Some(FAVORITES_FOLDER))?;
         assert_eq!(favorites.len(), 1);
         assert_eq!(favorites[0].id, apple);
 
-        let same = db.add_bookmark("Apple Inc.", "https://apple.com", Some("Избранное"))?;
+        // Legacy Russian folder name queries map to favorites
+        let legacy = db.get_bookmarks(Some(LEGACY_FAVORITES_FOLDER))?;
+        assert_eq!(legacy.len(), 1);
+        assert_eq!(legacy[0].id, apple);
+
+        let same = db.add_bookmark(
+            "Apple Inc.",
+            "https://apple.com",
+            Some(LEGACY_FAVORITES_FOLDER),
+        )?;
         assert_eq!(same, apple);
         assert_eq!(db.get_bookmarks(None)?.len(), 2);
 

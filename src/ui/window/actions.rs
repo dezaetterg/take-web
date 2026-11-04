@@ -1139,7 +1139,14 @@ impl Inner {
         let folder = existing
             .as_ref()
             .and_then(|b| b.folder.clone())
-            .unwrap_or_else(|| FAVORITES_FOLDER.to_string());
+            .map(|f| {
+                if crate::storage::database::is_favorites_folder(&f) {
+                    crate::i18n::tr("app.bookmark_folder_favorites").to_string()
+                } else {
+                    f
+                }
+            })
+            .unwrap_or_else(|| crate::i18n::tr("app.bookmark_folder_favorites").to_string());
 
         let title_entry = Entry::builder()
             .text(&title)
@@ -1183,7 +1190,15 @@ impl Inner {
                     let name = title_entry.text().trim().to_string();
                     let name = if name.is_empty() { url.clone() } else { name };
                     let folder_text = folder_entry.text().trim().to_string();
-                    let folder = (!folder_text.is_empty()).then_some(folder_text);
+                    let folder = (!folder_text.is_empty()).then(|| {
+                        if folder_text == crate::i18n::tr("app.bookmark_folder_favorites")
+                            || crate::storage::database::is_favorites_folder(&folder_text)
+                        {
+                            FAVORITES_FOLDER.to_string()
+                        } else {
+                            folder_text
+                        }
+                    });
                     match this.db.add_bookmark(&name, &url, folder.as_deref()) {
                         Ok(_) => this.toast(crate::i18n::tr("app.bookmark_saved")),
                         Err(err) => {

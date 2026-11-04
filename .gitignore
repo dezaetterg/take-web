@@ -21,18 +21,18 @@ scratch/
 browser.db*
 test.db*
 
-# Sessions, caches & storage
+# Sessions, caches & runtime storage
 *.session
 session.json*
 *.tmp
-cache/
-.cache/
-storage/
-data/
-local_data/
-favicons/
-offline/
-cookies/
+/cache/
+/.cache/
+/storage/
+/data/
+/local_data/
+/favicons/
+/offline/
+/cookies/
 
 # Logs & profiling
 perf.data*

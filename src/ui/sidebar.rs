@@ -596,17 +596,24 @@ impl BrowserSidebar {
             return;
         }
 
-        let mut by_folder: BTreeMap<&str, Vec<&Bookmark>> = BTreeMap::new();
+        let mut by_folder: BTreeMap<String, Vec<&Bookmark>> = BTreeMap::new();
         let mut loose: Vec<&Bookmark> = Vec::new();
         for bookmark in bookmarks {
             match bookmark.folder.as_deref().filter(|f| !f.is_empty()) {
-                Some(folder) => by_folder.entry(folder).or_default().push(bookmark),
+                Some(folder) => {
+                    let key = if crate::storage::database::is_favorites_folder(folder) {
+                        crate::storage::database::FAVORITES_FOLDER.to_string()
+                    } else {
+                        folder.to_string()
+                    };
+                    by_folder.entry(key).or_default().push(bookmark);
+                }
                 None => loose.push(bookmark),
             }
         }
 
         // Favorites feed the start page, so they stay on top regardless of alphabetical order.
-        let mut folders: Vec<(&str, Vec<&Bookmark>)> = by_folder.into_iter().collect();
+        let mut folders: Vec<(String, Vec<&Bookmark>)> = by_folder.into_iter().collect();
         folders.sort_by_key(|(name, _)| *name != crate::storage::database::FAVORITES_FOLDER);
 
         for (name, entries) in folders {
@@ -616,7 +623,14 @@ impl BrowserSidebar {
                 content.append(&self.bookmark_row(bookmark));
             }
 
-            let title = Label::new(Some(name));
+            let is_favorites = crate::storage::database::is_favorites_folder(&name);
+            let display_name = if is_favorites {
+                crate::i18n::tr("app.bookmark_folder_favorites")
+            } else {
+                name.as_str()
+            };
+
+            let title = Label::new(Some(display_name));
             title.add_css_class("take-folder-title");
             let folder_icon = Image::from_icon_name("folder-symbolic");
             let label_box = GtkBox::new(Orientation::Horizontal, 6);
@@ -626,7 +640,7 @@ impl BrowserSidebar {
             let expander = Expander::new(None);
             expander.set_label_widget(Some(&label_box));
             expander.set_child(Some(&content));
-            expander.set_expanded(name == crate::storage::database::FAVORITES_FOLDER);
+            expander.set_expanded(is_favorites);
             expander.add_css_class("take-folder");
             self.bookmarks_box.append(&expander);
         }

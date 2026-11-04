@@ -359,24 +359,6 @@ body {
     color: var(--text-primary);
 }
 
-.shield-status-pill {
-    font-size: 10.5px;
-    font-weight: 600;
-    color: var(--success);
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.shield-status-pill::before {
-    content: "";
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--success);
-    display: inline-block;
-    box-shadow: 0 0 8px var(--success);
-}
 
 .shield-desc {
     font-size: 11.5px;
