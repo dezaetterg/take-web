@@ -420,7 +420,7 @@ pub(super) fn setup_window_listeners(
     };
     history_popover
         .popover()
-        .set_parent(&inner.header.burger_button);
+        .set_parent(&inner.header.container);
     *inner.history_popover.borrow_mut() = Some(history_popover);
 
     // Initialize app burger menu
