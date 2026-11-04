@@ -108,7 +108,7 @@ impl Inner {
                     self.tab_view().set_page_pinned(&tab.page, true);
                 }
             }
-            None => self.toast("Нет закрытых вкладок для восстановления"),
+            None => self.toast(crate::i18n::tr("app.no_closed_tabs")),
         }
     }
 }

@@ -26,6 +26,7 @@ html, body {
     width: 100%;
     height: 100%;
     overflow: hidden;
+    background-color: #0c0e12;
 }
 
 body {
@@ -39,10 +40,12 @@ body {
     display: flex;
     width: 100%;
     height: 100%;
+    isolation: isolate;
 }
 
 /* Sidebar Navigation */
-.settings-sidebar {
+.settings-sidebar,
+.take-settings-sidebar {
     width: 260px;
     background: var(--bg-sidebar);
     border-right: 1px solid var(--border-card);
@@ -50,8 +53,7 @@ body {
     flex-direction: column;
     padding: 24px 14px;
     flex-shrink: 0;
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+    contain: paint;
 }
 
 .sidebar-header {
@@ -692,6 +694,21 @@ input:checked + .slider:before {
     color: var(--text-primary);
 }
 
+.spec-action-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.btn-sm {
+    padding: 3px 10px;
+    font-size: 11.5px;
+    border-radius: 6px;
+    min-height: 24px;
+    cursor: pointer;
+}
+
 .about-actions {
     display: flex;
     gap: 12px;
@@ -861,15 +878,55 @@ input:checked + .slider:before {
     --danger-bg: rgba(248, 81, 73, 0.12) !important;
 }
 
+:root[data-theme="light"] html,
 :root[data-theme="light"] body,
 body.light-mode {
-    background: #f6f8fa;
-    color: #1f2328;
+    background-color: #f6f8fa !important;
+    background: #f6f8fa !important;
+    color: #1f2328 !important;
 }
 
-:root[data-theme="light"] .settings-sidebar {
-    background: #ffffff;
-    border-right: 1px solid rgba(0, 0, 0, 0.08);
+:root[data-theme="light"] .settings-sidebar,
+:root[data-theme="light"] .take-settings-sidebar {
+    background: #ffffff !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    contain: paint;
+}
+
+:root[data-theme="light"] .brand-raccoon-img {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.12));
+}
+
+:root[data-theme="light"] .about-raccoon-logo {
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.12));
+}
+
+:root[data-theme="purple"] {
+    --bg-main: radial-gradient(ellipse at 50% 10%, #26113b 0%, #160c28 50%, #0d0718 100%);
+    --bg-sidebar: rgba(22, 12, 40, 0.98);
+    --bg-card: rgba(255, 255, 255, 0.05);
+    --bg-card-hover: rgba(255, 255, 255, 0.09);
+    --border-card: rgba(186, 126, 255, 0.16);
+    --border-card-hover: rgba(186, 126, 255, 0.35);
+    --text-primary: #ffffff;
+    --text-secondary: #c4b5fd;
+    --accent: #a855f7;
+    --accent-hover: #c084fc;
+    --accent-glow: rgba(168, 85, 247, 0.35);
+}
+
+:root[data-theme="purple"] html,
+:root[data-theme="purple"] body {
+    background-color: #0d0718 !important;
+}
+
+:root[data-theme="purple"] .settings-sidebar,
+:root[data-theme="purple"] .take-settings-sidebar {
+    background: #160c28 !important;
+    border-right: 1px solid rgba(186, 126, 255, 0.16) !important;
+    contain: paint;
 }
 
 :root[data-theme="light"] .nav-item {

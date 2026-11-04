@@ -86,6 +86,7 @@ pub struct OmniboxResult {
     pub item_type: OmniboxItemType,
 }
 
+#[cfg(test)]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SitePermissionEntry {
     pub origin: String,

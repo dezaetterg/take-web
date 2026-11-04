@@ -1,19 +1,19 @@
-/* Echo Browser - Echo OS dark theme (matching Echo Settings).
+/* TakeWeb - Take OS dark theme (matching Take Settings).
    Colors, radii and spacing live here; Rust code only assigns classes. */
 
-@define-color echo_bg_base #14171d;
-@define-color echo_bg_header #1a1d24;
-@define-color echo_bg_header_deep #16181f;
-@define-color echo_bg_sidebar #111317;
-@define-color echo_bg_raised #20242e;
-@define-color echo_accent #007aff;
-@define-color echo_accent_soft rgba(0, 122, 255, 0.16);
-@define-color echo_text_primary #ffffff;
-@define-color echo_text_secondary #9ba3b4;
-@define-color echo_text_dim #646b7a;
-@define-color echo_ok #30d158;
-@define-color echo_warn #ff9f0a;
-@define-color echo_danger #ff453a;
+@define-color take_bg_base #14171d;
+@define-color take_bg_header #1a1d24;
+@define-color take_bg_header_deep #16181f;
+@define-color take_bg_sidebar #111317;
+@define-color take_bg_raised #20242e;
+@define-color take_accent #007aff;
+@define-color take_accent_soft rgba(0, 122, 255, 0.16);
+@define-color take_text_primary #ffffff;
+@define-color take_text_secondary #9ba3b4;
+@define-color take_text_dim #646b7a;
+@define-color take_ok #30d158;
+@define-color take_warn #ff9f0a;
+@define-color take_danger #ff453a;
 
 /* Retint libadwaita so dialogs, popovers and toasts match the shell. */
 @define-color window_bg_color #14171d;
@@ -25,8 +25,8 @@
 @define-color popover_bg_color #1c1f27;
 @define-color popover_fg_color #ffffff;
 @define-color dialog_bg_color #1c1f27;
-@define-color sidebar_bg_color transparent;
-@define-color sidebar_backdrop_color transparent;
+@define-color sidebar_bg_color #111317;
+@define-color sidebar_backdrop_color #111317;
 @define-color accent_bg_color #007aff;
 @define-color accent_color #2997ff;
 
@@ -34,59 +34,75 @@
     font-family: "Inter", "Inter Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-window.echo-browser-window,
-window.echo-browser-window.background,
-window.echo-browser-window > .background,
-window.echo-browser-window > contents {
-    background-color: transparent;
+window.take-browser-window,
+window.take-browser-window.background,
+window.take-browser-window > .background,
+window.take-browser-window > contents {
+    background-color: #14171d;
     background-image: none;
-    color: @echo_text_primary;
+    color: @take_text_primary;
     font-family: "Inter", "Inter Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+.take-overview-overlay,
+.take-tab-overview,
+taboverview,
+taboverview scrolledwindow,
+taboverview .overview {
+    background-color: #14171d;
+    background-image: none;
+}
+
+toolbarview,
+toastoverlay {
+    background-color: #14171d;
+}
+
 /* Unified top bar: header and tab strip read as one surface. */
-headerbar.echo-headerbar {
-    background-image: linear-gradient(to bottom, #1d212b, @echo_bg_header);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+headerbar.take-headerbar {
+    background-color: #1a1d24;
+    background-image: linear-gradient(to bottom, #1d212b, @take_bg_header);
+    box-shadow: none;
+    border: none;
     border-bottom: none;
     min-height: 50px;
     padding: 0 8px;
 }
 
-.echo-nav-cluster {
+.take-nav-cluster {
     margin-left: 4px;
 }
 
-.echo-nav-button {
+.take-nav-button {
     background: transparent;
     border: 1px solid transparent;
     border-radius: 9px;
     min-width: 32px;
     min-height: 32px;
     padding: 0;
-    color: @echo_text_secondary;
+    color: @take_text_secondary;
     box-shadow: none;
     transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
 }
 
-.echo-nav-button:hover {
+.take-nav-button:hover {
     background-color: rgba(255, 255, 255, 0.09);
-    color: @echo_text_primary;
+    color: @take_text_primary;
 }
 
-.echo-nav-button:active,
-.echo-nav-button:checked {
+.take-nav-button:active,
+.take-nav-button:checked {
     background-color: rgba(255, 255, 255, 0.15);
-    color: @echo_text_primary;
+    color: @take_text_primary;
 }
 
-.echo-nav-button:disabled {
+.take-nav-button:disabled {
     opacity: 0.32;
     background: transparent;
 }
 
 /* Address capsule */
-.echo-address-capsule {
+.take-address-capsule {
     background-color: rgba(255, 255, 255, 0.07);
     border: 1px solid rgba(255, 255, 255, 0.10);
     border-radius: 11px;
@@ -96,19 +112,19 @@ headerbar.echo-headerbar {
     transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 
-.echo-address-capsule:hover {
+.take-address-capsule:hover {
     background-color: rgba(255, 255, 255, 0.10);
 }
 
-.echo-address-capsule:focus-within {
+.take-address-capsule:focus-within {
     background-color: rgba(255, 255, 255, 0.12);
-    border-color: @echo_accent;
+    border-color: @take_accent;
     box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.28);
 }
 
-.echo-address-capsule.echo-capsule-attached {
+.take-address-capsule.take-capsule-attached {
     background-color: #343844;
-    border-color: @echo_accent;
+    border-color: @take_accent;
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
     border-bottom: none;
@@ -116,45 +132,46 @@ headerbar.echo-headerbar {
 }
 
 /* The inner entry must stay invisible; otherwise its own focus ring doubles the capsule's. */
-.echo-address-entry,
-.echo-address-entry:focus,
-.echo-address-entry:focus-within,
-.echo-address-entry text,
-.echo-address-entry text:focus,
-.echo-address-entry text:focus-within {
+.take-address-entry,
+.take-address-entry:focus,
+.take-address-entry:focus-within,
+.take-address-entry text,
+.take-address-entry text:focus,
+.take-address-entry text:focus-within {
     background: none;
     background-color: transparent;
     border: none;
     box-shadow: none;
     outline: none;
     outline-width: 0;
-    color: @echo_text_primary;
+    color: @take_text_primary;
     font-size: 13.5px;
     font-weight: 500;
-    caret-color: @echo_accent;
+    caret-color: @take_accent;
     padding: 0 4px;
     min-height: 30px;
 }
 
-.echo-address-entry placeholder {
-    color: @echo_text_dim;
+.take-address-entry placeholder {
+    color: @take_text_dim;
     font-weight: 400;
 }
 
-.echo-security-badge {
-    color: @echo_ok;
+.take-security-badge {
+    color: @take_ok;
     -gtk-icon-size: 14px;
 }
 
-.echo-security-badge.insecure {
-    color: @echo_warn;
+.take-security-badge.insecure {
+    color: @take_warn;
 }
 
-.echo-security-badge.neutral {
-    color: @echo_text_dim;
+.take-security-badge.neutral {
+    color: @take_text_dim;
 }
 
-.echo-capsule-button {
+.take-capsule-button,
+menubutton.take-capsule-button > button {
     background: transparent;
     border: none;
     box-shadow: none;
@@ -162,24 +179,26 @@ headerbar.echo-headerbar {
     min-width: 28px;
     min-height: 28px;
     padding: 0;
-    color: @echo_text_secondary;
+    color: @take_text_secondary;
     transition: background-color 150ms ease, color 150ms ease;
 }
 
-.echo-capsule-button:hover {
+.take-capsule-button:hover,
+menubutton.take-capsule-button > button:hover {
     background-color: rgba(255, 255, 255, 0.12);
-    color: @echo_text_primary;
+    color: @take_text_primary;
 }
 
-.echo-capsule-button.active {
+.take-capsule-button.active,
+menubutton.take-capsule-button.active > button {
     color: #ffd60a;
 }
 
 /* Profile badge */
-menubutton.echo-profile-button > button {
+menubutton.take-profile-button > button {
     background-color: rgba(52, 199, 89, 0.14);
     border: 1px solid rgba(52, 199, 89, 0.32);
-    color: @echo_ok;
+    color: @take_ok;
     border-radius: 9px;
     min-height: 30px;
     padding: 0 12px;
@@ -189,52 +208,53 @@ menubutton.echo-profile-button > button {
     transition: background-color 160ms ease;
 }
 
-menubutton.echo-profile-button > button:hover {
+menubutton.take-profile-button > button:hover {
     background-color: rgba(52, 199, 89, 0.24);
 }
 
-menubutton.echo-profile-button.work > button {
+menubutton.take-profile-button.work > button {
     background-color: rgba(10, 132, 255, 0.14);
     border-color: rgba(10, 132, 255, 0.34);
     color: #6bb0ff;
 }
 
-menubutton.echo-profile-button.work > button:hover {
+menubutton.take-profile-button.work > button:hover {
     background-color: rgba(10, 132, 255, 0.24);
 }
 
-.echo-profile-menu {
+.take-profile-menu {
     padding: 4px;
     min-width: 260px;
 }
 
-.echo-profile-choice {
+.take-profile-choice {
     padding: 8px 12px;
     border-radius: 9px;
 }
 
-.echo-profile-choice-title {
+.take-profile-choice-title {
     font-weight: 600;
     font-size: 13.5px;
 }
 
-.echo-profile-choice-subtitle {
-    color: @echo_text_secondary;
+.take-profile-choice-subtitle {
+    color: @take_text_secondary;
     font-size: 12px;
 }
 
 /* Tab strip */
-tabbar.echo-tab-bar,
-tabbar.echo-tab-bar > revealer,
-tabbar.echo-tab-bar > revealer > box {
-    background-color: @echo_bg_header;
-    box-shadow: none;
-    border: none;
-    outline: none;
+tabbar.take-tab-bar,
+tabbar.take-tab-bar > revealer,
+tabbar.take-tab-bar > revealer > box {
+    background-color: @take_bg_header;
+    box-shadow: none !important;
+    border: none !important;
+    border-bottom: none !important;
+    outline: none !important;
 }
 
-tabbar.echo-tab-bar > revealer > box {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.45);
+tabbar.take-tab-bar > revealer > box {
+    border-bottom: none !important;
     padding: 4px 8px 6px 8px;
     min-height: 34px;
     margin: 0;
@@ -242,9 +262,10 @@ tabbar.echo-tab-bar > revealer > box {
 
 toolbarview > .top-bar,
 toolbarview > top-bar {
-    background-color: @echo_bg_header;
-    border: none;
-    box-shadow: none;
+    background-color: @take_bg_header;
+    border: none !important;
+    border-bottom: none !important;
+    box-shadow: none !important;
     padding: 0;
     margin: 0;
 }
@@ -255,9 +276,9 @@ tabview > stack > * {
     background-color: #0e1014;
 }
 
-tabbar.echo-tab-bar scrolledwindow,
-tabbar.echo-tab-bar tabbox,
-tabbar.echo-tab-bar tabboxchild {
+tabbar.take-tab-bar scrolledwindow,
+tabbar.take-tab-bar tabbox,
+tabbar.take-tab-bar tabboxchild {
     background-color: transparent;
     background: transparent;
     border: none;
@@ -265,7 +286,7 @@ tabbar.echo-tab-bar tabboxchild {
     box-shadow: none;
 }
 
-tabbar.echo-tab-bar tab {
+tabbar.take-tab-bar tab {
     background-color: transparent;
     border: none;
     outline: none;
@@ -273,28 +294,28 @@ tabbar.echo-tab-bar tab {
     border-radius: 9px;
     margin: 0 2px;
     min-height: 30px;
-    color: @echo_text_secondary;
+    color: @take_text_secondary;
     font-size: 13px;
     font-weight: 500;
     transition: background-color 160ms ease, color 160ms ease;
 }
 
-tabbar.echo-tab-bar tab:hover {
+tabbar.take-tab-bar tab:hover {
     background-color: rgba(255, 255, 255, 0.07);
-    color: @echo_text_primary;
+    color: @take_text_primary;
 }
 
-tabbar.echo-tab-bar tab:selected {
+tabbar.take-tab-bar tab:selected {
     background-color: rgba(255, 255, 255, 0.13);
     border: none;
     outline: none;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-    color: @echo_text_primary;
+    color: @take_text_primary;
     font-weight: 600;
 }
 
-tabbar.echo-tab-bar tab button.close-button,
-tabbar.echo-tab-bar tab button.close {
+tabbar.take-tab-bar tab button.close-button,
+tabbar.take-tab-bar tab button.close {
     background: transparent;
     border: none;
     box-shadow: none;
@@ -302,47 +323,47 @@ tabbar.echo-tab-bar tab button.close {
     min-width: 20px;
     min-height: 20px;
     padding: 0;
-    color: @echo_text_secondary;
+    color: @take_text_secondary;
     opacity: 0.75;
     transition: opacity 140ms ease, background-color 140ms ease;
 }
 
-tabbar.echo-tab-bar tab button.close-button:hover,
-tabbar.echo-tab-bar tab button.close:hover {
+tabbar.take-tab-bar tab button.close-button:hover,
+tabbar.take-tab-bar tab button.close:hover {
     opacity: 1;
     background-color: rgba(255, 255, 255, 0.18);
 }
 
-tabbar.echo-tab-bar .start-action,
-tabbar.echo-tab-bar .end-action {
+tabbar.take-tab-bar .start-action,
+tabbar.take-tab-bar .end-action {
     padding: 0 4px;
 }
 
 /* Page area */
-.echo-web-view {
+.take-web-view {
     background-color: #ffffff;
 }
 
-progressbar.echo-progress {
+progressbar.take-progress {
     background: transparent;
 }
 
-progressbar.echo-progress trough {
+progressbar.take-progress trough {
     background: transparent;
     min-height: 3px;
     border: none;
 }
 
-progressbar.echo-progress progress {
+progressbar.take-progress progress {
     background-image: linear-gradient(to right, #0a84ff, #5ac8fa);
     min-height: 3px;
     border-radius: 0 2px 2px 0;
     box-shadow: 0 0 8px rgba(10, 132, 255, 0.7);
 }
 
-.echo-status-pill {
+.take-status-pill {
     background-color: rgba(30, 34, 43, 0.94);
-    color: @echo_text_primary;
+    color: @take_text_primary;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 8px;
     padding: 4px 10px;
@@ -353,127 +374,139 @@ progressbar.echo-progress progress {
 
 /* Splitview & Sidebar */
 splitview,
-splitview > sidebar,
 splitview > contents,
-splitview > box {
-    background: transparent;
-    background-color: transparent;
+splitview > box,
+overlaysplitview,
+overlaysplitview > contents {
+    background-color: #14171d;
 }
 
-.echo-sidebar {
-    background-color: transparent;
+splitview > sidebar,
+overlaysplitview > sidebar {
+    background-color: #111317;
+}
+
+.take-sidebar {
+    background-color: #111317;
     padding: 10px 8px 16px 8px;
 }
 
-.echo-sidebar-container,
-scrolledwindow.echo-sidebar-container {
-    background: radial-gradient(ellipse at 20% 20%, rgba(25, 28, 36, 0.65) 0%, rgba(14, 16, 20, 0.78) 100%);
-    background-color: rgba(18, 22, 28, 0.70);
+.take-sidebar-container,
+scrolledwindow.take-sidebar-container {
+    background-color: #111317;
+    background-image: none;
     border-right: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.04);
+    box-shadow: none;
 }
 
-.echo-sidebar-container scrolledwindow,
-.echo-sidebar-container > viewport {
-    background-color: transparent;
+.take-sidebar-container scrolledwindow,
+.take-sidebar-container > viewport {
+    background-color: #111317;
 }
 
-.echo-favicon-img {
+overlaysplitview > separator {
+    background-color: rgba(255, 255, 255, 0.08);
+    border: none;
+    box-shadow: none;
+    min-width: 1px;
+}
+
+.take-favicon-img {
     min-width: 18px;
     min-height: 18px;
     border-radius: 4px;
 }
 
-.echo-sidebar-section-header {
+.take-sidebar-section-header {
     margin: 12px 4px 4px 4px;
 }
 
-.echo-sidebar-section-title {
-    color: @echo_text_dim;
+.take-sidebar-section-title {
+    color: @take_text_dim;
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.8px;
 }
 
-.echo-section-action {
+.take-section-action {
     min-width: 24px;
     min-height: 24px;
     padding: 0;
-    color: @echo_text_dim;
+    color: @take_text_dim;
     border-radius: 7px;
 }
 
-.echo-section-action:hover {
-    color: @echo_text_primary;
+.take-section-action:hover {
+    color: @take_text_primary;
     background-color: rgba(255, 255, 255, 0.10);
 }
 
-.echo-sidebar-item {
+.take-sidebar-item {
     border-radius: 9px;
     padding: 6px 8px;
-    color: @echo_text_secondary;
+    color: @take_text_secondary;
     font-size: 13px;
     font-weight: 500;
     transition: background-color 140ms ease, color 140ms ease;
 }
 
-.echo-sidebar-item:hover {
+.take-sidebar-item:hover {
     background-color: rgba(255, 255, 255, 0.07);
-    color: @echo_text_primary;
+    color: @take_text_primary;
 }
 
-.echo-sidebar-item.active {
-    background-color: @echo_accent_soft;
-    color: @echo_text_primary;
+.take-sidebar-item.active {
+    background-color: @take_accent_soft;
+    color: @take_text_primary;
     font-weight: 600;
-    box-shadow: inset 2px 0 0 @echo_accent;
+    box-shadow: inset 2px 0 0 @take_accent;
 }
 
-.echo-row-icon {
+.take-row-icon {
     min-width: 16px;
     min-height: 16px;
     -gtk-icon-size: 16px;
 }
 
-.echo-pin-mark {
-    color: @echo_text_dim;
+.take-pin-mark {
+    color: @take_text_dim;
     -gtk-icon-size: 12px;
 }
 
 /* Row actions appear on hover, and always on the active tab. */
-.echo-row-action {
+.take-row-action {
     min-width: 22px;
     min-height: 22px;
     padding: 0;
     opacity: 0;
-    color: @echo_text_secondary;
+    color: @take_text_secondary;
     transition: opacity 120ms ease, background-color 120ms ease;
 }
 
-.echo-sidebar-item:hover .echo-row-action,
-.echo-sidebar-item.active .echo-row-action,
-.echo-reading-card:hover .echo-row-action {
+.take-sidebar-item:hover .take-row-action,
+.take-sidebar-item.active .take-row-action,
+.take-reading-card:hover .take-row-action {
     opacity: 0.85;
 }
 
-.echo-row-action:hover {
+.take-row-action:hover {
     opacity: 1;
-    color: @echo_text_primary;
+    color: @take_text_primary;
     background-color: rgba(255, 255, 255, 0.16);
 }
 
-.echo-count-badge {
+.take-count-badge {
     background-color: rgba(255, 255, 255, 0.09);
-    color: @echo_text_secondary;
+    color: @take_text_secondary;
     border-radius: 9px;
     padding: 0 7px;
     font-size: 11px;
     font-weight: 600;
 }
 
-.echo-duplicate-badge {
+.take-duplicate-badge {
     background-color: rgba(90, 140, 255, 0.2);
-    color: @echo_accent;
+    color: @take_accent;
     border: 1px solid rgba(90, 140, 255, 0.35);
     border-radius: 9px;
     padding: 0 6px;
@@ -482,14 +515,14 @@ scrolledwindow.echo-sidebar-container {
     margin-left: 4px;
 }
 
-.echo-sidebar-empty {
-    color: @echo_text_dim;
+.take-sidebar-empty {
+    color: @take_text_dim;
     font-size: 12px;
     padding: 4px 10px 6px 10px;
 }
 
 /* Reading list cards */
-.echo-reading-card {
+.take-reading-card {
     background-color: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.07);
     border-radius: 11px;
@@ -498,24 +531,24 @@ scrolledwindow.echo-sidebar-container {
     transition: background-color 140ms ease, border-color 140ms ease;
 }
 
-.echo-reading-card:hover {
+.take-reading-card:hover {
     background-color: rgba(255, 255, 255, 0.09);
     border-color: rgba(255, 255, 255, 0.13);
 }
 
-.echo-reading-title {
+.take-reading-title {
     font-size: 13px;
     font-weight: 700;
-    color: @echo_text_primary;
+    color: @take_text_primary;
 }
 
-.echo-reading-domain {
+.take-reading-domain {
     font-size: 11.5px;
-    color: @echo_accent;
+    color: @take_accent;
     font-weight: 500;
 }
 
-.echo-offline-badge {
+.take-offline-badge {
     font-size: 10px;
     font-weight: 600;
     color: #30d158;
@@ -525,22 +558,22 @@ scrolledwindow.echo-sidebar-container {
     padding: 1px 5px;
 }
 
-.echo-reading-preview {
+.take-reading-preview {
     font-size: 12px;
-    color: @echo_text_secondary;
+    color: @take_text_secondary;
 }
 
-.echo-reading-card.read .echo-reading-title,
-.echo-reading-card.read .echo-reading-preview {
-    color: @echo_text_dim;
+.take-reading-card.read .take-reading-title,
+.take-reading-card.read .take-reading-preview {
+    color: @take_text_dim;
     font-weight: 500;
 }
 
-.echo-reading-card.read .echo-reading-domain {
-    color: @echo_text_dim;
+.take-reading-card.read .take-reading-domain {
+    color: @take_text_dim;
 }
 
-.echo-letter-avatar {
+.take-letter-avatar {
     background-image: linear-gradient(135deg, rgba(10, 132, 255, 0.55), rgba(94, 92, 230, 0.55));
     color: #ffffff;
     border-radius: 8px;
@@ -552,46 +585,64 @@ scrolledwindow.echo-sidebar-container {
 }
 
 /* Bookmark folders */
-.echo-folder {
-    color: @echo_text_secondary;
+.take-folder {
+    color: @take_text_secondary;
+    margin-bottom: 2px;
 }
 
-.echo-folder-title {
+.take-folder-title {
     font-size: 12.5px;
     font-weight: 600;
-    color: @echo_text_secondary;
+    color: @take_text_secondary;
 }
 
-.echo-folder > title {
-    padding: 4px 4px;
+.take-folder > title {
+    padding: 5px 6px;
     border-radius: 8px;
+    transition: background-color 140ms ease;
 }
 
-.echo-folder > title:hover {
+.take-folder > title:hover {
     background-color: rgba(255, 255, 255, 0.06);
 }
 
+.take-folder-content {
+    margin-left: 14px;
+    padding-left: 6px;
+    margin-top: 2px;
+    margin-bottom: 4px;
+    border-left: 1.5px solid rgba(255, 255, 255, 0.08);
+}
+
+window.take-browser-window.light-mode .take-folder-content {
+    border-left-color: rgba(0, 0, 0, 0.08);
+}
+
+window.take-browser-window.light-mode .take-folder > title:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
 /* Popup menus built by the sidebar */
-.echo-context-menu {
+.take-context-menu {
     padding: 4px;
     min-width: 200px;
 }
 
-.echo-menu-item {
+.take-menu-item {
     padding: 7px 12px;
     border-radius: 8px;
     font-size: 13px;
 }
 
-.echo-menu-item.destructive {
-    color: @echo_danger;
+.take-menu-item.destructive {
+    color: @take_danger;
 }
 
 /* ==========================================================================
-   Find Bar (Ctrl+F) — Floating Pill Panel (echo-search aesthetics)
+   Find Bar (Ctrl+F) — Floating Pill Panel (take-search aesthetics)
    ========================================================================== */
 
-.echo-find-bar {
+.take-find-bar {
     background-color: rgba(28, 33, 43, 0.78);
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 9999px;
@@ -600,71 +651,71 @@ scrolledwindow.echo-sidebar-container {
     transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 
-.echo-find-bar:focus-within {
+.take-find-bar:focus-within {
     border-color: rgba(0, 122, 255, 0.6);
     box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45), 0 0 0 2px rgba(0, 122, 255, 0.25);
 }
 
-.echo-find-icon {
+.take-find-icon {
     color: rgba(255, 255, 255, 0.55);
     margin-right: 2px;
     -gtk-icon-size: 14px;
 }
 
-.echo-find-entry,
-.echo-find-entry:focus,
-.echo-find-entry:focus-within,
-.echo-find-entry text,
-.echo-find-entry text:focus,
-.echo-find-entry text:focus-within {
+.take-find-entry,
+.take-find-entry:focus,
+.take-find-entry:focus-within,
+.take-find-entry text,
+.take-find-entry text:focus,
+.take-find-entry text:focus-within {
     background: transparent;
     background-color: transparent;
     border: none;
     box-shadow: none;
     outline: none;
     outline-width: 0;
-    color: @echo_text_primary;
+    color: @take_text_primary;
     font-size: 13px;
     font-weight: 500;
-    caret-color: @echo_accent;
+    caret-color: @take_accent;
     padding: 0 4px;
     min-height: 28px;
 }
 
-.echo-find-entry placeholder {
+.take-find-entry placeholder {
     color: rgba(255, 255, 255, 0.38);
     font-weight: 400;
 }
 
-.echo-find-counter {
+.take-find-counter {
     font-size: 11px;
     font-weight: 600;
-    color: @echo_text_secondary;
+    color: @take_text_secondary;
     padding: 0 6px 0 2px;
 }
 
-.echo-find-btn {
+.take-find-btn {
     border-radius: 9999px;
     min-width: 26px;
     min-height: 26px;
     padding: 0;
-    color: @echo_text_secondary;
+    color: @take_text_secondary;
     background: transparent;
     border: none;
     transition: background-color 120ms ease, color 120ms ease;
 }
 
-.echo-find-btn:hover {
+.take-find-btn:hover {
     background-color: rgba(255, 255, 255, 0.12);
     color: #ffffff;
 }
 
-.echo-find-btn:active {
+.take-find-btn:active {
     background-color: rgba(255, 255, 255, 0.18);
     color: #ffffff;
 }
 
-.echo-find-close:hover {
+.take-find-close:hover {
     background-color: rgba(255, 69, 58, 0.22);
     color: #ff453a;
 }
@@ -673,7 +724,7 @@ scrolledwindow.echo-sidebar-container {
    Permission Bar — Floating Glassmorphic Bubble
    ========================================================================== */
 
-.echo-permission-bar {
+.take-permission-bar {
     background-color: rgba(26, 31, 40, 0.95);
     border: 1px solid rgba(255, 255, 255, 0.16);
     border-radius: 12px;
@@ -683,30 +734,30 @@ scrolledwindow.echo-sidebar-container {
     margin-bottom: 4px;
 }
 
-.echo-permission-icon {
-    color: @echo_accent;
+.take-permission-icon {
+    color: @take_accent;
     margin-right: 4px;
 }
 
-.echo-permission-label {
+.take-permission-label {
     font-size: 13px;
-    color: @echo_text_primary;
+    color: @take_text_primary;
 }
 
-.echo-permission-check {
+.take-permission-check {
     font-size: 12px;
-    color: @echo_text_secondary;
+    color: @take_text_secondary;
     margin-left: 8px;
     margin-right: 6px;
 }
 
-.echo-permission-allow-btn {
+.take-permission-allow-btn {
     border-radius: 6px;
     font-weight: 600;
     padding: 4px 12px;
 }
 
-.echo-permission-deny-btn {
+.take-permission-deny-btn {
     border-radius: 6px;
     font-weight: 600;
     padding: 4px 12px;
@@ -716,21 +767,21 @@ scrolledwindow.echo-sidebar-container {
    Crash / Process Failure Banner
    ========================================================================== */
 
-banner.echo-crash-banner {
+banner.take-crash-banner {
     background-color: rgba(255, 69, 58, 0.16);
     border: none;
-    color: @echo_text_primary;
+    color: @take_text_primary;
 }
 
-banner.echo-crash-banner button {
-    background-color: @echo_danger;
+banner.take-crash-banner button {
+    background-color: @take_danger;
     color: #ffffff;
     font-weight: 600;
     border-radius: 7px;
     padding: 4px 14px;
 }
 
-banner.echo-crash-banner button:hover {
+banner.take-crash-banner button:hover {
     background-color: #ff5e54;
 }
 
@@ -738,21 +789,21 @@ banner.echo-crash-banner button:hover {
    Session Restore Banner
    ========================================================================== */
 
-banner.echo-restore-banner {
+banner.take-restore-banner {
     background-color: rgba(10, 132, 255, 0.14);
     border: none;
-    color: @echo_text_primary;
+    color: @take_text_primary;
 }
 
-banner.echo-restore-banner button {
-    background-color: @echo_accent;
+banner.take-restore-banner button {
+    background-color: @take_accent;
     color: #ffffff;
     font-weight: 600;
     border-radius: 7px;
     padding: 4px 14px;
 }
 
-banner.echo-restore-banner button:hover {
+banner.take-restore-banner button:hover {
     background-color: #2b95ff;
 }
 
@@ -760,9 +811,9 @@ banner.echo-restore-banner button:hover {
    Unified Popover Surfaces (App Menu, History, Downloads)
    ========================================================================== */
 
-popover.echo-app-menu-popover,
-popover.echo-history-popover,
-popover.echo-downloads-popover {
+popover.take-app-menu-popover,
+popover.take-history-popover,
+popover.take-downloads-popover {
     background: transparent;
     background-color: transparent;
     border: none;
@@ -771,20 +822,20 @@ popover.echo-downloads-popover {
     margin: 0;
 }
 
-popover.echo-app-menu-popover > arrow,
-popover.echo-history-popover > arrow,
-popover.echo-downloads-popover > arrow {
+popover.take-app-menu-popover > arrow,
+popover.take-history-popover > arrow,
+popover.take-downloads-popover > arrow {
     background: #252730;
     background-color: #252730;
     border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-popover.echo-app-menu-popover > contents,
-popover.echo-history-popover > contents,
-popover.echo-downloads-popover > contents {
+popover.take-app-menu-popover > contents,
+popover.take-history-popover > contents,
+popover.take-downloads-popover > contents {
     background: #252730;
     background-color: #252730;
-    color: @echo_text_primary;
+    color: @take_text_primary;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 14px;
     box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
@@ -792,18 +843,18 @@ popover.echo-downloads-popover > contents {
     margin: 0;
 }
 
-popover.echo-app-menu-popover scrolledwindow,
-popover.echo-app-menu-popover viewport,
-popover.echo-app-menu-popover listview,
-popover.echo-app-menu-popover list,
-popover.echo-history-popover scrolledwindow,
-popover.echo-history-popover viewport,
-popover.echo-history-popover listview,
-popover.echo-history-popover list,
-popover.echo-downloads-popover scrolledwindow,
-popover.echo-downloads-popover viewport,
-popover.echo-downloads-popover listview,
-popover.echo-downloads-popover list {
+popover.take-app-menu-popover scrolledwindow,
+popover.take-app-menu-popover viewport,
+popover.take-app-menu-popover listview,
+popover.take-app-menu-popover list,
+popover.take-history-popover scrolledwindow,
+popover.take-history-popover viewport,
+popover.take-history-popover listview,
+popover.take-history-popover list,
+popover.take-downloads-popover scrolledwindow,
+popover.take-downloads-popover viewport,
+popover.take-downloads-popover listview,
+popover.take-downloads-popover list {
     background: transparent;
     background-color: transparent;
     border: none;
@@ -814,27 +865,27 @@ popover.echo-downloads-popover list {
    Downloads Popover Cards & Items
    ========================================================================== */
 
-.echo-downloads-title {
+.take-downloads-title {
     font-size: 14px;
     font-weight: 700;
-    color: @echo_text_primary;
+    color: @take_text_primary;
     letter-spacing: -0.2px;
 }
 
-.echo-open-folder-btn {
+.take-open-folder-btn {
     border-radius: 8px;
     padding: 4px 8px;
     background: transparent;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    color: @echo_text_secondary;
+    color: @take_text_secondary;
 }
 
-.echo-open-folder-btn:hover {
+.take-open-folder-btn:hover {
     background-color: rgba(255, 255, 255, 0.08);
-    color: @echo_text_primary;
+    color: @take_text_primary;
 }
 
-.echo-download-card {
+.take-download-card {
     background-color: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 10px;
@@ -842,62 +893,62 @@ popover.echo-downloads-popover list {
     transition: background-color 140ms ease, border-color 140ms ease;
 }
 
-.echo-download-card:hover {
+.take-download-card:hover {
     background-color: rgba(255, 255, 255, 0.07);
     border-color: rgba(255, 255, 255, 0.1);
 }
 
-.echo-download-filename {
+.take-download-filename {
     font-size: 13px;
     font-weight: 600;
-    color: @echo_text_primary;
+    color: @take_text_primary;
 }
 
-.echo-download-progress trough {
+.take-download-progress trough {
     min-height: 4px;
     border-radius: 2px;
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-.echo-download-progress progress {
+.take-download-progress progress {
     min-height: 4px;
     border-radius: 2px;
     background: linear-gradient(90deg, #2f81f7, #a371f7);
 }
 
-.echo-download-status {
+.take-download-status {
     font-size: 11px;
-    color: @echo_text_secondary;
+    color: @take_text_secondary;
 }
 
-.echo-download-action-btn {
+.take-download-action-btn {
     border-radius: 6px;
     min-width: 28px;
     min-height: 28px;
     padding: 4px;
-    color: @echo_text_secondary;
+    color: @take_text_secondary;
     background: transparent;
     border: none;
     transition: background-color 120ms ease, color 120ms ease;
 }
 
-.echo-download-action-btn:hover {
+.take-download-action-btn:hover {
     background-color: rgba(255, 255, 255, 0.1);
-    color: @echo_text_primary;
+    color: @take_text_primary;
 }
 
 /* ==========================================================================
    History Popover Items & Search
    ========================================================================== */
 
-.echo-history-popover-title {
+.take-history-popover-title {
     font-size: 15px;
     font-weight: 700;
-    color: @echo_text_primary;
+    color: @take_text_primary;
     letter-spacing: -0.2px;
 }
 
-.echo-clear-history-button {
+.take-clear-history-button {
     border-radius: 8px;
     padding: 4px 10px;
     background-color: rgba(248, 81, 73, 0.12);
@@ -908,79 +959,79 @@ popover.echo-downloads-popover list {
     transition: background-color 140ms ease, border-color 140ms ease;
 }
 
-.echo-clear-history-button:hover {
+.take-clear-history-button:hover {
     background-color: rgba(248, 81, 73, 0.24);
     border-color: rgba(248, 81, 73, 0.45);
     color: #ff7b72;
 }
 
-.echo-history-search-entry,
-.echo-history-search-entry text {
+.take-history-search-entry,
+.take-history-search-entry text {
     border-radius: 8px;
     background: #252730;
     background-color: #252730;
     border: 1px solid rgba(255, 255, 255, 0.12);
-    color: @echo_text_primary;
+    color: @take_text_primary;
     padding: 6px 10px;
     font-size: 13px;
     margin-bottom: 4px;
     box-shadow: none;
 }
 
-.echo-history-search-entry:focus,
-.echo-history-search-entry:focus-within {
+.take-history-search-entry:focus,
+.take-history-search-entry:focus-within {
     border-color: rgba(47, 129, 247, 0.5);
     background: #252730;
     background-color: #252730;
 }
 
-.echo-history-row {
+.take-history-row {
     background-color: transparent;
     border-radius: 8px;
     padding: 6px 10px;
     transition: background-color 120ms ease;
 }
 
-.echo-history-row:hover {
+.take-history-row:hover {
     background-color: rgba(255, 255, 255, 0.08);
 }
 
-.echo-history-icon {
-    color: @echo_text_secondary;
+.take-history-icon {
+    color: @take_text_secondary;
     margin-top: 2px;
 }
 
-.echo-history-item-title {
+.take-history-item-title {
     font-size: 13px;
     font-weight: 500;
-    color: @echo_text_primary;
+    color: @take_text_primary;
 }
 
-.echo-history-item-url {
+.take-history-item-url {
     font-size: 11px;
-    color: @echo_text_secondary;
+    color: @take_text_secondary;
 }
 
-.echo-history-item-time {
+.take-history-item-time {
     font-size: 11px;
     color: rgba(255, 255, 255, 0.4);
     margin-left: 8px;
 }
 
-.echo-history-empty-label {
+.take-history-empty-label {
     font-size: 13px;
-    color: @echo_text_secondary;
+    color: @take_text_secondary;
 }
 
 /* ==========================================================================
    App Menu Popover (Firefox-style Burger Menu)
    ========================================================================== */
 
-.echo-burger-button {
+.take-burger-button {
     margin-left: 2px;
 }
 
-.echo-app-menu-row {
+.take-app-menu-row {
     border-radius: 8px;
     padding: 6px 10px;
     margin: 1px 2px;
@@ -988,64 +1039,64 @@ popover.echo-downloads-popover list {
     transition: background-color 100ms ease;
 }
 
-.echo-app-menu-row:hover {
+.take-app-menu-row:hover {
     background-color: rgba(255, 255, 255, 0.08);
 }
 
-.echo-menu-icon {
+.take-menu-icon {
     -gtk-icon-size: 16px;
-    color: @echo_text_secondary;
+    color: @take_text_secondary;
 }
 
-.echo-app-menu-row:hover .echo-menu-icon {
-    color: @echo_text_primary;
+.take-app-menu-row:hover .take-menu-icon {
+    color: @take_text_primary;
 }
 
-.echo-menu-label {
+.take-menu-label {
     font-size: 13px;
     font-weight: 500;
-    color: @echo_text_primary;
+    color: @take_text_primary;
 }
 
-.echo-menu-accel {
+.take-menu-accel {
     font-size: 11.5px;
-    color: @echo_text_dim;
+    color: @take_text_dim;
     font-weight: 400;
 }
 
-.echo-menu-separator {
+.take-menu-separator {
     background-color: rgba(255, 255, 255, 0.08);
     min-height: 1px;
 }
 
-.echo-menu-zoom-row {
+.take-menu-zoom-row {
     padding: 3px 6px;
 }
 
-.echo-menu-zoom-btn,
-.echo-menu-fullscreen-btn {
+.take-menu-zoom-btn,
+.take-menu-fullscreen-btn {
     min-width: 28px;
     min-height: 28px;
     padding: 4px;
     border-radius: 6px;
-    color: @echo_text_secondary;
+    color: @take_text_secondary;
 }
 
-.echo-menu-zoom-btn:hover,
-.echo-menu-fullscreen-btn:hover {
+.take-menu-zoom-btn:hover,
+.take-menu-fullscreen-btn:hover {
     background-color: rgba(255, 255, 255, 0.1);
-    color: @echo_text_primary;
+    color: @take_text_primary;
 }
 
-.echo-menu-zoom-reset-btn {
+.take-menu-zoom-reset-btn {
     padding: 4px 8px;
     border-radius: 6px;
 }
 
-.echo-menu-zoom-label {
+.take-menu-zoom-label {
     font-size: 12px;
     font-weight: 600;
-    color: @echo_text_primary;
+    color: @take_text_primary;
 }
 
 /* ==========================================================================
@@ -1053,7 +1104,7 @@ popover.echo-downloads-popover list {
    ========================================================================== */
 
 /* Outer popover must be 100% transparent with no padding or borders */
-popover.echo-omnibox-popover {
+popover.take-omnibox-popover {
     background: transparent;
     background-color: transparent;
     border: none;
@@ -1062,15 +1113,15 @@ popover.echo-omnibox-popover {
     margin: 0;
 }
 
-popover.echo-omnibox-popover > arrow {
+popover.take-omnibox-popover > arrow {
     background: transparent;
     border: none;
 }
 
 /* Dropdown card seamlessly flowing down from the address capsule */
-popover.echo-omnibox-popover > contents {
+popover.take-omnibox-popover > contents {
     background-color: #343844;
-    border: 1px solid @echo_accent;
+    border: 1px solid @take_accent;
     border-top: none;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
@@ -1082,15 +1133,15 @@ popover.echo-omnibox-popover > contents {
 }
 
 /* ScrolledWindow and Viewport must be transparent so the grey card background shows through */
-popover.echo-omnibox-popover scrolledwindow,
-popover.echo-omnibox-popover viewport {
+popover.take-omnibox-popover scrolledwindow,
+popover.take-omnibox-popover viewport {
     background: transparent;
     background-color: transparent;
     border: none;
     box-shadow: none;
 }
 
-.echo-omnibox-row {
+.take-omnibox-row {
     border-radius: 8px;
     margin: 2px 8px;
     padding: 7px 12px;
@@ -1099,46 +1150,46 @@ popover.echo-omnibox-popover viewport {
     transition: background-color 100ms ease, border-color 100ms ease;
 }
 
-.echo-omnibox-row:hover {
+.take-omnibox-row:hover {
     background-color: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.08);
 }
 
-.echo-omnibox-row.selected {
+.take-omnibox-row.selected {
     background-color: rgba(0, 122, 255, 0.32);
     border-color: rgba(0, 122, 255, 0.65);
 }
 
-.echo-omnibox-icon-bookmark {
+.take-omnibox-icon-bookmark {
     color: #f5c211;
     margin-right: 2px;
 }
 
-.echo-omnibox-icon-history {
-    color: @echo_text_secondary;
+.take-omnibox-icon-history {
+    color: @take_text_secondary;
     margin-right: 2px;
 }
 
-.echo-omnibox-title {
+.take-omnibox-title {
     font-size: 13px;
     font-weight: 500;
     color: #ffffff;
 }
 
-.echo-omnibox-row.selected .echo-omnibox-title {
+.take-omnibox-row.selected .take-omnibox-title {
     color: #ffffff;
 }
 
-.echo-omnibox-url {
+.take-omnibox-url {
     font-size: 11.5px;
     color: rgba(255, 255, 255, 0.6);
 }
 
-.echo-omnibox-row.selected .echo-omnibox-url {
+.take-omnibox-row.selected .take-omnibox-url {
     color: rgba(255, 255, 255, 0.9);
 }
 
-.echo-omnibox-badge {
+.take-omnibox-badge {
     font-size: 9.5px;
     font-weight: 500;
     padding: 1px 6px;
@@ -1147,13 +1198,13 @@ popover.echo-omnibox-popover viewport {
     letter-spacing: 0.3px;
 }
 
-.echo-omnibox-badge.bookmark {
+.take-omnibox-badge.bookmark {
     background-color: rgba(245, 194, 17, 0.18);
     color: #ffd60a;
     border: 1px solid rgba(245, 194, 17, 0.35);
 }
 
-.echo-omnibox-badge.history {
+.take-omnibox-badge.history {
     background-color: rgba(255, 255, 255, 0.08);
     color: rgba(255, 255, 255, 0.7);
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -1163,119 +1214,148 @@ popover.echo-omnibox-popover viewport {
    Light Mode Overrides (Stage 6)
    ========================================================================== */
 
-window.echo-browser-window.light-mode,
-window.echo-browser-window.light-mode.background,
-window.echo-browser-window.light-mode > .background,
-window.echo-browser-window.light-mode > contents {
-    background-color: transparent;
+window.take-browser-window.light-mode,
+window.take-browser-window.light-mode.background,
+window.take-browser-window.light-mode > .background,
+window.take-browser-window.light-mode > contents {
+    background-color: #f6f8fa;
     background-image: none;
     color: #1f2328;
+    font-family: "Inter", "Inter Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-window.echo-browser-window.light-mode headerbar.echo-headerbar {
+window.take-browser-window.light-mode toolbarview,
+window.take-browser-window.light-mode toastoverlay {
+    background-color: #f6f8fa;
+}
+
+window.take-browser-window.light-mode .take-overview-overlay,
+window.take-browser-window.light-mode .take-tab-overview,
+window.take-browser-window.light-mode taboverview,
+window.take-browser-window.light-mode taboverview scrolledwindow,
+window.take-browser-window.light-mode taboverview .overview {
+    background-color: #f6f8fa;
+    background-image: none;
+}
+
+toolbarview undershoot.top,
+toolbarview undershoot.bottom {
+    background: none;
+    border: none;
+    box-shadow: none;
+}
+
+window.take-browser-window.light-mode headerbar.take-headerbar {
+    background-color: #f0f2f5;
     background-image: linear-gradient(to bottom, #ffffff, #f0f2f5);
-    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.08);
+    box-shadow: none !important;
+    border: none !important;
+    border-bottom: none !important;
 }
 
-window.echo-browser-window.light-mode .echo-nav-button {
+window.take-browser-window.light-mode .take-nav-button {
     color: #57606a;
 }
 
-window.echo-browser-window.light-mode .echo-nav-button:hover {
+window.take-browser-window.light-mode .take-nav-button:hover {
     background-color: rgba(0, 0, 0, 0.06);
     color: #1f2328;
 }
 
-window.echo-browser-window.light-mode .echo-nav-button:active,
-window.echo-browser-window.light-mode .echo-nav-button:checked {
+window.take-browser-window.light-mode .take-nav-button:active,
+window.take-browser-window.light-mode .take-nav-button:checked {
     background-color: rgba(0, 0, 0, 0.1);
     color: #1f2328;
 }
 
-window.echo-browser-window.light-mode .echo-address-capsule {
+window.take-browser-window.light-mode .take-address-capsule {
     background-color: #ffffff;
     border: 1px solid rgba(0, 0, 0, 0.14);
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
-window.echo-browser-window.light-mode .echo-address-capsule:hover {
+window.take-browser-window.light-mode .take-address-capsule:hover {
     background-color: #ffffff;
     border-color: rgba(0, 0, 0, 0.22);
 }
 
-window.echo-browser-window.light-mode .echo-address-capsule:focus-within {
+window.take-browser-window.light-mode .take-address-capsule:focus-within {
     background-color: #ffffff;
-    border-color: @echo_accent;
+    border-color: @take_accent;
     box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
 }
 
-window.echo-browser-window.light-mode .echo-address-capsule.echo-capsule-attached {
+window.take-browser-window.light-mode .take-address-capsule.take-capsule-attached {
     background-color: #ffffff;
-    border-color: @echo_accent;
+    border-color: @take_accent;
 }
 
-window.echo-browser-window.light-mode .echo-capsule-button {
+window.take-browser-window.light-mode .take-capsule-button,
+window.take-browser-window.light-mode menubutton.take-capsule-button > button {
     color: #57606a;
 }
 
-window.echo-browser-window.light-mode .echo-capsule-button:hover {
+window.take-browser-window.light-mode .take-capsule-button:hover,
+window.take-browser-window.light-mode menubutton.take-capsule-button > button:hover {
     background-color: rgba(0, 0, 0, 0.06);
     color: #1f2328;
 }
 
-window.echo-browser-window.light-mode .echo-address-entry,
-window.echo-browser-window.light-mode .echo-address-entry text,
-window.echo-browser-window.light-mode .echo-address-entry:focus,
-window.echo-browser-window.light-mode .echo-address-entry:focus-within,
-window.echo-browser-window.light-mode .echo-address-entry text:focus,
-window.echo-browser-window.light-mode .echo-address-entry text:focus-within,
-window.echo-browser-window.light-mode .echo-omnibox-entry,
-window.echo-browser-window.light-mode .echo-omnibox-entry text {
+window.take-browser-window.light-mode .take-address-entry,
+window.take-browser-window.light-mode .take-address-entry text,
+window.take-browser-window.light-mode .take-address-entry:focus,
+window.take-browser-window.light-mode .take-address-entry:focus-within,
+window.take-browser-window.light-mode .take-address-entry text:focus,
+window.take-browser-window.light-mode .take-address-entry text:focus-within,
+window.take-browser-window.light-mode .take-omnibox-entry,
+window.take-browser-window.light-mode .take-omnibox-entry text {
     color: #1f2328;
     background: transparent;
     caret-color: #007aff;
 }
 
-window.echo-browser-window.light-mode .echo-address-entry placeholder,
-window.echo-browser-window.light-mode .echo-omnibox-entry placeholder {
+window.take-browser-window.light-mode .take-address-entry placeholder,
+window.take-browser-window.light-mode .take-omnibox-entry placeholder {
     color: #8c959f;
 }
 
-window.echo-browser-window.light-mode .echo-security-badge.neutral {
+window.take-browser-window.light-mode .take-security-badge.neutral {
     color: #6e7781;
 }
 
-window.echo-browser-window.light-mode tabbar.echo-tab-bar,
-window.echo-browser-window.light-mode tabbar.echo-tab-bar > revealer,
-window.echo-browser-window.light-mode tabbar.echo-tab-bar > revealer > box {
+window.take-browser-window.light-mode tabbar.take-tab-bar,
+window.take-browser-window.light-mode tabbar.take-tab-bar > revealer,
+window.take-browser-window.light-mode tabbar.take-tab-bar > revealer > box {
     background-color: #f0f2f5;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    border: none !important;
+    border-bottom: none !important;
     border-top: none;
     border-left: none;
     border-right: none;
-    box-shadow: none;
-    outline: none;
+    box-shadow: none !important;
+    outline: none !important;
     margin: 0;
 }
 
-window.echo-browser-window.light-mode toolbarview > .top-bar,
-window.echo-browser-window.light-mode toolbarview > top-bar {
+window.take-browser-window.light-mode toolbarview > .top-bar,
+window.take-browser-window.light-mode toolbarview > top-bar {
     background-color: #f0f2f5;
-    border: none;
-    box-shadow: none;
+    border: none !important;
+    border-bottom: none !important;
+    box-shadow: none !important;
     padding: 0;
     margin: 0;
 }
 
-window.echo-browser-window.light-mode tabview,
-window.echo-browser-window.light-mode tabview > stack,
-window.echo-browser-window.light-mode tabview > stack > * {
+window.take-browser-window.light-mode tabview,
+window.take-browser-window.light-mode tabview > stack,
+window.take-browser-window.light-mode tabview > stack > * {
     background-color: #ffffff;
 }
 
-window.echo-browser-window.light-mode tabbar.echo-tab-bar scrolledwindow,
-window.echo-browser-window.light-mode tabbar.echo-tab-bar tabbox,
-window.echo-browser-window.light-mode tabbar.echo-tab-bar tabboxchild {
+window.take-browser-window.light-mode tabbar.take-tab-bar scrolledwindow,
+window.take-browser-window.light-mode tabbar.take-tab-bar tabbox,
+window.take-browser-window.light-mode tabbar.take-tab-bar tabboxchild {
     background-color: transparent;
     background: transparent;
     border: none;
@@ -1283,7 +1363,7 @@ window.echo-browser-window.light-mode tabbar.echo-tab-bar tabboxchild {
     box-shadow: none;
 }
 
-window.echo-browser-window.light-mode tabbar.echo-tab-bar tab {
+window.take-browser-window.light-mode tabbar.take-tab-bar tab {
     background-color: transparent;
     color: #57606a;
     border: none;
@@ -1291,12 +1371,12 @@ window.echo-browser-window.light-mode tabbar.echo-tab-bar tab {
     box-shadow: none;
 }
 
-window.echo-browser-window.light-mode tabbar.echo-tab-bar tab:hover {
+window.take-browser-window.light-mode tabbar.take-tab-bar tab:hover {
     background-color: rgba(0, 0, 0, 0.05);
     color: #1f2328;
 }
 
-window.echo-browser-window.light-mode tabbar.echo-tab-bar tab:selected {
+window.take-browser-window.light-mode tabbar.take-tab-bar tab:selected {
     background-color: #ffffff;
     border: none;
     outline: none;
@@ -1304,90 +1384,113 @@ window.echo-browser-window.light-mode tabbar.echo-tab-bar tab:selected {
     color: #1f2328;
 }
 
-window.echo-browser-window.light-mode splitview,
-window.echo-browser-window.light-mode splitview > sidebar,
-window.echo-browser-window.light-mode splitview > contents,
-window.echo-browser-window.light-mode splitview > box {
-    background: transparent;
-    background-color: transparent;
+window.take-browser-window.light-mode splitview,
+window.take-browser-window.light-mode splitview > contents,
+window.take-browser-window.light-mode splitview > box,
+window.take-browser-window.light-mode overlaysplitview,
+window.take-browser-window.light-mode overlaysplitview > contents {
+    background-color: #ffffff;
 }
 
-window.echo-browser-window.light-mode .echo-sidebar {
-    background-color: transparent;
+window.take-browser-window.light-mode splitview > sidebar,
+window.take-browser-window.light-mode overlaysplitview > sidebar,
+overlaysplitview.light-mode > sidebar {
+    background-color: #f6f8fa;
 }
 
-window.echo-browser-window.light-mode .echo-sidebar-container,
-window.echo-browser-window.light-mode scrolledwindow.echo-sidebar-container {
-    background: radial-gradient(ellipse at 20% 20%, rgba(255, 255, 255, 0.65) 0%, rgba(240, 243, 248, 0.68) 100%);
-    background-color: rgba(255, 255, 255, 0.60);
-    border-right: 1px solid rgba(0, 0, 0, 0.08);
-    box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.75);
+window.take-browser-window.light-mode .take-sidebar,
+.take-sidebar.light-mode {
+    background-color: #f6f8fa;
 }
 
-window.echo-browser-window.light-mode .echo-sidebar-container scrolledwindow,
-window.echo-browser-window.light-mode .echo-sidebar-container > viewport {
-    background-color: transparent;
+window.take-browser-window.light-mode .take-sidebar-container,
+window.take-browser-window.light-mode scrolledwindow.take-sidebar-container,
+.take-sidebar-container.light-mode,
+scrolledwindow.take-sidebar-container.light-mode,
+window.take-browser-window.light-mode .take-sidebar-container:backdrop,
+.take-sidebar-container.light-mode:backdrop {
+    background: #f6f8fa !important;
+    background-color: #f6f8fa !important;
+    background-image: none !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: none !important;
 }
 
-window.echo-browser-window.light-mode .echo-sidebar-section-title {
+window.take-browser-window.light-mode overlaysplitview > separator {
+    background-color: rgba(0, 0, 0, 0.08);
+    border: none;
+    box-shadow: none;
+    min-width: 1px;
+}
+
+window.take-browser-window.light-mode .take-sidebar-container scrolledwindow,
+window.take-browser-window.light-mode .take-sidebar-container > viewport,
+.take-sidebar-container.light-mode scrolledwindow,
+.take-sidebar-container.light-mode > viewport {
+    background: #f6f8fa !important;
+    background-color: #f6f8fa !important;
+    background-image: none !important;
+}
+
+window.take-browser-window.light-mode .take-sidebar-section-title {
     color: #656d76;
 }
 
-window.echo-browser-window.light-mode .echo-section-action {
+window.take-browser-window.light-mode .take-section-action {
     color: #656d76;
 }
 
-window.echo-browser-window.light-mode .echo-section-action:hover {
+window.take-browser-window.light-mode .take-section-action:hover {
     background-color: rgba(0, 0, 0, 0.06);
     color: #1f2328;
 }
 
-window.echo-browser-window.light-mode .echo-sidebar-item {
+window.take-browser-window.light-mode .take-sidebar-item {
     color: #32383f;
 }
 
-window.echo-browser-window.light-mode .echo-sidebar-item:hover {
+window.take-browser-window.light-mode .take-sidebar-item:hover {
     background-color: rgba(0, 0, 0, 0.05);
     color: #1f2328;
 }
 
-window.echo-browser-window.light-mode .echo-sidebar-item.active {
+window.take-browser-window.light-mode .take-sidebar-item.active {
     background-color: rgba(0, 122, 255, 0.12);
     color: #0969da;
-    box-shadow: inset 2px 0 0 @echo_accent;
+    box-shadow: inset 2px 0 0 @take_accent;
 }
 
-window.echo-browser-window.light-mode .echo-duplicate-badge {
+window.take-browser-window.light-mode .take-duplicate-badge {
     background-color: rgba(0, 122, 255, 0.12);
     color: #0969da;
     border: 1px solid rgba(0, 122, 255, 0.25);
 }
 
-window.echo-browser-window.light-mode .echo-reading-card {
+window.take-browser-window.light-mode .take-reading-card {
     background-color: #ffffff;
     border: 1px solid rgba(0, 0, 0, 0.08);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-window.echo-browser-window.light-mode .echo-reading-card:hover {
+window.take-browser-window.light-mode .take-reading-card:hover {
     background-color: #ffffff;
     border-color: rgba(0, 122, 255, 0.35);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
-window.echo-browser-window.light-mode .echo-reading-title {
+window.take-browser-window.light-mode .take-reading-title {
     color: #1f2328;
 }
 
-window.echo-browser-window.light-mode .echo-reading-preview {
+window.take-browser-window.light-mode .take-reading-preview {
     color: #57606a;
 }
 
-window.echo-browser-window.light-mode .echo-reading-url {
+window.take-browser-window.light-mode .take-reading-url {
     color: #656d76;
 }
 
-window.echo-browser-window.light-mode .echo-status-pill {
+window.take-browser-window.light-mode .take-status-pill {
     background-color: rgba(255, 255, 255, 0.94);
     color: #1f2328;
     border: 1px solid rgba(0, 0, 0, 0.1);
@@ -1396,10 +1499,40 @@ window.echo-browser-window.light-mode .echo-status-pill {
 
 /* Light Mode Popovers */
 popover.light-mode > contents,
-popover.echo-app-menu-popover.light-mode > contents,
-popover.echo-history-popover.light-mode > contents,
-popover.echo-downloads-popover.light-mode > contents {
+popover.take-app-menu-popover.light-mode > contents,
+popover.take-history-popover.light-mode > contents,
+popover.take-downloads-popover.light-mode > contents,
+window.take-browser-window.light-mode popover.menu > contents,
+window.take-browser-window.light-mode .take-web-view popover > contents,
+popover.menu.light-mode > contents {
     background: #ffffff;
+    background-color: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+    color: #1f2328;
+}
+
+window.take-browser-window.light-mode popover.menu modelbutton,
+window.take-browser-window.light-mode .take-web-view popover modelbutton,
+popover.menu.light-mode modelbutton {
+    color: #1f2328;
+    background-color: transparent;
+    border-radius: 6px;
+    padding: 6px 10px;
+}
+
+window.take-browser-window.light-mode popover.menu modelbutton:hover,
+window.take-browser-window.light-mode .take-web-view popover modelbutton:hover,
+popover.menu.light-mode modelbutton:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+    color: #1f2328;
+}
+
+window.take-browser-window.light-mode popover.menu separator,
+window.take-browser-window.light-mode .take-web-view popover separator,
+popover.menu.light-mode separator {
+    background-color: rgba(0, 0, 0, 0.08);
+}
     background-color: #ffffff;
     color: #1f2328;
     border: 1px solid rgba(0, 0, 0, 0.12);
@@ -1407,164 +1540,164 @@ popover.echo-downloads-popover.light-mode > contents {
 }
 
 popover.light-mode > arrow,
-popover.echo-app-menu-popover.light-mode > arrow,
-popover.echo-history-popover.light-mode > arrow,
-popover.echo-downloads-popover.light-mode > arrow {
+popover.take-app-menu-popover.light-mode > arrow,
+popover.take-history-popover.light-mode > arrow,
+popover.take-downloads-popover.light-mode > arrow {
     background: #ffffff;
     background-color: #ffffff;
     border: 1px solid rgba(0, 0, 0, 0.12);
 }
 
-popover.light-mode .echo-app-menu-row:hover {
+popover.light-mode .take-app-menu-row:hover {
     background-color: rgba(0, 0, 0, 0.05);
 }
 
-popover.light-mode .echo-menu-label {
+popover.light-mode .take-menu-label {
     color: #1f2328;
 }
 
-popover.light-mode .echo-menu-icon {
+popover.light-mode .take-menu-icon {
     color: #57606a;
 }
 
-popover.light-mode .echo-app-menu-row:hover .echo-menu-icon {
+popover.light-mode .take-app-menu-row:hover .take-menu-icon {
     color: #1f2328;
 }
 
-popover.light-mode .echo-menu-accel {
+popover.light-mode .take-menu-accel {
     color: #8c959f;
 }
 
-popover.light-mode .echo-menu-separator {
+popover.light-mode .take-menu-separator {
     background-color: rgba(0, 0, 0, 0.08);
 }
 
-popover.light-mode .echo-menu-zoom-btn,
-popover.light-mode .echo-menu-fullscreen-btn {
+popover.light-mode .take-menu-zoom-btn,
+popover.light-mode .take-menu-fullscreen-btn {
     color: #57606a;
 }
 
-popover.light-mode .echo-menu-zoom-btn:hover,
-popover.light-mode .echo-menu-fullscreen-btn:hover {
+popover.light-mode .take-menu-zoom-btn:hover,
+popover.light-mode .take-menu-fullscreen-btn:hover {
     background-color: rgba(0, 0, 0, 0.06);
     color: #1f2328;
 }
 
-popover.light-mode .echo-menu-zoom-label {
+popover.light-mode .take-menu-zoom-label {
     color: #1f2328;
 }
 
-popover.light-mode .echo-history-popover-title {
+popover.light-mode .take-history-popover-title {
     color: #1f2328;
 }
 
-popover.light-mode .echo-history-search-entry,
-popover.light-mode .echo-history-search-entry text {
+popover.light-mode .take-history-search-entry,
+popover.light-mode .take-history-search-entry text {
     background: #f6f8fa;
     background-color: #f6f8fa;
     border: 1px solid rgba(0, 0, 0, 0.12);
     color: #1f2328;
 }
 
-popover.light-mode .echo-history-row:hover {
+popover.light-mode .take-history-row:hover {
     background-color: rgba(0, 0, 0, 0.05);
 }
 
-popover.light-mode .echo-history-item-title {
+popover.light-mode .take-history-item-title {
     color: #1f2328;
 }
 
-popover.light-mode .echo-history-item-url {
+popover.light-mode .take-history-item-url {
     color: #57606a;
 }
 
-popover.light-mode .echo-history-item-time {
+popover.light-mode .take-history-item-time {
     color: #8c959f;
 }
 
-popover.light-mode .echo-history-icon {
+popover.light-mode .take-history-icon {
     color: #57606a;
 }
 
-popover.light-mode .echo-downloads-title {
+popover.light-mode .take-downloads-title {
     color: #1f2328;
 }
 
-popover.light-mode .echo-open-folder-btn {
+popover.light-mode .take-open-folder-btn {
     border: 1px solid rgba(0, 0, 0, 0.1);
     color: #57606a;
 }
 
-popover.light-mode .echo-open-folder-btn:hover {
+popover.light-mode .take-open-folder-btn:hover {
     background-color: rgba(0, 0, 0, 0.05);
     color: #1f2328;
 }
 
-popover.light-mode .echo-download-card {
+popover.light-mode .take-download-card {
     background-color: #f6f8fa;
     border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-popover.light-mode .echo-download-card:hover {
+popover.light-mode .take-download-card:hover {
     background-color: #f0f2f5;
     border-color: rgba(0, 0, 0, 0.14);
 }
 
-popover.light-mode .echo-download-filename {
+popover.light-mode .take-download-filename {
     color: #1f2328;
 }
 
-popover.light-mode .echo-download-status {
+popover.light-mode .take-download-status {
     color: #57606a;
 }
 
-popover.light-mode .echo-download-progress trough {
+popover.light-mode .take-download-progress trough {
     background-color: rgba(0, 0, 0, 0.08);
 }
 
-popover.light-mode .echo-download-action-btn {
+popover.light-mode .take-download-action-btn {
     color: #57606a;
 }
 
-popover.light-mode .echo-download-action-btn:hover {
+popover.light-mode .take-download-action-btn:hover {
     background-color: rgba(0, 0, 0, 0.08);
     color: #1f2328;
 }
 
-popover.light-mode.echo-omnibox-popover > contents {
+popover.light-mode.take-omnibox-popover > contents {
     background-color: #ffffff;
-    border: 1px solid @echo_accent;
+    border: 1px solid @take_accent;
     border-top: none;
     box-shadow: 0 16px 32px rgba(0, 0, 0, 0.15);
 }
 
-popover.light-mode .echo-omnibox-row:hover {
+popover.light-mode .take-omnibox-row:hover {
     background-color: rgba(0, 0, 0, 0.05);
     border-color: rgba(0, 0, 0, 0.05);
 }
 
-popover.light-mode .echo-omnibox-row.selected {
+popover.light-mode .take-omnibox-row.selected {
     background-color: rgba(0, 122, 255, 0.14);
     border-color: rgba(0, 122, 255, 0.4);
 }
 
-popover.light-mode .echo-omnibox-title {
+popover.light-mode .take-omnibox-title {
     color: #1f2328;
 }
 
-popover.light-mode .echo-omnibox-url {
+popover.light-mode .take-omnibox-url {
     color: #57606a;
 }
 
-popover.light-mode .echo-omnibox-row.selected .echo-omnibox-title {
+popover.light-mode .take-omnibox-row.selected .take-omnibox-title {
     color: #0969da;
 }
 
-popover.light-mode .echo-omnibox-row.selected .echo-omnibox-url {
+popover.light-mode .take-omnibox-row.selected .take-omnibox-url {
     color: #0969da;
 }
 
-popover.light-mode .echo-omnibox-badge.history {
+popover.light-mode .take-omnibox-badge.history {
     background-color: rgba(0, 0, 0, 0.06);
     color: #57606a;
     border: 1px solid rgba(0, 0, 0, 0.1);
@@ -1581,21 +1714,21 @@ dialog.light-mode .dialog-contents,
 dialog.light-mode .body-scrolled-window,
 dialog.light-mode .message-area,
 dialog.light-mode .response-area,
-window.echo-browser-window.light-mode dialog,
-window.echo-browser-window.light-mode dialog sheet,
-window.echo-browser-window.light-mode dialog sheet.background,
-window.echo-browser-window.light-mode dialog .dialog-contents,
-window.echo-browser-window.light-mode dialog .body-scrolled-window,
-window.echo-browser-window.light-mode dialog .message-area,
-window.echo-browser-window.light-mode dialog .response-area,
-window.echo-browser-window.light-mode dialog.echo-password-dialog sheet.background,
-window.echo-browser-window.light-mode dialog.echo-password-dialog .response-area {
+window.take-browser-window.light-mode dialog,
+window.take-browser-window.light-mode dialog sheet,
+window.take-browser-window.light-mode dialog sheet.background,
+window.take-browser-window.light-mode dialog .dialog-contents,
+window.take-browser-window.light-mode dialog .body-scrolled-window,
+window.take-browser-window.light-mode dialog .message-area,
+window.take-browser-window.light-mode dialog .response-area,
+window.take-browser-window.light-mode dialog.take-password-dialog sheet.background,
+window.take-browser-window.light-mode dialog.take-password-dialog .response-area {
     background-color: #ffffff;
     color: #1f2328;
 }
 
 dialog.light-mode sheet.background,
-window.echo-browser-window.light-mode dialog sheet.background {
+window.take-browser-window.light-mode dialog sheet.background {
     background-color: #ffffff;
     border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 16px;
@@ -1607,18 +1740,18 @@ dialog.light-mode .heading-bin label,
 dialog.light-mode label.title-2,
 dialog.light-mode label.title-4,
 dialog.light-mode label.body,
-window.echo-browser-window.light-mode dialog label,
-window.echo-browser-window.light-mode dialog .heading-bin label,
-window.echo-browser-window.light-mode dialog label.title-2,
-window.echo-browser-window.light-mode dialog label.title-4,
-window.echo-browser-window.light-mode dialog label.body {
+window.take-browser-window.light-mode dialog label,
+window.take-browser-window.light-mode dialog .heading-bin label,
+window.take-browser-window.light-mode dialog label.title-2,
+window.take-browser-window.light-mode dialog label.title-4,
+window.take-browser-window.light-mode dialog label.body {
     color: #1f2328;
 }
 
 dialog.light-mode entry,
 dialog.light-mode passwordentry,
-window.echo-browser-window.light-mode dialog entry,
-window.echo-browser-window.light-mode dialog passwordentry {
+window.take-browser-window.light-mode dialog entry,
+window.take-browser-window.light-mode dialog passwordentry {
     background-color: #f1f3f5;
     border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 10px;
@@ -1629,27 +1762,27 @@ window.echo-browser-window.light-mode dialog passwordentry {
 
 dialog.light-mode entry text,
 dialog.light-mode passwordentry text,
-window.echo-browser-window.light-mode dialog entry text,
-window.echo-browser-window.light-mode dialog passwordentry text {
+window.take-browser-window.light-mode dialog entry text,
+window.take-browser-window.light-mode dialog passwordentry text {
     color: #1f2328;
 }
 
 dialog.light-mode entry placeholder,
 dialog.light-mode passwordentry placeholder,
-window.echo-browser-window.light-mode dialog entry placeholder,
-window.echo-browser-window.light-mode dialog passwordentry placeholder {
+window.take-browser-window.light-mode dialog entry placeholder,
+window.take-browser-window.light-mode dialog passwordentry placeholder {
     color: #8c959f;
 }
 
 dialog.light-mode .response-area,
-window.echo-browser-window.light-mode dialog .response-area {
+window.take-browser-window.light-mode dialog .response-area {
     background-color: #ffffff;
     border-top: 1px solid rgba(0, 0, 0, 0.07);
     padding: 8px 12px 12px 12px;
 }
 
 dialog.light-mode .response-area button.text-button,
-window.echo-browser-window.light-mode dialog .response-area button.text-button {
+window.take-browser-window.light-mode dialog .response-area button.text-button {
     background-color: #f1f3f5;
     border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: 10px;
@@ -1663,35 +1796,64 @@ window.echo-browser-window.light-mode dialog .response-area button.text-button {
 }
 
 dialog.light-mode .response-area button.text-button:hover,
-window.echo-browser-window.light-mode dialog .response-area button.text-button:hover {
+window.take-browser-window.light-mode dialog .response-area button.text-button:hover {
     background-color: #e4e7eb;
     color: #000000;
 }
 
 dialog.light-mode .response-area button.text-button:active,
-window.echo-browser-window.light-mode dialog .response-area button.text-button:active {
+window.take-browser-window.light-mode dialog .response-area button.text-button:active {
     background-color: #dbe0e6;
     color: #000000;
 }
 
 dialog.light-mode .response-area button.suggested-action,
-window.echo-browser-window.light-mode dialog .response-area button.suggested-action {
-    background-color: #007aff;
-    border: 1px solid #007aff;
+dialog.light-mode button.suggested-action,
+alertdialog.light-mode .response-area button.suggested-action,
+alertdialog.light-mode button.suggested-action,
+.take-password-dialog.light-mode button.suggested-action,
+.take-password-dialog.light-mode .response-area button.suggested-action,
+window.take-browser-window.light-mode dialog .response-area button.suggested-action,
+dialog.light-mode.take-password-dialog .response-area button.suggested-action,
+window.take-browser-window.light-mode dialog.take-password-dialog .response-area button.suggested-action {
+    background-color: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.16);
     border-radius: 10px;
-    color: #ffffff;
+    color: #1f2328;
     font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 dialog.light-mode .response-area button.suggested-action:hover,
-window.echo-browser-window.light-mode dialog .response-area button.suggested-action:hover {
-    background-color: #0069d9;
-    border-color: #0069d9;
-    color: #ffffff;
+dialog.light-mode button.suggested-action:hover,
+alertdialog.light-mode .response-area button.suggested-action:hover,
+alertdialog.light-mode button.suggested-action:hover,
+.take-password-dialog.light-mode button.suggested-action:hover,
+.take-password-dialog.light-mode .response-area button.suggested-action:hover,
+window.take-browser-window.light-mode dialog .response-area button.suggested-action:hover,
+dialog.light-mode.take-password-dialog .response-area button.suggested-action:hover,
+window.take-browser-window.light-mode dialog.take-password-dialog .response-area button.suggested-action:hover {
+    background-color: #f7f9fa;
+    border-color: rgba(0, 0, 0, 0.24);
+    color: #000000;
+}
+
+dialog.light-mode .response-area button.suggested-action:active,
+dialog.light-mode button.suggested-action:active,
+alertdialog.light-mode .response-area button.suggested-action:active,
+alertdialog.light-mode button.suggested-action:active,
+.take-password-dialog.light-mode button.suggested-action:active,
+.take-password-dialog.light-mode .response-area button.suggested-action:active,
+window.take-browser-window.light-mode dialog .response-area button.suggested-action:active,
+dialog.light-mode.take-password-dialog .response-area button.suggested-action:active,
+window.take-browser-window.light-mode dialog.take-password-dialog .response-area button.suggested-action:active {
+    background-color: #ebedef;
+    border-color: rgba(0, 0, 0, 0.28);
+    color: #000000;
 }
 
 dialog.light-mode .response-area button.destructive-action,
-window.echo-browser-window.light-mode dialog .response-area button.destructive-action {
+window.take-browser-window.light-mode dialog .response-area button.destructive-action {
     background-color: #ff3b30;
     border: 1px solid #ff3b30;
     border-radius: 10px;
@@ -1700,7 +1862,7 @@ window.echo-browser-window.light-mode dialog .response-area button.destructive-a
 }
 
 dialog.light-mode .response-area button.destructive-action:hover,
-window.echo-browser-window.light-mode dialog .response-area button.destructive-action:hover {
+window.take-browser-window.light-mode dialog .response-area button.destructive-action:hover {
     background-color: #e03126;
     border-color: #e03126;
     color: #ffffff;
@@ -1710,7 +1872,7 @@ window.echo-browser-window.light-mode dialog .response-area button.destructive-a
    Light Mode Find Bar (Ctrl+F)
    ========================================================================== */
 
-window.echo-browser-window.light-mode .echo-find-bar {
+window.take-browser-window.light-mode .take-find-bar {
     background-color: rgba(255, 255, 255, 0.90);
     border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 9999px;
@@ -1718,21 +1880,21 @@ window.echo-browser-window.light-mode .echo-find-bar {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
-window.echo-browser-window.light-mode .echo-find-bar:focus-within {
+window.take-browser-window.light-mode .take-find-bar:focus-within {
     border-color: rgba(0, 122, 255, 0.6);
     box-shadow: 0 10px 32px rgba(0, 0, 0, 0.15), 0 0 0 2px rgba(0, 122, 255, 0.22);
 }
 
-window.echo-browser-window.light-mode .echo-find-icon {
+window.take-browser-window.light-mode .take-find-icon {
     color: rgba(0, 0, 0, 0.45);
 }
 
-window.echo-browser-window.light-mode .echo-find-entry,
-window.echo-browser-window.light-mode .echo-find-entry:focus,
-window.echo-browser-window.light-mode .echo-find-entry:focus-within,
-window.echo-browser-window.light-mode .echo-find-entry text,
-window.echo-browser-window.light-mode .echo-find-entry text:focus,
-window.echo-browser-window.light-mode .echo-find-entry text:focus-within {
+window.take-browser-window.light-mode .take-find-entry,
+window.take-browser-window.light-mode .take-find-entry:focus,
+window.take-browser-window.light-mode .take-find-entry:focus-within,
+window.take-browser-window.light-mode .take-find-entry text,
+window.take-browser-window.light-mode .take-find-entry text:focus,
+window.take-browser-window.light-mode .take-find-entry text:focus-within {
     background: transparent;
     background-color: transparent;
     border: none;
@@ -1747,52 +1909,52 @@ window.echo-browser-window.light-mode .echo-find-entry text:focus-within {
     min-height: 28px;
 }
 
-window.echo-browser-window.light-mode .echo-find-entry placeholder {
+window.take-browser-window.light-mode .take-find-entry placeholder {
     color: rgba(0, 0, 0, 0.4);
     font-weight: 400;
 }
 
-window.echo-browser-window.light-mode .echo-find-counter {
+window.take-browser-window.light-mode .take-find-counter {
     color: #57606a;
 }
 
-window.echo-browser-window.light-mode .echo-find-btn {
+window.take-browser-window.light-mode .take-find-btn {
     color: #57606a;
     background: transparent;
 }
 
-window.echo-browser-window.light-mode .echo-find-btn:hover {
+window.take-browser-window.light-mode .take-find-btn:hover {
     background-color: rgba(0, 0, 0, 0.06);
     color: #1f2328;
 }
 
-window.echo-browser-window.light-mode .echo-find-btn:active {
+window.take-browser-window.light-mode .take-find-btn:active {
     background-color: rgba(0, 0, 0, 0.10);
     color: #000000;
 }
 
-window.echo-browser-window.light-mode .echo-find-close:hover {
+window.take-browser-window.light-mode .take-find-close:hover {
     background-color: rgba(255, 69, 58, 0.15);
     color: #cf222e;
 }
 
 /* Light Mode Tab Overview Dock */
-window.echo-browser-window.light-mode .echo-overview-dock {
-    background-color: rgba(255, 255, 255, 0.92);
-    border-color: rgba(0, 0, 0, 0.12);
+window.take-browser-window.light-mode .take-overview-dock {
+    background-color: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.12);
     box-shadow: 0 16px 36px rgba(0, 0, 0, 0.15);
 }
 
-window.echo-browser-window.light-mode .echo-dock-btn {
+window.take-browser-window.light-mode .take-dock-btn {
     color: #57606a;
 }
 
-window.echo-browser-window.light-mode .echo-dock-btn:hover {
+window.take-browser-window.light-mode .take-dock-btn:hover {
     color: #1f2328;
     background-color: rgba(0, 0, 0, 0.05);
 }
 
-window.echo-browser-window.light-mode .echo-dock-btn.echo-dock-active {
+window.take-browser-window.light-mode .take-dock-btn.take-dock-active {
     color: #1f2328;
     background-color: #ffffff;
     border-color: rgba(0, 0, 0, 0.1);
@@ -1800,15 +1962,15 @@ window.echo-browser-window.light-mode .echo-dock-btn.echo-dock-active {
 }
 
 /* Tab Overview Floating Action Dock */
-.echo-overview-dock {
-    background-color: rgba(26, 29, 36, 0.92);
+.take-overview-dock {
+    background-color: #1c1f27;
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 9999px;
     padding: 5px;
     box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-.echo-dock-btn {
+.take-dock-btn {
     border-radius: 9999px;
     padding: 8px 18px;
     font-size: 13px;
@@ -1819,12 +1981,12 @@ window.echo-browser-window.light-mode .echo-dock-btn.echo-dock-active {
     transition: all 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.echo-dock-btn:hover {
+.take-dock-btn:hover {
     color: #ffffff;
     background-color: rgba(255, 255, 255, 0.08);
 }
 
-.echo-dock-btn.echo-dock-active {
+.take-dock-btn.take-dock-active {
     color: #ffffff;
     background-color: rgba(255, 255, 255, 0.18);
     border-color: rgba(255, 255, 255, 0.2);
@@ -1833,12 +1995,12 @@ window.echo-browser-window.light-mode .echo-dock-btn.echo-dock-active {
 }
 
 /* Sidebar Anonymous / Incognito Mode */
-.echo-sidebar-private-box {
+.take-sidebar-private-box {
     margin: 12px 6px 16px 6px;
     padding-top: 4px;
 }
 
-.echo-sidebar-close-btn {
+.take-sidebar-close-btn {
     border-radius: 8px;
     padding: 4px 10px;
     font-size: 12px;
@@ -1849,7 +2011,7 @@ window.echo-browser-window.light-mode .echo-dock-btn.echo-dock-active {
     transition: all 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.echo-sidebar-close-btn:hover {
+.take-sidebar-close-btn:hover {
     background-color: rgba(248, 81, 73, 0.20);
     color: #ffffff;
     border-color: rgba(248, 81, 73, 0.45);
@@ -1857,7 +2019,7 @@ window.echo-browser-window.light-mode .echo-dock-btn.echo-dock-active {
 }
 
 /* Sleeping tabs popover styling */
-popover.echo-sleeping-tabs-popover > contents {
+popover.take-sleeping-tabs-popover > contents {
     background-color: #1a1d24;
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 16px;
@@ -1865,47 +2027,47 @@ popover.echo-sleeping-tabs-popover > contents {
     padding: 14px;
 }
 
-.echo-sleeping-title {
+.take-sleeping-title {
     font-size: 15px;
     font-weight: 600;
     color: #ffffff;
 }
 
-.echo-sleeping-description {
+.take-sleeping-description {
     font-size: 12px;
-    color: @echo_text_secondary;
+    color: @take_text_secondary;
     line-height: 1.4;
 }
 
-.echo-sleeping-empty {
+.take-sleeping-empty {
     font-size: 12px;
-    color: @echo_text_dim;
+    color: @take_text_dim;
     font-style: italic;
 }
 
-.echo-sleeping-row {
+.take-sleeping-row {
     background-color: rgba(255, 255, 255, 0.04);
     border-radius: 8px;
     padding: 8px 10px;
     border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.echo-sleeping-row:hover {
+.take-sleeping-row:hover {
     background-color: rgba(255, 255, 255, 0.08);
 }
 
-.echo-sleeping-item-title {
+.take-sleeping-item-title {
     font-weight: 500;
     color: #ffffff;
     font-size: 13px;
 }
 
-.echo-sleeping-item-url {
+.take-sleeping-item-url {
     font-size: 11px;
-    color: @echo_text_dim;
+    color: @take_text_dim;
 }
 
-.echo-wake-btn {
+.take-wake-btn {
     border-radius: 6px;
     padding: 4px 10px;
     font-size: 12px;
@@ -1915,41 +2077,41 @@ popover.echo-sleeping-tabs-popover > contents {
     border: 1px solid rgba(0, 122, 255, 0.4);
 }
 
-.echo-wake-btn:hover {
+.take-wake-btn:hover {
     background-color: rgba(0, 122, 255, 0.35);
 }
 
 /* Close private session dock button */
-.echo-dock-close-private {
+.take-dock-close-private {
     background-color: rgba(248, 81, 73, 0.16);
     color: #ff7b72;
     border: 1px solid rgba(248, 81, 73, 0.35);
 }
 
-.echo-dock-close-private:hover {
+.take-dock-close-private:hover {
     background-color: rgba(248, 81, 73, 0.28);
     border-color: rgba(248, 81, 73, 0.6);
     box-shadow: 0 4px 14px rgba(248, 81, 73, 0.25);
 }
 
 /* Private browsing mode window and chrome accents */
-.echo-browser-window.echo-private-mode headerbar {
+.take-browser-window.take-private-mode headerbar {
     background: linear-gradient(180deg, rgba(74, 25, 120, 0.35) 0%, rgba(20, 16, 28, 0.95) 100%);
     border-bottom: 1px solid rgba(163, 113, 247, 0.3);
 }
 
-.echo-browser-window.echo-private-mode .echo-tab-bar {
+.take-browser-window.take-private-mode .take-tab-bar {
     background-color: rgba(26, 18, 38, 0.92);
     border-bottom: 1px solid rgba(163, 113, 247, 0.2);
 }
 
-.echo-browser-window.echo-private-mode .echo-address-capsule {
+.take-browser-window.take-private-mode .take-address-capsule {
     border-color: rgba(163, 113, 247, 0.4);
     box-shadow: 0 0 0 1px rgba(163, 113, 247, 0.15);
 }
 
 /* Security Button in Address Capsule */
-.echo-security-button {
+.take-security-button {
     background: transparent;
     border: none;
     border-radius: 8px;
@@ -1958,20 +2120,20 @@ popover.echo-sleeping-tabs-popover > contents {
     min-height: 28px;
 }
 
-.echo-security-button:hover {
+.take-security-button:hover {
     background-color: rgba(255, 255, 255, 0.08);
 }
 
-.echo-security-button.insecure {
+.take-security-button.insecure {
     color: #ff453a;
 }
 
-window.echo-browser-window.light-mode .echo-security-button:hover {
+window.take-browser-window.light-mode .take-security-button:hover {
     background-color: rgba(0, 0, 0, 0.06);
 }
 
 /* Take Shield Firefox-style Popover */
-popover.echo-shield-popover > contents {
+popover.take-shield-popover > contents {
     min-width: 380px;
     padding: 16px;
     border-radius: 16px;
@@ -1980,42 +2142,42 @@ popover.echo-shield-popover > contents {
     box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
 }
 
-.echo-shield-popover.light-mode > contents {
+.take-shield-popover.light-mode > contents {
     background-color: #ffffff;
     border: 1px solid rgba(0, 0, 0, 0.12);
     box-shadow: 0 16px 36px rgba(0, 0, 0, 0.15);
     color: #1f2328;
 }
 
-.echo-shield-header-row {
+.take-shield-header-row {
     padding-bottom: 2px;
 }
 
-.echo-shield-domain-label {
+.take-shield-domain-label {
     font-size: 14px;
     font-weight: 600;
 }
 
-.echo-shield-connection-label {
+.take-shield-connection-label {
     font-size: 13px;
     font-weight: 500;
     color: #9ba3b4;
 }
 
-.echo-shield-connection-icon.secure {
+.take-shield-connection-icon.secure {
     color: #30d158;
 }
 
-.echo-shield-connection-icon.insecure {
+.take-shield-connection-icon.insecure {
     color: #ff453a;
 }
 
-.echo-shield-chevron {
+.take-shield-chevron {
     opacity: 0.45;
 }
 
 /* Purple Shield Banner */
-.echo-shield-banner {
+.take-shield-banner {
     background: linear-gradient(135deg, #371e61 0%, #20123b 100%);
     border: 1px solid rgba(168, 85, 247, 0.28);
     border-radius: 14px;
@@ -2023,91 +2185,539 @@ popover.echo-shield-popover > contents {
     margin: 4px 0 6px 0;
 }
 
-.echo-shield-popover.light-mode .echo-shield-banner {
+.take-shield-popover.light-mode .take-shield-banner {
     background: linear-gradient(135deg, #ede7f6 0%, #e1d6fa 100%);
     border: 1px solid rgba(124, 58, 237, 0.22);
 }
 
-.echo-shield-banner-title {
+.take-shield-banner-title {
     font-size: 15px;
     font-weight: 700;
     color: #ffffff;
 }
 
-.echo-shield-popover.light-mode .echo-shield-banner-title {
+.take-shield-popover.light-mode .take-shield-banner-title {
     color: #3b1464;
 }
 
-.echo-shield-banner-desc {
+.take-shield-banner-desc {
     font-size: 12px;
     line-height: 1.4;
     color: rgba(255, 255, 255, 0.85);
 }
 
-.echo-shield-popover.light-mode .echo-shield-banner-desc {
+.take-shield-popover.light-mode .take-shield-banner-desc {
     color: #4c1d95;
 }
 
-.echo-shield-art-icon {
+.take-shield-art-icon {
     color: #c084fc;
 }
 
-.echo-shield-popover.light-mode .echo-shield-art-icon {
+.take-shield-popover.light-mode .take-shield-art-icon {
     color: #7c3aed;
 }
 
 /* Protection section */
-.echo-shield-protection-section {
+.take-shield-protection-section {
     padding: 4px 2px;
 }
 
-.echo-shield-switch-title {
+.take-shield-switch-title {
     font-size: 13px;
     font-weight: 600;
 }
 
-.echo-shield-switch-title.dimmed {
+.take-shield-switch-title.dimmed {
     opacity: 0.6;
 }
 
-.echo-shield-subtext {
+.take-shield-subtext {
     font-size: 12px;
     color: #8b949e;
     line-height: 1.35;
 }
 
-.echo-shield-popover.light-mode .echo-shield-subtext {
+.take-shield-popover.light-mode .take-shield-subtext {
     color: #656d76;
 }
 
-switch.echo-shield-switch:checked {
+switch.take-shield-switch:checked {
     background-color: #30d158;
 }
 
 /* Action Rows */
-.echo-shield-action-btn {
+.take-shield-action-btn {
     border-radius: 10px;
     padding: 10px 12px;
     font-size: 13px;
     font-weight: 500;
 }
 
-.echo-shield-action-btn:hover {
+.take-shield-action-btn:hover {
     background-color: rgba(255, 255, 255, 0.07);
 }
 
-.echo-shield-popover.light-mode .echo-shield-action-btn:hover {
+.take-shield-popover.light-mode .take-shield-action-btn:hover {
     background-color: rgba(0, 0, 0, 0.05);
 }
 
-.echo-shield-link-btn {
+.take-shield-link-btn {
     border-radius: 8px;
     padding: 6px 12px;
     font-size: 13px;
     color: #2997ff;
 }
 
-.echo-shield-link-btn:hover {
+.take-shield-link-btn:hover {
     background-color: rgba(41, 151, 255, 0.1);
 }
+
+/* Minimalist Trackers Display */
+.take-shield-trackers-box {
+    background-color: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 8px 10px;
+    margin: 2px 0 4px 0;
+}
+
+.take-shield-popover.light-mode .take-shield-trackers-box {
+    background-color: #f6f8fa;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.take-shield-trackers-header {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #9ba3b4;
+    margin-bottom: 4px;
+}
+
+.take-shield-popover.light-mode .take-shield-trackers-header {
+    color: #57606a;
+}
+
+.take-shield-tracker-item {
+    font-size: 12px;
+    color: #ffffff;
+    padding: 2px 0;
+}
+
+.take-shield-popover.light-mode .take-shield-tracker-item {
+    color: #1f2328;
+}
+
+.take-shield-tracker-icon {
+    color: #30d158;
+    margin-right: 6px;
+}
+
+.take-shield-tracker-badge {
+    background-color: rgba(48, 209, 88, 0.15);
+    color: #30d158;
+    border-radius: 6px;
+    padding: 1px 6px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   Take Translate Popover (Bergamot WASM Local Engine)
+   ========================================================================== */
+
+popover.take-translate-popover > contents {
+    min-width: 275px;
+    max-width: 295px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background-color: #1a1d24;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+popover.take-translate-popover.light-mode > contents {
+    background-color: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+    color: #1f2328;
+}
+
+.take-translate-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: @take_text_primary;
+}
+
+popover.take-translate-popover.light-mode .take-translate-title {
+    color: #1f2328;
+}
+
+.take-translate-subtitle {
+    font-size: 11px;
+    color: @take_text_secondary;
+}
+
+popover.take-translate-popover.light-mode .take-translate-subtitle {
+    color: #57606a;
+}
+
+.take-translate-badge {
+    background-color: rgba(48, 209, 88, 0.15);
+    border: 1px solid rgba(48, 209, 88, 0.35);
+    color: #30d158;
+    border-radius: 999px;
+    padding: 3px 8px;
+}
+
+.take-translate-badge-label {
+    font-size: 10.5px;
+    font-weight: 700;
+}
+
+.take-translate-banner {
+    background: linear-gradient(135deg, rgba(10, 132, 255, 0.16) 0%, rgba(94, 92, 230, 0.16) 100%);
+    border: 1px solid rgba(10, 132, 255, 0.28);
+    border-radius: 12px;
+    padding: 10px 12px;
+}
+
+popover.take-translate-popover.light-mode .take-translate-banner {
+    background: linear-gradient(135deg, rgba(0, 122, 255, 0.08) 0%, rgba(94, 92, 230, 0.08) 100%);
+    border-color: rgba(0, 122, 255, 0.2);
+}
+
+.take-translate-banner-icon {
+    color: #2997ff;
+}
+
+.take-translate-banner-desc {
+    font-size: 11.5px;
+    color: @take_text_secondary;
+}
+
+popover.take-translate-popover.light-mode .take-translate-banner-desc {
+    color: #32383f;
+}
+
+.take-translate-field-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: @take_text_secondary;
+}
+
+popover.take-translate-popover.light-mode .take-translate-field-label {
+    color: #57606a;
+}
+
+.take-translate-status-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #30d158;
+}
+
+.take-translate-hint-label {
+    font-size: 11.5px;
+    color: @take_text_dim;
+}
+
+.take-translate-primary-btn {
+    background-color: @take_accent;
+    color: #ffffff;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+.take-translate-primary-btn:hover {
+    background-color: #2997ff;
+}
+
+.take-translate-secondary-btn {
+    background-color: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: @take_text_primary;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+popover.take-translate-popover.light-mode .take-translate-secondary-btn {
+    background-color: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #1f2328;
+}
+
+.take-translate-auto-label {
+    font-size: 12.5px;
+    font-weight: 500;
+}
+
+.take-translate-model-row {
+    background-color: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 6px 10px;
+}
+
+popover.take-translate-popover.light-mode .take-translate-model-row {
+    background-color: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+.take-translate-delete-btn {
+    color: #ff453a;
+    min-width: 26px;
+    min-height: 26px;
+    padding: 2px;
+}
+
+.take-translate-delete-btn:hover {
+    background-color: rgba(255, 69, 58, 0.14);
+}
+
+.take-translate-download-box {
+    background-color: rgba(10, 132, 255, 0.09);
+    border: 1px solid rgba(10, 132, 255, 0.25);
+    border-radius: 10px;
+    padding: 8px 10px;
+}
+
+.take-translate-progress-bar trough {
+    min-height: 6px;
+    border-radius: 999px;
+}
+
+.take-translate-progress-bar progress {
+    min-height: 6px;
+    border-radius: 999px;
+    background-color: @take_accent;
+}
+
+/* ============================================================================
+ * READER MODE
+ * ============================================================================ */
+.take-reader-button.active {
+    background-color: rgba(10, 132, 255, 0.22);
+    color: #0a84ff;
+}
+
+.take-reader-button.active:hover {
+    background-color: rgba(10, 132, 255, 0.32);
+}
+
+/* ============================================================================
+ * SPLIT VIEW (F3 / Ctrl+\) — Firefox-style 50/50 Split & Tab Picker
+ * ============================================================================ */
+.take-view-paned {
+    background-color: #14171d;
+    background-image: none;
+}
+
+window.take-browser-window.light-mode .take-view-paned {
+    background-color: #ffffff;
+}
+
+.take-view-paned > separator {
+    min-width: 2px;
+    min-height: 2px;
+    background-color: #262934;
+    background-image: none;
+    border: none;
+    transition: background-color 150ms ease;
+}
+
+window.take-browser-window.light-mode .take-view-paned > separator {
+    background-color: #e1e4e8;
+}
+
+.take-view-paned > separator:hover {
+    background-color: #30d158;
+}
+
+.take-split-left-pane {
+    background-color: #14171d;
+    border: 2px solid #262934;
+    border-radius: 8px;
+}
+
+window.take-browser-window.light-mode .take-split-left-pane {
+    background-color: #ffffff;
+    border-color: #d0d7de;
+}
+
+.take-split-box {
+    background-color: #1c1b22;
+    border: 2px solid #262934;
+    border-radius: 8px;
+}
+
+window.take-browser-window.light-mode .take-split-box {
+    background-color: #f6f8fa;
+    border-color: #d0d7de;
+}
+
+.take-split-active-pane {
+    border-color: #30d158;
+}
+
+window.take-browser-window.light-mode .take-split-active-pane {
+    border-color: #2da44e;
+}
+
+.take-split-picker {
+    background-color: #1c1b22;
+    background-image: radial-gradient(circle at 50% 45%, #30263a 0%, #1c1b22 75%);
+}
+
+window.take-browser-window.light-mode .take-split-picker {
+    background-color: #f3f4f6;
+    background-image: radial-gradient(circle at 50% 45%, #ffffff 0%, #eaedf2 80%);
+}
+
+.take-split-picker-title {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #d8dbe4;
+    margin-bottom: 2px;
+}
+
+window.take-browser-window.light-mode .take-split-picker-title {
+    color: #24292f;
+}
+
+.take-split-search-entry {
+    min-height: 32px;
+    border-radius: 999px;
+    background-color: #26252f;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    padding: 2px 12px;
+    font-size: 12.5px;
+    color: #ffffff;
+    box-shadow: none;
+}
+
+window.take-browser-window.light-mode .take-split-search-entry {
+    background-color: #ffffff;
+    border-color: rgba(0, 0, 0, 0.16);
+    color: #1f2328;
+}
+
+.take-split-search-entry:focus {
+    border-color: #007aff;
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.25);
+}
+
+.take-split-tabs-card {
+    background-color: #26252f;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+window.take-browser-window.light-mode .take-split-tabs-card {
+    background-color: #ffffff;
+    border-color: rgba(0, 0, 0, 0.10);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.take-split-tab-item {
+    border-radius: 8px;
+    padding: 7px 10px;
+    background: transparent;
+    border: none;
+    color: #e4e7ef;
+}
+
+window.take-browser-window.light-mode .take-split-tab-item {
+    color: #1f2328;
+}
+
+.take-split-tab-item:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+window.take-browser-window.light-mode .take-split-tab-item:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.take-split-tab-label {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #e4e7ef;
+}
+
+window.take-browser-window.light-mode .take-split-tab-label {
+    color: #1f2328;
+}
+
+.take-split-floating-bar {
+    background-color: #1c1f27;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+    padding: 2px 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+window.take-browser-window.light-mode .take-split-floating-bar {
+    background-color: #ffffff;
+    border-color: rgba(0, 0, 0, 0.14);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.take-split-float-btn,
+.take-split-close-btn {
+    min-width: 26px;
+    min-height: 26px;
+    padding: 2px;
+    border-radius: 999px;
+    color: #9ba3b4;
+}
+
+window.take-browser-window.light-mode .take-split-float-btn,
+window.take-browser-window.light-mode .take-split-close-btn {
+    color: #57606a;
+}
+
+.take-split-float-btn:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.10);
+}
+
+window.take-browser-window.light-mode .take-split-float-btn:hover {
+    color: #1f2328;
+    background-color: rgba(0, 0, 0, 0.07);
+}
+
+.take-split-close-btn:hover {
+    color: #ff453a;
+    background-color: rgba(255, 69, 58, 0.14);
+}
+
+/* ============================================================================
+ * PWA APP MODE (--app=<URL>)
+ * ============================================================================ */
+.take-app-mode-window headerbar {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+window.take-browser-window.light-mode.take-app-mode-window headerbar {
+    border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+.take-app-mode-title {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: @take_text_primary;
+}
+
+window.take-browser-window.light-mode .take-app-mode-title {
+    color: #1f2328;
+}
+
+
+
 

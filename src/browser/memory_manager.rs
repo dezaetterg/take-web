@@ -134,6 +134,7 @@ impl MemoryManager {
         log::info!("MemoryManager: low_memory_mode set to {low}");
     }
 
+    #[cfg(test)]
     pub fn is_low_memory_mode(&self) -> bool {
         self.low_memory_mode.get()
     }
@@ -166,57 +167,6 @@ impl MemoryManager {
                 Self::suspend_tab_internal(tab, *id);
             }
         }
-    }
-
-    /// Immediately suspends all background tabs to free memory and rendering pipelines.
-    pub fn suspend_all_background(&self) {
-        let mut tabs = self.tabs.borrow_mut();
-        tabs.retain(|_, tab| tab.view.upgrade().is_some());
-        for (id, tab) in tabs.iter_mut() {
-            if tab.is_background && !tab.is_suspended {
-                Self::suspend_tab_internal(tab, *id);
-            }
-        }
-    }
-
-    /// Resumes rendering and audio for all suspended tabs.
-    pub fn resume_all(&self) {
-        let mut tabs = self.tabs.borrow_mut();
-        for (id, tab) in tabs.iter_mut() {
-            if tab.is_suspended {
-                Self::resume_tab_internal(tab, *id);
-            }
-        }
-    }
-
-    /// Immediately resumes a specific tab by ID.
-    pub fn resume_tab(&self, id: u64) {
-        let mut tabs = self.tabs.borrow_mut();
-        if let Some(tab) = tabs.get_mut(&id) {
-            if tab.is_suspended {
-                Self::resume_tab_internal(tab, id);
-            }
-        }
-    }
-
-    /// Immediately suspends a specific background tab by ID.
-    pub fn suspend_tab(&self, id: u64) {
-        let mut tabs = self.tabs.borrow_mut();
-        if let Some(tab) = tabs.get_mut(&id) {
-            if !tab.is_suspended && tab.is_background {
-                Self::suspend_tab_internal(tab, id);
-            }
-        }
-    }
-
-    /// Returns the list of all currently suspended tab IDs.
-    pub fn suspended_tab_ids(&self) -> Vec<u64> {
-        self.tabs
-            .borrow()
-            .iter()
-            .filter(|(_, t)| t.is_suspended)
-            .map(|(id, _)| *id)
-            .collect()
     }
 
     /// Suspends rendering and mutes audio for the given tab, purging in-RAM cache textures.
@@ -278,34 +228,6 @@ impl MemoryManager {
         if let Some(tab) = tabs.get_mut(&id) {
             tab.was_muted_by_manager = false;
         }
-    }
-
-    /// Returns true if the tab is currently suspended.
-    pub fn is_tab_suspended(&self, id: u64) -> bool {
-        self.tabs
-            .borrow()
-            .get(&id)
-            .map(|t| t.is_suspended)
-            .unwrap_or(false)
-    }
-
-    /// Total number of tracked tabs.
-    pub fn tab_count(&self) -> usize {
-        self.tabs.borrow().len()
-    }
-
-    /// Number of suspended tabs.
-    pub fn suspended_count(&self) -> usize {
-        self.tabs
-            .borrow()
-            .values()
-            .filter(|t| t.is_suspended)
-            .count()
-    }
-
-    /// Currently active tab id.
-    pub fn active_tab_id(&self) -> Option<u64> {
-        *self.active_tab.borrow()
     }
 }
 

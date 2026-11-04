@@ -1,7 +1,7 @@
-//! Session persistence and crash recovery for Echo Browser.
+//! Session persistence and crash recovery for TakeWeb.
 //!
 //! Tracks open tabs, tab order, pinned states, and active tab groups, saving state
-//! atomically to disk (`~/.config/echo-browser/session.json`). If the browser terminates
+//! atomically to disk (`~/.config/takeweb/session.json`). If the browser terminates
 //! abnormally (e.g. system crash, SIGKILL, power loss), the next launch detects
 //! `clean_shutdown == false` and offers one-click session restoration.
 
@@ -42,11 +42,9 @@ impl Default for SessionState {
 pub struct SessionManager;
 
 impl SessionManager {
-    /// Returns default path: `~/.config/echo-browser/session.json`
+    /// Returns default path: `~/.config/takeweb/session.json`
     pub fn default_session_path() -> PathBuf {
-        glib::user_config_dir()
-            .join("echo-browser")
-            .join("session.json")
+        glib::user_config_dir().join("takeweb").join("session.json")
     }
 
     /// Loads session state from the given JSON file.
@@ -87,6 +85,7 @@ impl SessionManager {
     }
 
     /// Deletes the session file if present.
+    #[cfg(test)]
     pub fn clear_session(path: &Path) -> io::Result<()> {
         if path.exists() {
             fs::remove_file(path)?;
@@ -104,8 +103,8 @@ mod tests {
         let state = SessionState {
             tabs: vec![
                 SavedTab {
-                    title: "Echo Browser".into(),
-                    url: "echo://start".into(),
+                    title: "TakeWeb".into(),
+                    url: "take://start".into(),
                     pinned: true,
                 },
                 SavedTab {
@@ -128,7 +127,7 @@ mod tests {
     #[test]
     fn test_atomic_save_and_load() {
         let temp_dir =
-            std::env::temp_dir().join(format!("echo_session_test_{}", std::process::id()));
+            std::env::temp_dir().join(format!("take_session_test_{}", std::process::id()));
         let session_file = temp_dir.join("session.json");
 
         let state = SessionState {
@@ -160,7 +159,7 @@ mod tests {
     #[test]
     fn test_corrupted_file_handling() {
         let temp_dir =
-            std::env::temp_dir().join(format!("echo_session_corrupt_{}", std::process::id()));
+            std::env::temp_dir().join(format!("take_session_corrupt_{}", std::process::id()));
         let session_file = temp_dir.join("corrupt.json");
         fs::create_dir_all(&temp_dir).expect("create temp dir");
         fs::write(&session_file, "{ invalid json content").expect("write invalid");

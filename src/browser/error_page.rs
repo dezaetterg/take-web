@@ -25,33 +25,33 @@ pub fn human_readable_error(error: &glib::Error) -> (&'static str, &'static str)
 
     if msg.contains("resolve") || msg.contains("not found") || domain.contains("resolver") {
         (
-            "Сервер не найден",
-            "Не удалось определить IP-адрес для указанного домена. Проверьте правильность написания адреса или настройки DNS.",
+            crate::i18n::tr("error_page.server_not_found_title"),
+            crate::i18n::tr("error_page.server_not_found_desc"),
         )
     } else if msg.contains("refused") || msg.contains("connect") {
         (
-            "Не удалось подключиться",
-            "Сервер отклонил соединение или временно недоступен. Проверьте адрес или повторите попытку позже.",
+            crate::i18n::tr("error_page.connection_refused_title"),
+            crate::i18n::tr("error_page.connection_refused_desc"),
         )
     } else if msg.contains("timeout") || msg.contains("timed out") {
         (
-            "Время ожидания истекло",
-            "Сервер слишком долго не отвечает на запрос. Проверьте стабильность интернет-соединения.",
+            crate::i18n::tr("error_page.timeout_title"),
+            crate::i18n::tr("error_page.timeout_desc"),
         )
     } else if msg.contains("tls") || msg.contains("ssl") || msg.contains("cert") {
         (
-            "Ошибка защищённого соединения",
-            "Не удалось установить безопасное TLS/SSL подключение. Возможно, сертификат сайта недействителен.",
+            crate::i18n::tr("error_page.tls_error_title"),
+            crate::i18n::tr("error_page.tls_error_desc"),
         )
     } else if msg.contains("offline") || msg.contains("network") {
         (
-            "Отсутствует подключение к сети",
-            "Компьютер не подключён к Интернету. Проверьте кабель Ethernet или статус сети Wi-Fi.",
+            crate::i18n::tr("error_page.network_down_title"),
+            crate::i18n::tr("error_page.network_down_desc"),
         )
     } else {
         (
-            "Не удалось загрузить страницу",
-            "Во время обращения к веб-ресурсу произошла сетевая ошибка.",
+            crate::i18n::tr("error_page.generic_title"),
+            crate::i18n::tr("error_page.generic_desc"),
         )
     }
 }
@@ -63,10 +63,21 @@ pub fn render_error_page(failing_uri: &str, error: &glib::Error) -> String {
     let escaped_err_msg = escape_html(error.message());
     let domain = error.domain().as_str();
     let code = error.code();
+    let lang = crate::i18n::current_language_code();
+    let badge_network_error = crate::i18n::tr("error_page.badge_network_error");
+    let btn_reload = crate::i18n::tr("error_page.btn_reload");
+    let btn_connecting = crate::i18n::tr("error_page.btn_connecting");
+    let btn_back = crate::i18n::tr("error_page.btn_back");
+    let suggestions_title = crate::i18n::tr("error_page.suggestions_title");
+    let suggestion_1 = crate::i18n::tr("error_page.suggestion_1");
+    let suggestion_2 = crate::i18n::tr("error_page.suggestion_2");
+    let suggestion_3 = crate::i18n::tr("error_page.suggestion_3");
+    let details_title = crate::i18n::tr("error_page.details");
+    let error_code_label = crate::i18n::tr("error_page.error_code");
 
     format!(
         r##"<!DOCTYPE html>
-<html lang="ru">
+<html lang="{lang}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -367,7 +378,7 @@ pub fn render_error_page(failing_uri: &str, error: &glib::Error) -> String {
       </svg>
     </div>
 
-    <div class="badge">Сетевая ошибка</div>
+    <div class="badge">{badge_network_error}</div>
     <h1>{title}</h1>
     <p class="description">{description}</p>
 
@@ -380,26 +391,26 @@ pub fn render_error_page(failing_uri: &str, error: &glib::Error) -> String {
           <polyline points="1 20 1 14 7 14"></polyline>
           <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
         </svg>
-        <span>Перезагрузить</span>
+        <span>{btn_reload}</span>
       </button>
 
       <button class="btn btn-secondary" onclick="window.history.back()">
-        <span>Назад</span>
+        <span>{btn_back}</span>
       </button>
     </div>
 
     <div class="suggestions">
-      <h2>Что можно сделать:</h2>
+      <h2>{suggestions_title}</h2>
       <ul>
-        <li>Проверьте сетевой кабель, подключение к Wi-Fi или сотовой сети.</li>
-        <li>Убедитесь, что в адресе веб-сайта нет опечаток.</li>
-        <li>Проверьте настройки прокси-сервера, VPN или брандмауэра.</li>
+        <li>{suggestion_1}</li>
+        <li>{suggestion_2}</li>
+        <li>{suggestion_3}</li>
       </ul>
     </div>
 
     <details>
-      <summary>Технические подробности</summary>
-      <pre>Код ошибки: {code} ({domain})\n{escaped_err_msg}</pre>
+      <summary>{details_title}</summary>
+      <pre>{error_code_label} {code} ({domain})\n{escaped_err_msg}</pre>
     </details>
   </div>
 
@@ -408,7 +419,7 @@ pub fn render_error_page(failing_uri: &str, error: &glib::Error) -> String {
       const btn = document.getElementById('reload-btn');
       if (btn) {{
         btn.disabled = true;
-        btn.querySelector('span').textContent = 'Подключение...';
+        btn.querySelector('span').textContent = '{btn_connecting}';
       }}
       if (url && url.startsWith('http')) {{
         window.location.href = url;
@@ -449,22 +460,60 @@ mod tests {
             "Cannot resolve hostname example.com",
         );
         let (title, _) = human_readable_error(&dns_err);
-        assert_eq!(title, "Сервер не найден");
+        assert!(!title.is_empty());
+        assert!(
+            title
+                == crate::i18n::tr_lang(
+                    "error_page.server_not_found_title",
+                    crate::i18n::UiLanguage::En
+                )
+                || title
+                    == crate::i18n::tr_lang(
+                        "error_page.server_not_found_title",
+                        crate::i18n::UiLanguage::Ru
+                    )
+        );
 
         let refused_err = glib::Error::new(glib::FileError::Noent, "Connection refused");
         let (title, _) = human_readable_error(&refused_err);
-        assert_eq!(title, "Не удалось подключиться");
+        assert!(
+            title
+                == crate::i18n::tr_lang(
+                    "error_page.connection_refused_title",
+                    crate::i18n::UiLanguage::En
+                )
+                || title
+                    == crate::i18n::tr_lang(
+                        "error_page.connection_refused_title",
+                        crate::i18n::UiLanguage::Ru
+                    )
+        );
 
         let timeout_err = glib::Error::new(glib::FileError::Noent, "Operation timed out");
         let (title, _) = human_readable_error(&timeout_err);
-        assert_eq!(title, "Время ожидания истекло");
+        assert!(
+            title == crate::i18n::tr_lang("error_page.timeout_title", crate::i18n::UiLanguage::En)
+                || title
+                    == crate::i18n::tr_lang(
+                        "error_page.timeout_title",
+                        crate::i18n::UiLanguage::Ru
+                    )
+        );
 
         let tls_err = glib::Error::new(
             glib::FileError::Noent,
             "TLS certificate verification failed",
         );
         let (title, _) = human_readable_error(&tls_err);
-        assert_eq!(title, "Ошибка защищённого соединения");
+        assert!(
+            title
+                == crate::i18n::tr_lang("error_page.tls_error_title", crate::i18n::UiLanguage::En)
+                || title
+                    == crate::i18n::tr_lang(
+                        "error_page.tls_error_title",
+                        crate::i18n::UiLanguage::Ru
+                    )
+        );
     }
 
     #[test]
@@ -475,8 +524,24 @@ mod tests {
         assert!(html.contains("<!DOCTYPE html>"));
         assert!(html.contains("https://example.com/test"));
         assert!(html.contains("id=\"reload-btn\""));
-        assert!(html.contains("Перезагрузить"));
         assert!(html.contains("retryLoad"));
-        assert!(html.contains("Сетевая ошибка"));
+        assert!(
+            html.contains(crate::i18n::tr_lang(
+                "error_page.btn_reload",
+                crate::i18n::UiLanguage::En
+            )) || html.contains(crate::i18n::tr_lang(
+                "error_page.btn_reload",
+                crate::i18n::UiLanguage::Ru
+            ))
+        );
+        assert!(
+            html.contains(crate::i18n::tr_lang(
+                "error_page.badge_network_error",
+                crate::i18n::UiLanguage::En
+            )) || html.contains(crate::i18n::tr_lang(
+                "error_page.badge_network_error",
+                crate::i18n::UiLanguage::Ru
+            ))
+        );
     }
 }

@@ -1,0 +1,12 @@
+[Icon Theme]
+Name=TakeWeb
+Comment=TakeWeb Built-in Icon Theme
+Inherits=Adwaita,hicolor
+Directories=scalable/actions
+
+[scalable/actions]
+Size=16
+Context=Actions
+Type=Scalable
+MinSize=8
+MaxSize=512

@@ -13,38 +13,10 @@ pub enum BrowserProfile {
 }
 
 impl BrowserProfile {
-    pub fn name(&self) -> &'static str {
-        match self {
-            Self::Work => "Рабочий (Производительность)",
-            Self::Hardened => "Защищенный (Приватность)",
-        }
-    }
-
-    pub fn id(&self) -> &'static str {
-        match self {
-            Self::Work => "work",
-            Self::Hardened => "hardened",
-        }
-    }
-
     pub fn enables_content_blocker(&self) -> bool {
         match self {
             Self::Work => false,
             Self::Hardened => true,
-        }
-    }
-
-    pub fn enables_do_not_track(&self) -> bool {
-        match self {
-            Self::Work => true,
-            Self::Hardened => true,
-        }
-    }
-
-    pub fn third_party_cookies_allowed(&self) -> bool {
-        match self {
-            Self::Work => true,
-            Self::Hardened => false,
         }
     }
 

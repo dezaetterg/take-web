@@ -31,7 +31,7 @@ impl OmniboxPopup {
         popover.set_autohide(false);
         popover.set_position(gtk4::PositionType::Bottom);
         popover.set_offset(0, 0);
-        popover.add_css_class("echo-omnibox-popover");
+        popover.add_css_class("take-omnibox-popover");
 
         let list_box = GtkBox::new(Orientation::Vertical, 1);
         list_box.set_hexpand(true);
@@ -50,7 +50,7 @@ impl OmniboxPopup {
         let weak_parent = parent_widget.downgrade();
         popover.connect_closed(move |_| {
             if let Some(p) = weak_parent.upgrade() {
-                p.remove_css_class("echo-capsule-attached");
+                p.remove_css_class("take-capsule-attached");
             }
         });
 
@@ -76,7 +76,7 @@ impl OmniboxPopup {
 
     pub fn close(&self) {
         self.highlight_index(None);
-        self.parent.remove_css_class("echo-capsule-attached");
+        self.parent.remove_css_class("take-capsule-attached");
         self.popover.set_offset(0, 0);
         self.popover.popdown();
     }
@@ -203,7 +203,7 @@ impl OmniboxPopup {
 
         for (idx, item) in results.into_iter().enumerate() {
             let row = GtkBox::new(Orientation::Horizontal, 8);
-            row.add_css_class("echo-omnibox-row");
+            row.add_css_class("take-omnibox-row");
             row.set_hexpand(true);
 
             // Icon (compact 16px)
@@ -214,8 +214,8 @@ impl OmniboxPopup {
             let icon = Image::from_icon_name(icon_name);
             icon.set_pixel_size(16);
             icon.add_css_class(match item.item_type {
-                OmniboxItemType::Bookmark => "echo-omnibox-icon-bookmark",
-                OmniboxItemType::History => "echo-omnibox-icon-history",
+                OmniboxItemType::Bookmark => "take-omnibox-icon-bookmark",
+                OmniboxItemType::History => "take-omnibox-icon-history",
             });
             row.append(&icon);
 
@@ -225,7 +225,7 @@ impl OmniboxPopup {
 
             let title_label = Label::builder()
                 .label(&item.title)
-                .css_classes(["echo-omnibox-title"])
+                .css_classes(["take-omnibox-title"])
                 .ellipsize(gtk4::pango::EllipsizeMode::End)
                 .halign(gtk4::Align::Start)
                 .build();
@@ -237,7 +237,7 @@ impl OmniboxPopup {
 
             let url_label = Label::builder()
                 .label(&clean_url)
-                .css_classes(["echo-omnibox-url"])
+                .css_classes(["take-omnibox-url"])
                 .ellipsize(gtk4::pango::EllipsizeMode::Middle)
                 .halign(gtk4::Align::Start)
                 .build();
@@ -248,11 +248,11 @@ impl OmniboxPopup {
             // Compact badge
             let badge = Label::builder()
                 .label(match item.item_type {
-                    OmniboxItemType::Bookmark => "Закладка",
-                    OmniboxItemType::History => "История",
+                    OmniboxItemType::Bookmark => crate::i18n::tr("omnibox.badge_bookmark"),
+                    OmniboxItemType::History => crate::i18n::tr("omnibox.badge_history"),
                 })
                 .css_classes([
-                    "echo-omnibox-badge",
+                    "take-omnibox-badge",
                     match item.item_type {
                         OmniboxItemType::Bookmark => "bookmark",
                         OmniboxItemType::History => "history",
@@ -291,7 +291,7 @@ impl OmniboxPopup {
             self.row_widgets.borrow_mut().push(row);
         }
 
-        self.parent.add_css_class("echo-capsule-attached");
+        self.parent.add_css_class("take-capsule-attached");
         self.popover.popup();
     }
 }

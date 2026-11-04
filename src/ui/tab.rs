@@ -1,4 +1,5 @@
 use std::cell::{Cell, RefCell};
+use std::rc::Rc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use glib::clone;
@@ -13,7 +14,6 @@ use crate::browser::BrowserEngine;
 static TAB_COUNTER: AtomicU64 = AtomicU64::new(1);
 
 const START_URL: &str = "take://start";
-const TEST_SUITE_URL: &str = "take://test-suite";
 const SETTINGS_URL: &str = "take://settings";
 const TRACKERS_URL: &str = "take://trackers";
 const PRIVACY_URL: &str = "take://privacy";
@@ -26,6 +26,9 @@ pub struct BrowserTab {
     requested_url: RefCell<String>,
     pub is_crashed: Cell<Option<WebProcessTerminationReason>>,
     pub is_private: bool,
+    pub detected_lang: RefCell<Option<String>>,
+    pub auto_translated_for_uri: RefCell<Option<String>>,
+    pub blocked_trackers: Rc<RefCell<Vec<String>>>,
 }
 
 impl BrowserTab {
@@ -77,6 +80,9 @@ impl BrowserTab {
             requested_url: RefCell::new(String::new()),
             is_crashed: Cell::new(None),
             is_private,
+            detected_lang: RefCell::new(None),
+            auto_translated_for_uri: RefCell::new(None),
+            blocked_trackers: Rc::new(RefCell::new(Vec::new())),
         }
     }
 
@@ -88,9 +94,9 @@ impl BrowserTab {
     ) -> Self {
         let id = TAB_COUNTER.fetch_add(1, Ordering::SeqCst);
 
-        web_view.add_css_class("echo-web-view");
+        web_view.add_css_class("take-web-view");
         if is_private {
-            web_view.add_css_class("echo-private-web-view");
+            web_view.add_css_class("take-private-web-view");
         }
         web_view.set_background_color(&gtk4::gdk::RGBA::new(1.0, 1.0, 1.0, 1.0));
         web_view.set_hexpand(true);
@@ -98,10 +104,10 @@ impl BrowserTab {
 
         let page = tab_view.add_page(&web_view, parent);
         if is_private {
-            page.set_title("Приватная вкладка");
+            page.set_title(crate::i18n::tr("tab.private_tab_title"));
             page.set_icon(Some(&ThemedIcon::new("view-conceal-symbolic")));
         } else {
-            page.set_title("Новая вкладка");
+            page.set_title(crate::i18n::tr("tab.new_tab_title"));
             page.set_icon(Some(&ThemedIcon::new("web-browser-symbolic")));
         }
         page.set_live_thumbnail(false);
@@ -127,7 +133,11 @@ impl BrowserTab {
                     page.invalidate_thumbnail();
                     let is_dark = libadwaita::StyleManager::default().is_dark();
                     let theme_str = if is_dark { "dark" } else { "light" };
-                    let js = format!("if (document.documentElement) document.documentElement.setAttribute('data-theme', '{theme_str}');");
+                    let js = if is_private {
+                        format!("if (document.documentElement) {{ document.documentElement.setAttribute('data-theme', '{theme_str}'); document.documentElement.setAttribute('data-private', 'true'); if (document.body) document.body.classList.add('private-session'); }}")
+                    } else {
+                        format!("if (document.documentElement) document.documentElement.setAttribute('data-theme', '{theme_str}');")
+                    };
                     view.evaluate_javascript(&js, None, None, None::<&gtk4::gio::Cancellable>, |_| {});
                 }
             }
@@ -186,6 +196,9 @@ impl BrowserTab {
             requested_url: RefCell::new(String::new()),
             is_crashed: Cell::new(None),
             is_private,
+            detected_lang: RefCell::new(None),
+            auto_translated_for_uri: RefCell::new(None),
+            blocked_trackers: Rc::new(RefCell::new(Vec::new())),
         }
     }
 
@@ -224,15 +237,15 @@ impl BrowserTab {
 
     fn sync_title(page: &adw::TabPage, view: &WebView) {
         if Self::is_start_page(view) {
-            page.set_title("Начальная страница");
+            page.set_title(crate::i18n::tr("tab.startpage_title"));
             return;
         }
         if Self::is_settings_page(view) {
-            page.set_title("Настройки");
+            page.set_title(crate::i18n::tr("tab.settings_title"));
             return;
         }
         if Self::is_trackers_page(view) {
-            page.set_title("Отчет о защите");
+            page.set_title(crate::i18n::tr("tab.trackers_title"));
             return;
         }
         if let Some(title) = view.title() {
@@ -264,7 +277,7 @@ impl BrowserTab {
     }
 
     fn sync_audio_indicator(page: &adw::TabPage, view: &WebView) {
-        // Internal echo:// pages never produce sound
+        // Internal take:// pages never produce sound
         if Self::is_start_page(view) || Self::is_settings_page(view) || Self::is_trackers_page(view)
         {
             page.set_indicator_icon(None::<&ThemedIcon>);
@@ -301,7 +314,7 @@ impl BrowserTab {
         self.web_view.set_is_muted(!self.web_view.is_muted());
     }
 
-    /// The address as the user knows it: bundled pages appear as echo:// URLs.
+    /// The address as the user knows it: bundled pages appear as take:// URLs.
     pub fn logical_url(&self) -> String {
         match self.web_view.uri() {
             Some(uri) => BrowserEngine::logical_url(&uri),
@@ -309,32 +322,28 @@ impl BrowserTab {
         }
     }
 
-    pub fn is_pinned(&self) -> bool {
-        self.page.is_pinned()
-    }
-
     pub fn load_url(&self, target_url: &str) {
         *self.requested_url.borrow_mut() = target_url.to_string();
 
-        // Internal pages are served by the in-memory `echo://` scheme handler.
+        // Internal pages are served by the in-memory `take://` scheme handler.
         let internal = crate::browser::scheme_handler::canonical_load_url(target_url);
         if internal.is_some() {
             let logical = BrowserEngine::logical_url(target_url);
             match logical.as_str() {
                 START_URL => {
-                    self.page.set_title("Начальная страница");
+                    self.page.set_title(crate::i18n::tr("tab.startpage_title"));
                     self.page
                         .set_icon(Some(&ThemedIcon::new("go-home-symbolic")));
                     self.page.set_loading(false);
                 }
                 SETTINGS_URL => {
-                    self.page.set_title("Настройки");
+                    self.page.set_title(crate::i18n::tr("tab.settings_title"));
                     self.page
                         .set_icon(Some(&ThemedIcon::new("preferences-system-symbolic")));
                     self.page.set_loading(false);
                 }
                 TRACKERS_URL | PRIVACY_URL => {
-                    self.page.set_title("Отчет о защите");
+                    self.page.set_title(crate::i18n::tr("tab.trackers_title"));
                     self.page
                         .set_icon(Some(&ThemedIcon::new("security-high-symbolic")));
                     self.page.set_loading(false);
@@ -344,7 +353,12 @@ impl BrowserTab {
         }
 
         match internal {
-            Some(url) => self.web_view.load_uri(&url),
+            Some(mut url) => {
+                if self.is_private && (url == "take://start/" || url == "take://start") {
+                    url = "take://start/?private=1".to_string();
+                }
+                self.web_view.load_uri(&url);
+            }
             None => {
                 let effective_url =
                     crate::browser::NetworkManager::enforce_https_upgrade(target_url)

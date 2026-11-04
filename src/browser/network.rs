@@ -8,17 +8,10 @@ use webkit6::{
 
 /// Target maximum disk cache size: 500 MB (in bytes).
 pub const MAX_DISK_CACHE_BYTES: u64 = 500 * 1024 * 1024;
-/// WebKit process memory pressure threshold: 2048 MB.
-/// Generous desktop memory budget so image-heavy, graphics-intensive sites
-/// (e.g. kapof.ru) don't have decoded bitmap caches, layer tiles, and JIT code
-/// purged every few seconds.
-pub const MAX_MEMORY_LIMIT_MB: u32 = 2048;
 
 /// Standard Accept header for Safari on macOS (eliminates libsoup/WebKitGTK fingerprinting)
 pub const HARDENED_ACCEPT_HEADER: &str =
     "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
-/// Standard Accept-Language header
-pub const HARDENED_ACCEPT_LANGUAGE_HEADER: &str = "en-US,en;q=0.9";
 /// Standard Accept-Encoding header
 pub const HARDENED_ACCEPT_ENCODING_HEADER: &str = "gzip, deflate, br";
 /// Standard User-Agent header for Hardened profile
@@ -28,8 +21,6 @@ pub const HARDENED_USER_AGENT: &str =
 #[derive(Clone)]
 pub struct NetworkManager {
     session: NetworkSession,
-    cache_dir: PathBuf,
-    data_dir: PathBuf,
     https_only: Cell<bool>,
 }
 
@@ -38,11 +29,11 @@ impl NetworkManager {
     /// ITP enabled, strict TLS policy, and memory limits.
     pub fn new() -> Self {
         let mut cache_dir = glib::user_cache_dir();
-        cache_dir.push("echo-browser");
+        cache_dir.push("takeweb");
         cache_dir.push("http-cache");
 
         let mut data_dir = glib::user_data_dir();
-        data_dir.push("echo-browser");
+        data_dir.push("takeweb");
         data_dir.push("network-data");
 
         if let Err(err) = std::fs::create_dir_all(&cache_dir) {
@@ -61,7 +52,7 @@ impl NetworkManager {
         let cache_str = cache_dir.to_str();
         let data_str = data_dir.to_str();
 
-        // 1. Persistent NetworkSession using ~/.cache/echo-browser/http-cache/
+        // 1. Persistent NetworkSession using ~/.cache/takeweb/http-cache/
         let session = NetworkSession::new(data_str, cache_str);
 
         // 2. Intelligent Tracking Prevention (ITP)
@@ -107,8 +98,6 @@ impl NetworkManager {
 
         Self {
             session,
-            cache_dir,
-            data_dir,
             https_only: Cell::new(true),
         }
     }
@@ -123,8 +112,6 @@ impl NetworkManager {
         session.set_tls_errors_policy(TLSErrorsPolicy::Fail);
         Self {
             session,
-            cache_dir: PathBuf::new(),
-            data_dir: PathBuf::new(),
             https_only: Cell::new(true),
         }
     }
@@ -132,26 +119,6 @@ impl NetworkManager {
     /// Accessor for the underlying WebKit NetworkSession.
     pub fn session(&self) -> &NetworkSession {
         &self.session
-    }
-
-    /// Returns true if the network session is ephemeral (private browsing).
-    pub fn is_ephemeral(&self) -> bool {
-        self.session.is_ephemeral()
-    }
-
-    /// Returns the active disk cache directory.
-    pub fn cache_dir(&self) -> &Path {
-        &self.cache_dir
-    }
-
-    /// Returns the active persistent data directory.
-    pub fn data_dir(&self) -> &Path {
-        &self.data_dir
-    }
-
-    /// Whether HTTPS-Only mode is enforced.
-    pub fn is_https_only(&self) -> bool {
-        self.https_only.get()
     }
 
     /// Toggles Intelligent Tracking Prevention (ITP).
@@ -192,11 +159,6 @@ impl NetworkManager {
             }
         }
         None
-    }
-
-    /// Computes the current size of the HTTP disk cache on filesystem.
-    pub fn disk_cache_size(&self) -> u64 {
-        Self::get_dir_size(&self.cache_dir)
     }
 
     /// Calculates recursive directory size in bytes.
@@ -294,7 +256,8 @@ impl NetworkManager {
             if should_replace_accept {
                 headers.replace("Accept", HARDENED_ACCEPT_HEADER);
             }
-            headers.replace("Accept-Language", HARDENED_ACCEPT_LANGUAGE_HEADER);
+            let accept_lang = crate::i18n::current_language().accept_language_header();
+            headers.replace("Accept-Language", accept_lang);
             headers.replace("Accept-Encoding", HARDENED_ACCEPT_ENCODING_HEADER);
             headers.replace("User-Agent", HARDENED_USER_AGENT);
 
@@ -346,12 +309,12 @@ mod tests {
             NetworkManager::enforce_https_upgrade("https://example.com"),
             None
         );
-        assert_eq!(NetworkManager::enforce_https_upgrade("echo://start"), None);
+        assert_eq!(NetworkManager::enforce_https_upgrade("take://start"), None);
     }
 
     #[test]
     fn test_cache_dir_pruning() {
-        let temp_dir = std::env::temp_dir().join("echo_cache_test");
+        let temp_dir = std::env::temp_dir().join("take_cache_test");
         let _ = std::fs::remove_dir_all(&temp_dir);
         let _ = std::fs::create_dir_all(&temp_dir);
 
@@ -388,7 +351,7 @@ mod tests {
             );
             assert_eq!(
                 headers.one("Accept-Language").as_deref(),
-                Some(HARDENED_ACCEPT_LANGUAGE_HEADER)
+                Some(crate::i18n::current_language().accept_language_header())
             );
             assert_eq!(
                 headers.one("Accept-Encoding").as_deref(),

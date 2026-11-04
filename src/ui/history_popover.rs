@@ -31,7 +31,7 @@ impl HistoryPopover {
     ) -> Rc<Self> {
         let popover = Popover::new();
         popover.set_autohide(true);
-        popover.add_css_class("echo-history-popover");
+        popover.add_css_class("take-history-popover");
 
         let key_ctrl = gtk4::EventControllerKey::new();
         key_ctrl.set_propagation_phase(gtk4::PropagationPhase::Capture);
@@ -59,23 +59,23 @@ impl HistoryPopover {
         root.set_margin_start(10);
         root.set_margin_end(10);
 
-        // Header: Title and "Очистить" button
+        // Header: Title and Clear button
         let header = GtkBox::new(Orientation::Horizontal, 8);
         header.set_hexpand(true);
 
         let title = Label::builder()
-            .label("История")
-            .css_classes(["echo-history-popover-title"])
+            .label(crate::i18n::tr("history.title"))
+            .css_classes(["take-history-popover-title"])
             .halign(gtk4::Align::Start)
             .hexpand(true)
             .build();
         header.append(&title);
 
         let clear_btn = Button::builder()
-            .label("Очистить")
+            .label(crate::i18n::tr("history.clear"))
             .icon_name("user-trash-symbolic")
-            .tooltip_text("Очистить историю посещений")
-            .css_classes(["echo-clear-history-button"])
+            .tooltip_text(crate::i18n::tr("history.clear_tooltip"))
+            .css_classes(["take-clear-history-button"])
             .build();
         header.append(&clear_btn);
 
@@ -83,8 +83,8 @@ impl HistoryPopover {
 
         // Search field
         let search_entry = Entry::builder()
-            .placeholder_text("Поиск в истории...")
-            .css_classes(["echo-history-search-entry"])
+            .placeholder_text(crate::i18n::tr("history.search_placeholder"))
+            .css_classes(["take-history-search-entry"])
             .hexpand(true)
             .build();
         root.append(&search_entry);
@@ -175,11 +175,11 @@ impl HistoryPopover {
 
             let empty_label = Label::builder()
                 .label(if query.is_empty() {
-                    "История посещений пуста"
+                    crate::i18n::tr("history.empty")
                 } else {
-                    "Ничего не найдено"
+                    crate::i18n::tr("history.no_results")
                 })
-                .css_classes(["echo-history-empty-label"])
+                .css_classes(["take-history-empty-label"])
                 .build();
             empty_box.append(&empty_label);
             self.list_box.append(&empty_box);
@@ -194,10 +194,10 @@ impl HistoryPopover {
 
     fn create_history_row(&self, entry: HistoryEntry) -> GtkBox {
         let row = GtkBox::new(Orientation::Horizontal, 10);
-        row.add_css_class("echo-history-row");
+        row.add_css_class("take-history-row");
 
         let icon = Image::from_icon_name("web-browser-symbolic");
-        icon.add_css_class("echo-history-icon");
+        icon.add_css_class("take-history-icon");
         row.append(&icon);
 
         let text_col = GtkBox::new(Orientation::Vertical, 2);
@@ -205,7 +205,7 @@ impl HistoryPopover {
 
         let title_label = Label::builder()
             .label(&entry.title)
-            .css_classes(["echo-history-item-title"])
+            .css_classes(["take-history-item-title"])
             .halign(gtk4::Align::Start)
             .ellipsize(gtk4::pango::EllipsizeMode::End)
             .max_width_chars(32)
@@ -214,7 +214,7 @@ impl HistoryPopover {
 
         let url_label = Label::builder()
             .label(&entry.url)
-            .css_classes(["echo-history-item-url"])
+            .css_classes(["take-history-item-url"])
             .halign(gtk4::Align::Start)
             .ellipsize(gtk4::pango::EllipsizeMode::End)
             .max_width_chars(36)
@@ -226,7 +226,7 @@ impl HistoryPopover {
         let time_str = Self::format_time(entry.visit_time);
         let time_label = Label::builder()
             .label(&time_str)
-            .css_classes(["echo-history-item-time"])
+            .css_classes(["take-history-item-time"])
             .halign(gtk4::Align::End)
             .valign(gtk4::Align::Center)
             .build();
@@ -261,13 +261,13 @@ impl HistoryPopover {
             .unwrap_or(0);
         let diff = now.saturating_sub(ts);
         if diff < 60 {
-            "Только что".to_string()
+            crate::i18n::tr("history.just_now").to_string()
         } else if diff < 3600 {
-            format!("{} мин", diff / 60)
+            format!("{} {}", diff / 60, crate::i18n::tr("history.minutes_short"))
         } else if diff < 86400 {
-            format!("{} ч", diff / 3600)
+            format!("{} {}", diff / 3600, crate::i18n::tr("history.hours_short"))
         } else {
-            format!("{} дн", diff / 86400)
+            format!("{} {}", diff / 86400, crate::i18n::tr("history.days_short"))
         }
     }
 }

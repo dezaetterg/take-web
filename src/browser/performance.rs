@@ -34,6 +34,7 @@ pub(crate) fn low_memory(ratio: f64) -> bool {
     ratio < 0.15
 }
 
+#[cfg(test)]
 pub(crate) fn should_suspend_background(ratio: f64) -> bool {
     low_memory(ratio)
 }
@@ -113,6 +114,7 @@ pub(crate) fn vendor_from_id(id: &str) -> Option<GpuVendor> {
     }
 }
 
+#[cfg(test)]
 pub(crate) fn vaapi_vendor_from_ids<I, S>(vendor_ids: I) -> Option<GpuVendor>
 where
     I: IntoIterator<Item = S>,
@@ -179,7 +181,7 @@ fn detect_has_render_node() -> bool {
 }
 
 fn detect_gpu_vendor() -> Option<GpuVendor> {
-    if let Ok(v) = env::var("ECHO_GPU_VENDOR") {
+    if let Ok(v) = env::var("TAKEWEB_GPU_VENDOR") {
         return vendor_from_id(&v);
     }
 
@@ -221,7 +223,7 @@ fn detect_gpu_vendor() -> Option<GpuVendor> {
 /// capable of hardware VA-API video decoding, independent of whether NVIDIA
 /// is present (e.g. hybrid laptops with Intel/AMD iGPU + NVIDIA dGPU).
 fn detect_vaapi_vendor() -> Option<GpuVendor> {
-    if let Ok(v) = env::var("ECHO_VAAPI_VENDOR") {
+    if let Ok(v) = env::var("TAKEWEB_VAAPI_VENDOR") {
         return vendor_from_id(&v);
     }
 
@@ -313,7 +315,7 @@ pub fn apply_tuning() -> bool {
 }
 
 pub fn is_nvidia() -> bool {
-    if let Ok(v) = env::var("ECHO_NVIDIA") {
+    if let Ok(v) = env::var("TAKEWEB_NVIDIA") {
         return v == "1" || v.eq_ignore_ascii_case("true");
     }
 
@@ -368,16 +370,9 @@ pub fn is_nvidia() -> bool {
     true
 }
 
-pub fn is_wayland_session() -> bool {
-    env::var("XDG_SESSION_TYPE")
-        .map(|v| v == "wayland")
-        .unwrap_or(false)
-        || env::var_os("WAYLAND_DISPLAY").is_some()
-}
-
 /// Computes the desired graphics configuration for the current hardware and session.
 pub fn calculate_desired_graphics_config() -> Vec<(String, String)> {
-    if env::var("ECHO_GFX_TUNING")
+    if env::var("TAKEWEB_GFX_TUNING")
         .map(|v| v == "0")
         .unwrap_or(false)
     {
@@ -405,7 +400,7 @@ pub fn calculate_desired_graphics_config_internal(
     // User override takes highest priority.
     // If running on NVIDIA with an X server available (X11 or Xwayland), route through x11
     // to bypass Mutter/WebKitGTK fence stalls (GNOME #3144 / WebKit #261877).
-    if let Ok(backend) = env::var("ECHO_GDK_BACKEND") {
+    if let Ok(backend) = env::var("TAKEWEB_GDK_BACKEND") {
         config.push(("GDK_BACKEND".into(), backend));
     } else if is_nvidia && has_x {
         config.push(("GDK_BACKEND".into(), "x11".into()));
@@ -414,14 +409,14 @@ pub fn calculate_desired_graphics_config_internal(
     // 2. GSK Renderer:
     // In modern GTK4, 'gl' is the stable default; 'ngl' is deprecated and 'vulkan'
     // encounters stalls with WebKitGTK DMA-BUF on NVIDIA drivers.
-    if let Ok(renderer) = env::var("ECHO_GSK_RENDERER") {
+    if let Ok(renderer) = env::var("TAKEWEB_GSK_RENDERER") {
         config.push(("GSK_RENDERER".into(), renderer));
     } else {
         config.push(("GSK_RENDERER".into(), "gl".into()));
     }
 
     // 3. WebKit DMA-BUF:
-    // Only disable if explicitly requested via ECHO_WEBKIT_DMABUF=off or if software rendering is forced.
+    // Only disable if explicitly requested via TAKEWEB_WEBKIT_DMABUF=off or if software rendering is forced.
     // On NVIDIA with X11, WebKitGTK falls back to software rendering (Policy: never) unless
     // WEBKIT_FORCE_DMABUF_RENDERER=1 is set, which unlocks hardware DMABUF on /dev/dri/renderD128.
     let force_software = env::var("LIBGL_ALWAYS_SOFTWARE")
@@ -431,7 +426,7 @@ pub fn calculate_desired_graphics_config_internal(
             .map(|v| v == "llvmpipe")
             .unwrap_or(false);
 
-    if env::var("ECHO_WEBKIT_DMABUF")
+    if env::var("TAKEWEB_WEBKIT_DMABUF")
         .map(|v| v == "off")
         .unwrap_or(false)
         || force_software
@@ -511,11 +506,11 @@ pub fn calculate_graphics_config() -> Vec<(String, String)> {
 
 /// Must be called from `main()` before any GTK/WebKit call.
 pub fn configure_graphics_environment() {
-    if env::var("ECHO_GFX_TUNING")
+    if env::var("TAKEWEB_GFX_TUNING")
         .map(|v| v == "0")
         .unwrap_or(false)
     {
-        log::info!("perf: graphics tuning disabled via ECHO_GFX_TUNING=0");
+        log::info!("perf: graphics tuning disabled via TAKEWEB_GFX_TUNING=0");
         return;
     }
 
@@ -723,11 +718,11 @@ mod tests {
 
     #[test]
     fn test_is_nvidia_override() {
-        env::set_var("ECHO_NVIDIA", "0");
+        env::set_var("TAKEWEB_NVIDIA", "0");
         assert!(!is_nvidia());
-        env::set_var("ECHO_NVIDIA", "1");
+        env::set_var("TAKEWEB_NVIDIA", "1");
         assert!(is_nvidia());
-        env::remove_var("ECHO_NVIDIA");
+        env::remove_var("TAKEWEB_NVIDIA");
     }
 
     #[test]

@@ -43,7 +43,15 @@ pub fn create_user_script_with_secret(secret: &str) -> UserScript {
 
 /// Substitutes the session salt into the stealth JavaScript payload.
 pub fn build_script_with_secret(secret: &str) -> String {
-    ANTI_FINGERPRINT_SCRIPT.replace("/*__ECHO_SESSION_SECRET__*/", secret)
+    let lang = crate::i18n::current_language();
+    let (nav_lang, nav_langs) = match lang {
+        crate::i18n::UiLanguage::Ru => ("ru-RU", "['ru-RU', 'ru', 'en-US', 'en']"),
+        crate::i18n::UiLanguage::En => ("en-US", "['en-US', 'en']"),
+    };
+    ANTI_FINGERPRINT_SCRIPT
+        .replace("/*__TAKE_SESSION_SECRET__*/", secret)
+        .replace("/*__TAKE_NAV_LANG__*/", nav_lang)
+        .replace("/*__TAKE_NAV_LANGS__*/", nav_langs)
 }
 
 #[cfg(test)]
@@ -55,14 +63,14 @@ mod tests {
         assert!(!ANTI_FINGERPRINT_SCRIPT.trim().is_empty());
         assert!(ANTI_FINGERPRINT_SCRIPT.contains("farbledCanvases"));
         assert!(ANTI_FINGERPRINT_SCRIPT.contains("SESSION_SALT"));
-        assert!(!ANTI_FINGERPRINT_SCRIPT.contains("__echo_anti_fingerprint_installed__"));
-        assert!(!ANTI_FINGERPRINT_SCRIPT.contains("__echo_farbled__"));
+        assert!(!ANTI_FINGERPRINT_SCRIPT.contains("__take_anti_fingerprint_installed__"));
+        assert!(!ANTI_FINGERPRINT_SCRIPT.contains("__take_farbled__"));
 
         let secret = generate_session_secret();
         assert_eq!(secret.len(), 64);
         let built = build_script_with_secret(&secret);
         assert!(built.contains(&secret));
-        assert!(!built.contains("/*__ECHO_SESSION_SECRET__*/"));
+        assert!(!built.contains("/*__TAKE_SESSION_SECRET__*/"));
     }
 
     #[test]

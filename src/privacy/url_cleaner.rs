@@ -196,7 +196,7 @@ mod tests {
 
     #[test]
     fn test_leaves_internal_schemes_untouched() {
-        let raw = "echo://start";
+        let raw = "take://start";
         assert_eq!(UrlCleaner::clean_url(raw), None);
         assert_eq!(UrlCleaner::strip_tracking(raw), raw);
     }

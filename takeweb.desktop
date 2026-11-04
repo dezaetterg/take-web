@@ -11,7 +11,7 @@ Icon=takeweb
 Terminal=false
 StartupNotify=true
 Categories=Network;WebBrowser;
-MimeType=x-scheme-handler/http;x-scheme-handler/https;text/html;text/xml;application/xhtml+xml;application/xml;application/rss+xml;image/png;image/jpeg;image/webp;image/svg+xml;x-scheme-handler/take;x-scheme-handler/echo;
+MimeType=x-scheme-handler/http;x-scheme-handler/https;text/html;text/xml;application/xhtml+xml;application/xml;application/rss+xml;image/png;image/jpeg;image/webp;image/svg+xml;x-scheme-handler/take;
 StartupWMClass=takeweb
 Actions=NewWindow;NewPrivateWindow;
 

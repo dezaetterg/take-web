@@ -99,15 +99,18 @@ impl PrivateSessionGuard {
         current
     }
 
-    pub fn setup_system_lock_listener<F>(on_lock: F)
+    pub fn setup_system_lock_listener<F, W>(on_lock: F, on_wake: W)
     where
         F: Fn() + 'static,
+        W: Fn() + 'static,
     {
         let lock_cb = Rc::new(on_lock);
+        let wake_cb = Rc::new(on_wake);
 
         // 1. Subscribe to system sleep via logind on SYSTEM bus
         if let Ok(sys_bus) = gio::bus_get_sync(gio::BusType::System, gio::Cancellable::NONE) {
-            let cb = Rc::clone(&lock_cb);
+            let cb_lock = Rc::clone(&lock_cb);
+            let cb_wake = Rc::clone(&wake_cb);
             let _ = sys_bus.subscribe_to_signal(
                 Some("org.freedesktop.login1"),
                 Some("org.freedesktop.login1.Manager"),
@@ -119,7 +122,13 @@ impl PrivateSessionGuard {
                     if let Some(is_sleeping) = signal.parameters.child_value(0).get::<bool>() {
                         if is_sleeping {
                             log::info!("System sleep detected - locking private session");
-                            let cb = Rc::clone(&cb);
+                            let cb = Rc::clone(&cb_lock);
+                            glib::idle_add_local_once(move || {
+                                cb();
+                            });
+                        } else {
+                            log::info!("System wake detected - restoring theme and rendering");
+                            let cb = Rc::clone(&cb_wake);
                             glib::idle_add_local_once(move || {
                                 cb();
                             });
@@ -131,7 +140,8 @@ impl PrivateSessionGuard {
 
         // 2. Subscribe to screen lock on SESSION bus
         if let Ok(ses_bus) = gio::bus_get_sync(gio::BusType::Session, gio::Cancellable::NONE) {
-            let cb = Rc::clone(&lock_cb);
+            let cb_lock = Rc::clone(&lock_cb);
+            let cb_wake = Rc::clone(&wake_cb);
             let _ = ses_bus.subscribe_to_signal(
                 None,
                 None,
@@ -143,7 +153,13 @@ impl PrivateSessionGuard {
                     if let Some(is_active) = signal.parameters.child_value(0).get::<bool>() {
                         if is_active {
                             log::info!("Screen lock detected - locking private session");
-                            let cb = Rc::clone(&cb);
+                            let cb = Rc::clone(&cb_lock);
+                            glib::idle_add_local_once(move || {
+                                cb();
+                            });
+                        } else {
+                            log::info!("Screen unlock detected - refreshing theme and rendering");
+                            let cb = Rc::clone(&cb_wake);
                             glib::idle_add_local_once(move || {
                                 cb();
                             });

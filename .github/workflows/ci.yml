@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    # WebKitGTK 2.52+ is required, so build in Arch instead of an Ubuntu LTS image.
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - name: Install toolchain and libraries
+        run: |
+          pacman -Syu --noconfirm base-devel git rust gtk4 libadwaita webkitgtk-6.0 libsoup3 sqlite
+          rustup --version >/dev/null 2>&1 || true
+      - uses: actions/checkout@v4
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test

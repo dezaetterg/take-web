@@ -25,7 +25,7 @@ pub struct FindBar {
 impl FindBar {
     pub fn new() -> Rc<Self> {
         let container = GtkBox::new(Orientation::Horizontal, 4);
-        container.add_css_class("echo-find-bar");
+        container.add_css_class("take-find-bar");
         container.set_halign(gtk4::Align::End);
         container.set_valign(gtk4::Align::Start);
         container.set_margin_top(12);
@@ -33,39 +33,39 @@ impl FindBar {
         container.set_visible(false);
 
         let search_icon = Image::from_icon_name("edit-find-symbolic");
-        search_icon.add_css_class("echo-find-icon");
+        search_icon.add_css_class("take-find-icon");
         container.append(&search_icon);
 
         let entry = Entry::builder()
-            .placeholder_text("Поиск по странице...")
-            .css_classes(["echo-find-entry"])
+            .placeholder_text(crate::i18n::tr("find_bar.placeholder"))
+            .css_classes(["take-find-entry"])
             .max_width_chars(20)
             .width_chars(15)
             .build();
         container.append(&entry);
 
         let counter_label = Label::new(None);
-        counter_label.add_css_class("echo-find-counter");
+        counter_label.add_css_class("take-find-counter");
         container.append(&counter_label);
 
         let prev_button = Button::builder()
             .icon_name("go-up-symbolic")
-            .tooltip_text("Предыдущее (Shift+Enter)")
-            .css_classes(["echo-nav-button", "echo-find-btn"])
+            .tooltip_text(crate::i18n::tr("find_bar.prev_tooltip"))
+            .css_classes(["take-nav-button", "take-find-btn"])
             .build();
         container.append(&prev_button);
 
         let next_button = Button::builder()
             .icon_name("go-down-symbolic")
-            .tooltip_text("Следующее (Enter)")
-            .css_classes(["echo-nav-button", "echo-find-btn"])
+            .tooltip_text(crate::i18n::tr("find_bar.next_tooltip"))
+            .css_classes(["take-nav-button", "take-find-btn"])
             .build();
         container.append(&next_button);
 
         let close_button = Button::builder()
             .icon_name("window-close-symbolic")
-            .tooltip_text("Закрыть (Esc)")
-            .css_classes(["echo-nav-button", "echo-find-btn", "echo-find-close"])
+            .tooltip_text(crate::i18n::tr("find_bar.close_tooltip"))
+            .css_classes(["take-nav-button", "take-find-btn", "take-find-close"])
             .build();
         container.append(&close_button);
 
@@ -177,7 +177,8 @@ impl FindBar {
             if let Some(this) = weak_self.upgrade() {
                 this.current_match.set(0);
                 this.total_matches.set(0);
-                this.counter_label.set_text("0 из 0");
+                this.counter_label
+                    .set_text(crate::i18n::tr("find_bar.counter_zero"));
             }
         });
 
@@ -233,10 +234,15 @@ impl FindBar {
         let total = self.total_matches.get();
         if total > 0 {
             let display_curr = if current == 0 { 1 } else { current };
-            self.counter_label
-                .set_text(&format!("{display_curr} из {total}"));
+            let curr_str = display_curr.to_string();
+            let total_str = total.to_string();
+            self.counter_label.set_text(&crate::i18n::tr_fmt(
+                "find_bar.counter",
+                &[("current", &curr_str), ("total", &total_str)],
+            ));
         } else {
-            self.counter_label.set_text("0 из 0");
+            self.counter_label
+                .set_text(crate::i18n::tr("find_bar.counter_zero"));
         }
     }
 

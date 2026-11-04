@@ -928,3 +928,209 @@ body.has-wallpaper .search-bar {
     transform: translateX(18px);
 }
 
+/* ==========================================================================
+   Purple / Private Browsing Theme & Wallpaper
+   ========================================================================== */
+
+:root[data-private="true"],
+body.private-session,
+:root[data-theme="purple"] {
+    --bg-main: radial-gradient(ellipse at 50% 12%, #26113b 0%, #160c28 50%, #0d0718 100%);
+    --bg-card: rgba(255, 255, 255, 0.06);
+    --bg-card-hover: rgba(255, 255, 255, 0.10);
+    --border-card: rgba(186, 126, 255, 0.16);
+    --border-card-hover: rgba(186, 126, 255, 0.38);
+    --text-primary: #ffffff;
+    --text-secondary: #c4b5fd;
+    --text-dim: rgba(233, 223, 255, 0.7);
+    --accent: #a855f7;
+    --shadow-soft: 0 16px 44px rgba(10, 4, 20, 0.65);
+    --search-bg: rgba(30, 16, 50, 0.75);
+    --search-border: rgba(186, 126, 255, 0.25);
+    --search-shadow: 0 8px 32px rgba(10, 4, 20, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    --search-hover-bg: rgba(40, 22, 66, 0.85);
+    --search-focus-bg: rgba(45, 24, 76, 0.95);
+    --squircle-bg: rgba(255, 255, 255, 0.06);
+    --squircle-border: rgba(186, 126, 255, 0.18);
+    --squircle-shadow: 0 8px 24px rgba(10, 4, 20, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    --squircle-hover-shadow: 0 12px 28px rgba(10, 4, 20, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+:root[data-private="true"] .wallpaper-background:not(.active),
+body.private-session .wallpaper-background:not(.active) {
+    background-image: url('purple_hills.png') !important;
+    background-size: cover !important;
+    background-position: center bottom !important;
+    background-repeat: no-repeat !important;
+    opacity: 0.96 !important;
+}
+
+:root[data-private="true"] body,
+body.private-session {
+    background-color: #120b22 !important;
+}
+
+/* Add Favorite Button in Grid */
+.add-favorite-btn {
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    padding: 0;
+    cursor: pointer;
+}
+
+.add-favorite-btn .squircle-icon {
+    border: 1.5px dashed var(--squircle-border);
+    color: var(--text-secondary);
+    background: var(--squircle-bg);
+}
+
+.add-favorite-btn:hover .squircle-icon {
+    color: #007aff;
+    border-color: #007aff;
+    background: rgba(0, 122, 255, 0.10);
+    transform: translateY(-2px);
+}
+
+/* Modal Dialog for Add Favorite */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.modal-backdrop[hidden] {
+    display: none !important;
+}
+
+.modal-card {
+    background: rgba(26, 30, 39, 0.95);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    width: 380px;
+    max-width: calc(100vw - 32px);
+    padding: 22px;
+}
+
+:root[data-theme="light"] .modal-card {
+    background: rgba(255, 255, 255, 0.98);
+    border-color: rgba(0, 0, 0, 0.12);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.modal-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.modal-close {
+    background: transparent;
+    border: none;
+    font-size: 22px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px;
+}
+
+.modal-close:hover {
+    color: var(--text-primary);
+}
+
+.modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.modal-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.modal-field label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.modal-input {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 9px;
+    padding: 8px 12px;
+    font-size: 13.5px;
+    color: var(--text-primary);
+    font-family: inherit;
+    outline: none;
+}
+
+:root[data-theme="light"] .modal-input {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.16);
+    color: #1f2328;
+}
+
+.modal-input:focus {
+    border-color: #007aff;
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.25);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.modal-btn {
+    padding: 7px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+}
+
+.modal-btn.secondary {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .modal-btn.secondary {
+    background: rgba(0, 0, 0, 0.06);
+    color: #1f2328;
+}
+
+.modal-btn.primary {
+    background: #007aff;
+    color: #ffffff;
+}
+
+.modal-btn.primary:hover {
+    background: #0069d9;
+}
+

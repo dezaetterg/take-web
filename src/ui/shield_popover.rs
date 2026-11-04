@@ -18,6 +18,8 @@ pub struct ShieldPopover {
     protection_switch: Switch,
     protection_title: Label,
     protection_box: GtkBox,
+    trackers_box: GtkBox,
+    trackers_list_box: GtkBox,
     site_data_box: GtkBox,
     current_url: RefCell<String>,
     current_domain: RefCell<String>,
@@ -31,7 +33,7 @@ impl ShieldPopover {
         let popover = Popover::builder()
             .autohide(true)
             .has_arrow(true)
-            .css_classes(["echo-shield-popover"])
+            .css_classes(["take-shield-popover"])
             .build();
 
         let key_ctrl = gtk4::EventControllerKey::new();
@@ -54,21 +56,21 @@ impl ShieldPopover {
         popover.add_controller(key_ctrl);
 
         let root = GtkBox::new(Orientation::Vertical, 10);
-        root.add_css_class("echo-shield-popover-content");
+        root.add_css_class("take-shield-popover-content");
 
         // --- 1. Header: domain + connection status ---
         let header_row = GtkBox::new(Orientation::Horizontal, 8);
-        header_row.add_css_class("echo-shield-header-row");
+        header_row.add_css_class("take-shield-header-row");
 
         let domain_cluster = GtkBox::new(Orientation::Horizontal, 6);
         domain_cluster.set_hexpand(true);
         domain_cluster.set_halign(Align::Start);
 
         let domain_icon = Image::from_icon_name("network-server-symbolic");
-        domain_icon.add_css_class("echo-shield-domain-icon");
+        domain_icon.add_css_class("take-shield-domain-icon");
         let domain_label = Label::builder()
             .label("take-web")
-            .css_classes(["echo-shield-domain-label"])
+            .css_classes(["take-shield-domain-label"])
             .ellipsize(gtk4::pango::EllipsizeMode::End)
             .build();
         domain_cluster.append(&domain_icon);
@@ -77,13 +79,13 @@ impl ShieldPopover {
         let connection_cluster = GtkBox::new(Orientation::Horizontal, 4);
         connection_cluster.set_halign(Align::End);
         let connection_icon = Image::from_icon_name("channel-secure-symbolic");
-        connection_icon.add_css_class("echo-shield-connection-icon");
+        connection_icon.add_css_class("take-shield-connection-icon");
         let connection_label = Label::builder()
-            .label("Защищённое соединение")
-            .css_classes(["echo-shield-connection-label"])
+            .label(crate::i18n::tr("shield.secure_connection"))
+            .css_classes(["take-shield-connection-label"])
             .build();
         let connection_chevron = Image::from_icon_name("go-next-symbolic");
-        connection_chevron.add_css_class("echo-shield-chevron");
+        connection_chevron.add_css_class("take-shield-chevron");
         connection_cluster.append(&connection_icon);
         connection_cluster.append(&connection_label);
         connection_cluster.append(&connection_chevron);
@@ -94,21 +96,21 @@ impl ShieldPopover {
 
         // --- 2. Purple Shield Banner ---
         let banner_box = GtkBox::new(Orientation::Horizontal, 12);
-        banner_box.add_css_class("echo-shield-banner");
+        banner_box.add_css_class("take-shield-banner");
 
         let banner_text_col = GtkBox::new(Orientation::Vertical, 4);
         banner_text_col.set_hexpand(true);
         banner_text_col.set_valign(Align::Center);
 
         let banner_title = Label::builder()
-            .label("Take Shield на страже")
-            .css_classes(["echo-shield-banner-title"])
+            .label(crate::i18n::tr("shield.on_guard"))
+            .css_classes(["take-shield-banner-title"])
             .xalign(0.0)
             .build();
 
         let banner_desc = Label::builder()
-            .label("Вы защищены. Если мы что-то заметим, мы сообщим вам.")
-            .css_classes(["echo-shield-banner-desc"])
+            .label(crate::i18n::tr("shield.protected_subtitle"))
+            .css_classes(["take-shield-banner-desc"])
             .wrap(true)
             .xalign(0.0)
             .build();
@@ -119,7 +121,7 @@ impl ShieldPopover {
         let shield_art = Image::builder()
             .icon_name("security-high-symbolic")
             .pixel_size(44)
-            .css_classes(["echo-shield-art-icon"])
+            .css_classes(["take-shield-art-icon"])
             .valign(Align::Center)
             .build();
 
@@ -129,14 +131,14 @@ impl ShieldPopover {
 
         // --- 3. Enhanced Tracking Protection Switch ---
         let protection_box = GtkBox::new(Orientation::Vertical, 4);
-        protection_box.add_css_class("echo-shield-protection-section");
+        protection_box.add_css_class("take-shield-protection-section");
 
         let switch_row = GtkBox::new(Orientation::Horizontal, 8);
         switch_row.set_valign(Align::Center);
 
         let protection_title = Label::builder()
-            .label("Улучшенная защита от отслеживания включена")
-            .css_classes(["echo-shield-switch-title"])
+            .label(crate::i18n::tr("shield.etp_enabled"))
+            .css_classes(["take-shield-switch-title"])
             .hexpand(true)
             .wrap(true)
             .xalign(0.0)
@@ -145,15 +147,15 @@ impl ShieldPopover {
         let protection_switch = Switch::builder()
             .active(true)
             .valign(Align::Center)
-            .css_classes(["echo-shield-switch"])
+            .css_classes(["take-shield-switch"])
             .build();
 
         switch_row.append(&protection_title);
         switch_row.append(&protection_switch);
 
         let protection_subtext = Label::builder()
-            .label("Если что-то на этом сайте не работает, попробуйте отключить защиту.")
-            .css_classes(["echo-shield-subtext"])
+            .label(crate::i18n::tr("shield.etp_trouble_hint"))
+            .css_classes(["take-shield-subtext"])
             .wrap(true)
             .xalign(0.0)
             .build();
@@ -162,27 +164,42 @@ impl ShieldPopover {
         protection_box.append(&protection_subtext);
         root.append(&protection_box);
 
+        // --- Minimalist Blocked Trackers Display ---
+        let trackers_box = GtkBox::new(Orientation::Vertical, 4);
+        trackers_box.add_css_class("take-shield-trackers-box");
+
+        let trackers_header = Label::builder()
+            .label(crate::i18n::tr("shield.blocked_trackers_on_site"))
+            .css_classes(["take-shield-trackers-header"])
+            .xalign(0.0)
+            .build();
+        trackers_box.append(&trackers_header);
+
+        let trackers_list_box = GtkBox::new(Orientation::Vertical, 2);
+        trackers_box.append(&trackers_list_box);
+        root.append(&trackers_box);
+
         // --- Separator ---
         root.append(&Separator::new(Orientation::Horizontal));
 
         // --- 4. Clear Cookies & Site Data ---
         let site_data_box = GtkBox::new(Orientation::Horizontal, 8);
-        site_data_box.add_css_class("echo-shield-action-row");
+        site_data_box.add_css_class("take-shield-action-row");
 
         let clear_data_btn = Button::builder()
-            .css_classes(["flat", "echo-shield-action-btn"])
+            .css_classes(["flat", "take-shield-action-btn"])
             .hexpand(true)
             .build();
 
         let clear_data_inner = GtkBox::new(Orientation::Horizontal, 8);
         clear_data_inner.set_hexpand(true);
         let clear_data_label = Label::builder()
-            .label("Удалить куки и данные сайтов")
+            .label(crate::i18n::tr("shield.clear_site_data"))
             .xalign(0.0)
             .hexpand(true)
             .build();
         let clear_data_chevron = Image::from_icon_name("go-next-symbolic");
-        clear_data_chevron.add_css_class("echo-shield-chevron");
+        clear_data_chevron.add_css_class("take-shield-chevron");
         clear_data_inner.append(&clear_data_label);
         clear_data_inner.append(&clear_data_chevron);
         clear_data_btn.set_child(Some(&clear_data_inner));
@@ -195,11 +212,11 @@ impl ShieldPopover {
 
         // --- 5. Privacy Settings Link ---
         let privacy_settings_btn = Button::builder()
-            .css_classes(["flat", "echo-shield-link-btn"])
+            .css_classes(["flat", "take-shield-link-btn"])
             .halign(Align::Start)
             .build();
         let privacy_label = Label::builder()
-            .label("Настройки приватности")
+            .label(crate::i18n::tr("shield.privacy_settings"))
             .xalign(0.0)
             .build();
         privacy_settings_btn.set_child(Some(&privacy_label));
@@ -217,6 +234,8 @@ impl ShieldPopover {
             protection_switch,
             protection_title,
             protection_box,
+            trackers_box,
+            trackers_list_box,
             site_data_box,
             current_url: RefCell::new(String::new()),
             current_domain: RefCell::new(String::new()),
@@ -278,40 +297,89 @@ impl ShieldPopover {
         &self.popover
     }
 
-    pub fn popup(&self) {
-        self.popover.popup();
-    }
-
     pub fn popdown(&self) {
         self.popover.popdown();
     }
 
-    pub fn update_state(&self, url: &str, is_protected: bool, blocked_trackers: usize) {
+    pub fn update_state(
+        &self,
+        url: &str,
+        is_protected: bool,
+        blocked_trackers: usize,
+        tracker_names: &[String],
+    ) {
         *self.current_url.borrow_mut() = url.to_string();
 
-        let is_internal = url.starts_with("take://")
-            || url.starts_with("echo://")
-            || url.starts_with("about:")
-            || url.is_empty();
+        let is_internal = url.starts_with("take://") || url.starts_with("about:") || url.is_empty();
 
         if is_internal {
             self.domain_label.set_label("Take Web");
             self.domain_icon.set_icon_name(Some("go-home-symbolic"));
-            self.connection_label.set_label("Внутренняя страница");
+            self.connection_label
+                .set_label(crate::i18n::tr("shield.internal_page"));
             self.connection_icon
                 .set_icon_name(Some("channel-secure-symbolic"));
             self.connection_icon.remove_css_class("insecure");
             self.connection_icon.add_css_class("secure");
             self.banner_desc
-                .set_label("Локальные сервисы Take Web работают с защитой приватности.");
+                .set_label(crate::i18n::tr("shield.internal_page_desc"));
             self.protection_box.set_visible(false);
+            self.trackers_box.set_visible(false);
             self.site_data_box.set_visible(false);
             *self.current_domain.borrow_mut() = String::new();
             return;
         }
 
         self.protection_box.set_visible(true);
+        self.trackers_box.set_visible(true);
         self.site_data_box.set_visible(true);
+
+        while let Some(child) = self.trackers_list_box.first_child() {
+            self.trackers_list_box.remove(&child);
+        }
+
+        if tracker_names.is_empty() {
+            let row = GtkBox::new(Orientation::Horizontal, 6);
+            let ok_icon = Image::from_icon_name("emblem-ok-symbolic");
+            ok_icon.add_css_class("take-shield-tracker-icon");
+            let ok_label = Label::builder()
+                .label(crate::i18n::tr("shield.no_trackers_detected"))
+                .css_classes(["take-shield-subtext"])
+                .xalign(0.0)
+                .build();
+            row.append(&ok_icon);
+            row.append(&ok_label);
+            self.trackers_list_box.append(&row);
+        } else {
+            for tracker in tracker_names.iter().take(5) {
+                let row = GtkBox::new(Orientation::Horizontal, 6);
+                row.add_css_class("take-shield-tracker-item");
+                let icon = Image::from_icon_name("channel-secure-symbolic");
+                icon.add_css_class("take-shield-tracker-icon");
+                let name = Label::builder()
+                    .label(tracker)
+                    .hexpand(true)
+                    .xalign(0.0)
+                    .ellipsize(gtk4::pango::EllipsizeMode::Middle)
+                    .build();
+                let badge = Label::builder()
+                    .label("✓")
+                    .css_classes(["take-shield-tracker-badge"])
+                    .build();
+                row.append(&icon);
+                row.append(&name);
+                row.append(&badge);
+                self.trackers_list_box.append(&row);
+            }
+            if tracker_names.len() > 5 {
+                let more = Label::builder()
+                    .label(format!("+{} more", tracker_names.len() - 5))
+                    .css_classes(["take-shield-subtext"])
+                    .xalign(0.0)
+                    .build();
+                self.trackers_list_box.append(&more);
+            }
+        }
 
         let domain = url::Url::parse(url)
             .ok()
@@ -327,13 +395,15 @@ impl ShieldPopover {
 
         let is_https = url.starts_with("https://");
         if is_https {
-            self.connection_label.set_label("Защищённое соединение");
+            self.connection_label
+                .set_label(crate::i18n::tr("shield.secure_connection"));
             self.connection_icon
                 .set_icon_name(Some("channel-secure-symbolic"));
             self.connection_icon.remove_css_class("insecure");
             self.connection_icon.add_css_class("secure");
         } else {
-            self.connection_label.set_label("Небезопасное соединение");
+            self.connection_label
+                .set_label(crate::i18n::tr("shield.insecure_connection"));
             self.connection_icon
                 .set_icon_name(Some("channel-insecure-symbolic"));
             self.connection_icon.remove_css_class("secure");
@@ -341,12 +411,14 @@ impl ShieldPopover {
         }
 
         if blocked_trackers > 0 {
-            self.banner_desc.set_label(&format!(
-                "Заблокировано элементов отслеживания: {blocked_trackers}"
+            let count_str = blocked_trackers.to_string();
+            self.banner_desc.set_label(&crate::i18n::tr_fmt(
+                "shield.blocked_count",
+                &[("count", &count_str)],
             ));
         } else {
             self.banner_desc
-                .set_label("Вы защищены. Если мы что-то заметим, мы сообщим вам.");
+                .set_label(crate::i18n::tr("shield.protected_subtitle"));
         }
 
         self.protection_switch.set_state(is_protected);
@@ -356,11 +428,11 @@ impl ShieldPopover {
     fn update_switch_label(&self, active: bool) {
         if active {
             self.protection_title
-                .set_label("Улучшенная защита от отслеживания включена");
+                .set_label(crate::i18n::tr("shield.etp_enabled"));
             self.protection_title.remove_css_class("dimmed");
         } else {
             self.protection_title
-                .set_label("Улучшенная защита от отслеживания отключена");
+                .set_label(crate::i18n::tr("shield.etp_disabled"));
             self.protection_title.add_css_class("dimmed");
         }
     }

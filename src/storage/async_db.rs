@@ -62,13 +62,9 @@ enum Command {
         perm_type: String,
         state: String,
     },
-    DeleteSitePermission {
-        origin: String,
-        perm_type: String,
-    },
-    ClearSitePermissions,
     ClearTrackers,
     Job(Job),
+    #[cfg(test)]
     Flush(Sender<()>),
     Shutdown,
 }
@@ -93,7 +89,7 @@ impl AsyncDb {
         let path = path.to_path_buf();
         let (tx, rx) = mpsc::channel::<Command>();
         let spawned = thread::Builder::new()
-            .name("echo-db".into())
+            .name("take-db".into())
             .spawn(move || {
                 let db = match BrowserDatabase::open(&path) {
                     Ok(db) => db,
@@ -168,17 +164,6 @@ impl AsyncDb {
         });
     }
 
-    pub fn delete_site_permission(&self, origin: &str, perm_type: &str) {
-        self.send(Command::DeleteSitePermission {
-            origin: origin.to_owned(),
-            perm_type: perm_type.to_owned(),
-        });
-    }
-
-    pub fn clear_site_permissions(&self) {
-        self.send(Command::ClearSitePermissions);
-    }
-
     /// Drops queued-but-unwritten counters and wipes the table, preserving ordering
     /// with later queries (a plain synchronous clear could be undone by a pending flush).
     pub fn clear_tracker_stats(&self) {
@@ -218,6 +203,7 @@ impl AsyncDb {
     }
 
     /// Blocks until everything queued so far is on disk (used on shutdown/tests).
+    #[cfg(test)]
     pub fn flush_blocking(&self) {
         if let Some(tx) = &self.tx {
             let (ack_tx, ack_rx) = mpsc::channel();
@@ -315,16 +301,6 @@ fn worker_loop(db: &BrowserDatabase, rx: mpsc::Receiver<Command>) {
                     log::warn!("AsyncDb: site permission write failed: {err}");
                 }
             }
-            Command::DeleteSitePermission { origin, perm_type } => {
-                if let Err(err) = db.delete_site_permission(&origin, &perm_type) {
-                    log::warn!("AsyncDb: site permission delete failed: {err}");
-                }
-            }
-            Command::ClearSitePermissions => {
-                if let Err(err) = db.clear_site_permissions() {
-                    log::warn!("AsyncDb: clearing site permissions failed: {err}");
-                }
-            }
             Command::ClearTrackers => {
                 pending_trackers.clear();
                 pending_fp.clear();
@@ -336,6 +312,7 @@ fn worker_loop(db: &BrowserDatabase, rx: mpsc::Receiver<Command>) {
                 flush_privacy_stats(db, &mut pending_trackers, &mut pending_fp);
                 job(db);
             }
+            #[cfg(test)]
             Command::Flush(ack) => {
                 flush_privacy_stats(db, &mut pending_trackers, &mut pending_fp);
                 let _ = ack.send(());
@@ -352,7 +329,7 @@ mod tests {
     use super::*;
 
     fn temp_db_path(name: &str) -> std::path::PathBuf {
-        let dir = std::env::temp_dir().join(format!("echo-asyncdb-{name}-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("take-asyncdb-{name}-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         dir.join("test.db")
     }

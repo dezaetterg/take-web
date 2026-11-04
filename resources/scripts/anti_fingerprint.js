@@ -1,7 +1,7 @@
 (function() {
     'use strict';
     // Injected by BrowserEngine at runtime or fallback seed
-    const SESSION_SALT = "/*__ECHO_SESSION_SECRET__*/";
+    const SESSION_SALT = "/*__TAKE_SESSION_SECRET__*/";
 
     // --- Private WeakSets for Tracking Farbled Objects without Global DOM Leaks ---
     const farbledCanvases = new WeakSet();
@@ -88,8 +88,8 @@
         const hwConcurrency = (domainSeed % 2 === 0) ? 4 : 8;
         definePropertyStealth(Navigator.prototype, 'hardwareConcurrency', hwConcurrency);
         definePropertyStealth(Navigator.prototype, 'maxTouchPoints', 0);
-        definePropertyStealth(Navigator.prototype, 'language', 'en-US');
-        definePropertyStealth(Navigator.prototype, 'languages', Object.freeze(['en-US', 'en']));
+        definePropertyStealth(Navigator.prototype, 'language', window.__TAKE_LANG__ || '/*__TAKE_NAV_LANG__*/' || 'en-US');
+        definePropertyStealth(Navigator.prototype, 'languages', Object.freeze(window.__TAKE_LANGS__ || /*__TAKE_NAV_LANGS__*/ || ['en-US', 'en']));
 
         // Real Safari on macOS does not implement navigator.deviceMemory (Chromium-only API)
         try {
@@ -1013,11 +1013,13 @@
         'an.yandex.ru', 'hotjar.com', 'clarity.ms', 'criteo.com', 'criteo.net',
         'scorecardresearch.com', 'adnxs.com', 'appnexus.com', 'taboola.com',
         'outbrain.com', 'amazon-adsystem.com', 'adroll.com', 'quantserve.com',
-        'segment.io', 'segment.com', 'mixpanel.com', 'amplitude.com'
+        'segment.io', 'segment.com', 'mixpanel.com', 'amplitude.com',
+        'gen_204', 'client_204', 'play.google.com/log', 'ogads-pa.clients6.google.com',
+        'bat.bing.com', 'analytics.twitter.com', 'sentry.io'
     ];
 
     function checkAndReportTracker(rawUrl, source) {
-        if (!rawUrl || typeof rawUrl !== 'string') return;
+        if (!rawUrl || typeof rawUrl !== 'string') return false;
         const lower = rawUrl.toLowerCase();
         for (const t of KNOWN_TRACKERS) {
             if (lower.includes(t)) {
@@ -1029,9 +1031,10 @@
                         }));
                     }
                 } catch (_) {}
-                break;
+                return true;
             }
         }
+        return false;
     }
 
     // Capture element load failures (blocked by WebKit UserContentFilter)
@@ -1047,11 +1050,14 @@
         }, true);
     }
 
-    // Intercept fetch error rejection for tracker requests
+    // Intercept fetch error rejection and telemetry requests
     if (typeof window !== 'undefined' && window.fetch) {
         const preTrackerFetch = window.fetch;
         window.fetch = registerNative(function(input, init) {
             const url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+            if (url && (url.includes('gen_204') || url.includes('client_204'))) {
+                checkAndReportTracker(url, 'Telemetry Intercept');
+            }
             return preTrackerFetch.apply(this, arguments).catch(err => {
                 checkAndReportTracker(url, 'Blocked Network Fetch');
                 throw err;
@@ -1063,9 +1069,23 @@
     if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
         const origSendBeacon = navigator.sendBeacon;
         navigator.sendBeacon = registerNative(function(url, data) {
-            checkAndReportTracker(url, 'Beacon Telemetry');
+            const isTracker = checkAndReportTracker(url, 'Beacon Telemetry');
+            if (isTracker) {
+                return true; // Intercepted and counted by Take Shield
+            }
             return origSendBeacon.apply(this, arguments);
         }, 'sendBeacon');
+    }
+
+    // Intercept XMLHttpRequest for telemetry endpoints
+    if (typeof window !== 'undefined' && window.XMLHttpRequest) {
+        const origOpen = window.XMLHttpRequest.prototype.open;
+        window.XMLHttpRequest.prototype.open = registerNative(function(method, url) {
+            if (url && typeof url === 'string' && (url.includes('gen_204') || url.includes('client_204'))) {
+                checkAndReportTracker(url, 'Telemetry Intercept');
+            }
+            return origOpen.apply(this, arguments);
+        }, 'open');
     }
 
     // --- 16. Cross-Origin Referrer Trimming ---

@@ -1,17 +1,22 @@
 mod actions;
+mod listeners;
+mod menu;
 mod omnibox;
 mod session;
 mod tab_controller;
+mod translation;
+
+use menu::*;
 
 use std::cell::{Cell, RefCell};
-use std::rc::{Rc, Weak};
+use std::rc::Rc;
+use std::sync::Arc;
 
-use gtk4::gdk::{Display, Key};
+use gtk4::gdk::Display;
 use gtk4::gio;
 use gtk4::prelude::*;
-use gtk4::{CssProvider, EventControllerKey, Label, Overlay};
+use gtk4::{Box as GtkBox, CssProvider, Label, Orientation, Overlay, Paned};
 use libadwaita as adw;
-use webkit6::prelude::*;
 use webkit6::WebProcessTerminationReason;
 
 pub(crate) use session::{ClosedTab, TabRecord};
@@ -27,6 +32,7 @@ use super::shield_popover::ShieldPopover;
 use super::sidebar::BrowserSidebar;
 use super::tab::BrowserTab;
 use super::tab_overview_dock::TabOverviewDock;
+use super::translate_popover::TranslatePopover;
 use crate::browser::session_manager::{SessionManager, SessionState};
 use crate::browser::{BrowserEngine, BrowserProfile, DownloadManager, MemoryManager};
 use crate::privacy::PrivateSessionGuard;
@@ -77,6 +83,13 @@ pub(crate) struct Inner {
     pub(super) download_manager: Rc<DownloadManager>,
     pub(super) downloads_popover: Rc<DownloadsPopover>,
     pub(super) shield_popover: Rc<ShieldPopover>,
+    pub(super) translate_popover: Rc<TranslatePopover>,
+    pub(super) translate_download_cancellable: RefCell<Option<gio::Cancellable>>,
+    pub(super) translator_view: RefCell<Option<webkit6::WebView>>,
+    pub(super) translator_host_ready: Cell<bool>,
+    pub(super) translator_pending_jobs: RefCell<Vec<String>>,
+    pub(super) translator_inflight_requests:
+        RefCell<std::collections::HashMap<String, webkit6::WebView>>,
     pub(super) history_popover: RefCell<Option<Rc<HistoryPopover>>>,
     pub(super) app_menu: RefCell<Option<Rc<AppMenu>>>,
     pub(super) omnibox_popup: Rc<OmniboxPopup>,
@@ -99,10 +112,22 @@ pub(crate) struct Inner {
     pub(super) refresh_pending: Cell<bool>,
     pub(super) stats_refresh_pending: Cell<bool>,
     pub(super) theme_dark: Cell<bool>,
+    pub(super) is_app_mode: Cell<bool>,
+    pub(super) is_split_view: Cell<bool>,
+    pub(super) is_split_focused: Cell<bool>,
+    pub(super) view_paned: Paned,
+    pub(super) split_container: RefCell<Option<GtkBox>>,
+    pub(super) split_web_view: RefCell<Option<webkit6::WebView>>,
+    pub(super) is_reader_active: Cell<bool>,
+    pub(super) mpris_controller: RefCell<Option<Arc<crate::browser::mpris::MprisController>>>,
 }
 
 pub struct BrowserWindow {
     pub(crate) inner: Rc<Inner>,
+}
+
+thread_local! {
+    static MPRIS_ACTIVE_WINDOW: std::cell::RefCell<Option<std::rc::Weak<Inner>>> = const { std::cell::RefCell::new(None) };
 }
 
 impl BrowserWindow {
@@ -116,11 +141,15 @@ impl BrowserWindow {
         start_urls: &[String],
         start_private: bool,
     ) -> Self {
-        Self::new_internal(app, is_test_suite, start_urls, start_private, false)
+        Self::new_internal(app, is_test_suite, start_urls, start_private, false, false)
     }
 
     pub fn new_empty(app: &adw::Application, is_test_suite: bool, start_private: bool) -> Self {
-        Self::new_internal(app, is_test_suite, &[], start_private, true)
+        Self::new_internal(app, is_test_suite, &[], start_private, true, false)
+    }
+
+    pub fn new_app_mode(app: &adw::Application, app_url: &str) -> Self {
+        Self::new_internal(app, false, &[app_url.to_string()], false, false, true)
     }
 
     pub fn tab_view(&self) -> &adw::TabView {
@@ -133,6 +162,7 @@ impl BrowserWindow {
         start_urls: &[String],
         start_private: bool,
         is_empty: bool,
+        is_app_mode: bool,
     ) -> Self {
         Self::load_styles();
 
@@ -153,13 +183,13 @@ impl BrowserWindow {
         tab_bar.set_view(Some(&normal_tab_view));
         tab_bar.set_autohide(false);
         tab_bar.set_end_action_widget(Some(&header.new_tab_button));
-        tab_bar.add_css_class("echo-tab-bar");
+        tab_bar.add_css_class("take-tab-bar");
 
         let progress = header.progress_bar.clone();
         progress.set_can_target(false);
 
         let status_label = Label::new(None);
-        status_label.add_css_class("echo-status-pill");
+        status_label.add_css_class("take-status-pill");
         status_label.set_halign(gtk4::Align::Start);
         status_label.set_valign(gtk4::Align::End);
         status_label.set_ellipsize(gtk4::pango::EllipsizeMode::Middle);
@@ -169,20 +199,30 @@ impl BrowserWindow {
 
         let find_bar = FindBar::new();
         let permission_bar = PermissionBar::new();
-        let crash_banner = adw::Banner::new("Веб-страница завершила работу из-за сбоя рендерера");
-        crash_banner.set_button_label(Some("Перезагрузить страницу"));
+        let crash_banner = adw::Banner::new(crate::i18n::tr("app.crash_banner"));
+        crash_banner.set_button_label(Some(crate::i18n::tr("app.crash_reload")));
         crash_banner.set_revealed(false);
         crash_banner.set_visible(false);
-        crash_banner.add_css_class("echo-crash-banner");
+        crash_banner.add_css_class("take-crash-banner");
 
-        let restore_banner = adw::Banner::new("Предыдущая сессия завершилась некорректно");
-        restore_banner.set_button_label(Some("Восстановить вкладки"));
+        let restore_banner = adw::Banner::new(crate::i18n::tr("app.restore_banner"));
+        restore_banner.set_button_label(Some(crate::i18n::tr("app.restore_tabs")));
         restore_banner.set_revealed(false);
         restore_banner.set_visible(false);
-        restore_banner.add_css_class("echo-restore-banner");
+        restore_banner.add_css_class("take-restore-banner");
+
+        let view_paned = Paned::new(Orientation::Horizontal);
+        view_paned.set_hexpand(true);
+        view_paned.set_vexpand(true);
+        view_paned.set_start_child(Some(&normal_tab_view));
+        view_paned.set_shrink_start_child(true);
+        view_paned.set_resize_start_child(true);
+        view_paned.set_shrink_end_child(true);
+        view_paned.set_resize_end_child(true);
+        view_paned.add_css_class("take-view-paned");
 
         let content_overlay = Overlay::new();
-        content_overlay.set_child(Some(&normal_tab_view));
+        content_overlay.set_child(Some(&view_paned));
         content_overlay.add_overlay(&progress);
         content_overlay.add_overlay(&status_label);
         content_overlay.add_overlay(find_bar.widget());
@@ -204,9 +244,35 @@ impl BrowserWindow {
             .build();
         {
             let split = split_view.clone();
+            let paned_for_sidebar = view_paned.clone();
             header.sidebar_toggle.connect_toggled(move |btn| {
                 set_sidebar_visible(&split, btn.is_active());
+                if paned_for_sidebar.end_child().is_some() {
+                    let p = paned_for_sidebar.clone();
+                    glib::idle_add_local_once(move || {
+                        let w = p.width();
+                        if w > 100 {
+                            p.set_position(w / 2);
+                        }
+                    });
+                }
             });
+        }
+
+        if is_app_mode {
+            tab_bar.set_visible(false);
+            header.sidebar_toggle.set_visible(false);
+            header.back_button.set_visible(false);
+            header.forward_button.set_visible(false);
+            header.reload_button.set_visible(false);
+            header.address_capsule.set_visible(false);
+            header.app_title_label.set_visible(true);
+            header.new_tab_button.set_visible(false);
+            header.tab_overview_button.set_visible(false);
+            header.burger_button.set_visible(false);
+            header.downloads_button.set_visible(false);
+            split_view.set_show_sidebar(false);
+            split_view.set_enable_hide_gesture(false);
         }
 
         let toast_overlay = adw::ToastOverlay::new();
@@ -215,7 +281,9 @@ impl BrowserWindow {
         let toolbar_view = adw::ToolbarView::new();
         toolbar_view.set_top_bar_style(adw::ToolbarStyle::Flat);
         toolbar_view.add_top_bar(&header.container);
-        toolbar_view.add_top_bar(&tab_bar);
+        if !is_app_mode {
+            toolbar_view.add_top_bar(&tab_bar);
+        }
         toolbar_view.add_top_bar(&restore_banner);
         toolbar_view.add_top_bar(&crash_banner);
         toolbar_view.set_content(Some(&toast_overlay));
@@ -225,17 +293,19 @@ impl BrowserWindow {
         tab_overview.set_enable_search(true);
         tab_overview.set_enable_new_tab(false);
         tab_overview.set_child(Some(&toolbar_view));
+        tab_overview.add_css_class("take-tab-overview");
 
         let overview_dock = Rc::new(TabOverviewDock::new());
 
         let overview_overlay = Overlay::new();
+        overview_overlay.add_css_class("take-overview-overlay");
         overview_overlay.set_child(Some(&tab_overview));
         overview_overlay.add_overlay(&overview_dock.container);
 
         let window = adw::ApplicationWindow::builder()
             .application(app)
             .title(if is_test_suite {
-                "Echo Test Suite"
+                "Take Test Suite"
             } else {
                 "Take Web"
             })
@@ -244,7 +314,10 @@ impl BrowserWindow {
             .content(&overview_overlay)
             .icon_name("takeweb")
             .build();
-        window.add_css_class("echo-browser-window");
+        window.add_css_class("take-browser-window");
+        if is_app_mode {
+            window.add_css_class("take-app-mode-window");
+        }
 
         let download_manager = DownloadManager::new();
         download_manager.set_parent_window(Some(window.clone().upcast::<gtk4::Window>()));
@@ -259,6 +332,11 @@ impl BrowserWindow {
         header
             .security_button
             .set_popover(Some(shield_popover.popover()));
+
+        let translate_popover = TranslatePopover::new();
+        header
+            .translate_button
+            .set_popover(Some(translate_popover.popover()));
 
         let engine = BrowserEngine::new(BrowserProfile::Hardened, is_test_suite);
         let dl_mgr = Rc::clone(&download_manager);
@@ -344,6 +422,12 @@ impl BrowserWindow {
             download_manager,
             downloads_popover,
             shield_popover: Rc::clone(&shield_popover),
+            translate_popover: Rc::clone(&translate_popover),
+            translate_download_cancellable: RefCell::new(None),
+            translator_view: RefCell::new(None),
+            translator_host_ready: Cell::new(false),
+            translator_pending_jobs: RefCell::new(Vec::new()),
+            translator_inflight_requests: RefCell::new(std::collections::HashMap::new()),
             history_popover: RefCell::new(None),
             app_menu: RefCell::new(None),
             omnibox_popup,
@@ -366,427 +450,65 @@ impl BrowserWindow {
             refresh_pending: Cell::new(false),
             stats_refresh_pending: Cell::new(false),
             theme_dark: Cell::new(true),
+            is_app_mode: Cell::new(is_app_mode),
+            is_split_view: Cell::new(false),
+            is_split_focused: Cell::new(false),
+            view_paned,
+            split_container: RefCell::new(None),
+            split_web_view: RefCell::new(None),
+            is_reader_active: Cell::new(false),
+            mpris_controller: RefCell::new(None),
         });
+
+        // Track focus when clicking left pane in Split View
+        for tv in [&inner.normal_tab_view, &inner.private_tab_view] {
+            let click_left = gtk4::GestureClick::new();
+            click_left.set_propagation_phase(gtk4::PropagationPhase::Capture);
+            click_left.set_button(0);
+            let weak_left = Rc::downgrade(&inner);
+            click_left.connect_pressed(move |_, _, _, _| {
+                if let Some(this) = weak_left.upgrade() {
+                    if this.is_split_view.get() && this.is_split_focused.get() {
+                        this.set_split_pane_focused(false);
+                    }
+                }
+            });
+            tv.add_controller(click_left);
+        }
+
+        // Initialize MPRIS media playback controller
+        let weak_mpris = Rc::downgrade(&inner);
+        MPRIS_ACTIVE_WINDOW.with(|w| {
+            *w.borrow_mut() = Some(weak_mpris);
+        });
+
+        let mpris_controller = Arc::new(crate::browser::mpris::MprisController::new(move |cmd| {
+            glib::idle_add_once(move || {
+                MPRIS_ACTIVE_WINDOW.with(|w| {
+                    if let Some(ref weak) = *w.borrow() {
+                        if let Some(this) = weak.upgrade() {
+                            this.dispatch_media_command(cmd);
+                        }
+                    }
+                });
+            });
+        }));
+        *inner.mpris_controller.borrow_mut() = Some(mpris_controller);
+
+        // Connect Reader Mode header button
+        {
+            let weak_reader = Rc::downgrade(&inner);
+            inner.header.reader_button.connect_clicked(move |_| {
+                if let Some(this) = weak_reader.upgrade() {
+                    this.toggle_reader_mode();
+                }
+            });
+        }
 
         // Connect Shield Popover actions
-        {
-            let weak_shield = Rc::downgrade(&inner);
-            inner
-                .shield_popover
-                .set_on_toggle_protection(move |domain, active| {
-                    if let Some(this) = weak_shield.upgrade() {
-                        let is_exception = !active;
-                        let private = this.is_private_mode.get()
-                            || this.current_tab().is_some_and(|t| t.is_private);
-                        if !private {
-                            if let Err(e) = this.db.set_protection_exception(domain, is_exception) {
-                                log::warn!("failed to set protection exception: {e}");
-                            }
-                        }
-                        if let Some(tab) = this.current_tab() {
-                            if let Some(ucm) = tab.web_view.user_content_manager() {
-                                if is_exception {
-                                    ucm.remove_filter_by_id("echo_default_filters");
-                                } else if let Some(ref filter) =
-                                    *this.engine.borrow().content_filter().borrow()
-                                {
-                                    ucm.add_filter(filter);
-                                }
-                            }
-                            tab.web_view.reload();
-                        }
-                    }
-                });
-        }
-        {
-            let weak_clear = Rc::downgrade(&inner);
-            inner.shield_popover.set_on_clear_site_data(move |domain| {
-                if let Some(this) = weak_clear.upgrade() {
-                    let domain_owned = domain.to_string();
-                    if let Some(tab) = this.current_tab() {
-                        let js = "try { localStorage.clear(); sessionStorage.clear(); } catch(e){}";
-                        tab.web_view.evaluate_javascript(
-                            js,
-                            None,
-                            None,
-                            None::<&gio::Cancellable>,
-                            |_| {},
-                        );
-
-                        let engine = this.engine.borrow();
-                        let session = engine.network_manager().session();
-                        if let Some(dm) = session.website_data_manager() {
-                            let view = tab.web_view.clone();
-                            let dm_clone = dm.clone();
-                            dm.fetch(
-                                webkit6::WebsiteDataTypes::ALL,
-                                None::<&gio::Cancellable>,
-                                move |res| {
-                                    if let Ok(data_list) = res {
-                                        let matched: Vec<&webkit6::WebsiteData> = data_list
-                                            .iter()
-                                            .filter(|d| {
-                                                d.name()
-                                                    .map(|n| {
-                                                        n.contains(&domain_owned)
-                                                            || domain_owned.contains(n.as_str())
-                                                    })
-                                                    .unwrap_or(false)
-                                            })
-                                            .collect();
-                                        if !matched.is_empty() {
-                                            let (tx, rx) = tokio::sync::oneshot::channel();
-                                            let view_clone = view.clone();
-                                            glib::spawn_future_local(async move {
-                                                if rx.await.is_ok() {
-                                                    view_clone.reload();
-                                                }
-                                            });
-                                            dm_clone.remove(
-                                                webkit6::WebsiteDataTypes::ALL,
-                                                &matched,
-                                                None::<&gio::Cancellable>,
-                                                move |_| {
-                                                    let _ = tx.send(());
-                                                },
-                                            );
-                                        } else {
-                                            view.reload();
-                                        }
-                                    } else {
-                                        view.reload();
-                                    }
-                                },
-                            );
-                        } else {
-                            tab.web_view.reload();
-                        }
-                        this.toast(&format!("Данные для {domain} очищены"));
-                    }
-                }
-            });
-        }
-        {
-            let weak_priv = Rc::downgrade(&inner);
-            inner.shield_popover.set_on_open_privacy_settings(move || {
-                if let Some(this) = weak_priv.upgrade() {
-                    this.open_tab(TRACKERS_URL, None, true);
-                }
-            });
-        }
-
-        // Connect restore banner action
-        {
-            let weak_restore = Rc::downgrade(&inner);
-            inner.restore_banner.connect_button_clicked(move |banner| {
-                if let Some(this) = weak_restore.upgrade() {
-                    banner.set_revealed(false);
-                    banner.set_visible(false);
-                    if let Some(session) = this.last_crashed_session.borrow().clone() {
-                        this.restore_session(&session);
-                        this.toast("Сессия успешно восстановлена");
-                    }
-                }
-            });
-        }
-
-        // Connect crash banner reload button
-        {
-            let weak_crash = Rc::downgrade(&inner);
-            inner.crash_banner.connect_button_clicked(move |banner| {
-                if let Some(this) = weak_crash.upgrade() {
-                    banner.set_revealed(false);
-                    banner.set_visible(false);
-                    if let Some(tab) = this.current_tab() {
-                        tab.clear_crashed();
-                        log::info!("Reloading crashed tab #{}", tab.id);
-                        tab.web_view.reload();
-                    }
-                }
-            });
-        }
-
-        // Setup system lock & sleep listener for private session
-        {
-            let weak_inner = Rc::downgrade(&inner);
-            let guard = Rc::clone(&session_guard);
-            PrivateSessionGuard::setup_system_lock_listener(move || {
-                guard.set_locked(true);
-                if let Some(this) = weak_inner.upgrade() {
-                    if this.is_private_mode.get() && guard.has_password() {
-                        log::info!("System locked or sleeping: auto-exiting private mode");
-                        this.exit_private_browsing();
-                    }
-                }
-            });
-        }
-
-        // Connect Tab Overview & Floating Dock
-        {
-            inner.wire_tab_overview_signals(&inner.tab_overview.borrow());
-
-            let weak_normal = Rc::downgrade(&inner);
-            inner
-                .overview_dock
-                .normal_tabs_button
-                .connect_clicked(move |_| {
-                    if let Some(this) = weak_normal.upgrade() {
-                        this.exit_private_browsing();
-                    }
-                });
-
-            let weak_priv = Rc::downgrade(&inner);
-            inner
-                .overview_dock
-                .private_tabs_button
-                .connect_clicked(move |_| {
-                    if let Some(this) = weak_priv.upgrade() {
-                        this.enter_private_browsing();
-                    }
-                });
-        }
-
-        // Initialize history popover
-        let history_popover = {
-            let weak = Rc::downgrade(&inner);
-            HistoryPopover::new(
-                Rc::new({
-                    let weak = weak.clone();
-                    move |url| {
-                        if let Some(this) = weak.upgrade() {
-                            this.open_in_current_tab(url);
-                        }
-                    }
-                }),
-                Rc::new({
-                    let weak = weak.clone();
-                    move |url| {
-                        if let Some(this) = weak.upgrade() {
-                            this.open_tab(url, None, false);
-                        }
-                    }
-                }),
-                Rc::new({
-                    let weak = weak.clone();
-                    move |query| {
-                        if let Some(this) = weak.upgrade() {
-                            this.load_history_for_popover(query)
-                        } else {
-                            Vec::new()
-                        }
-                    }
-                }),
-                Rc::new({
-                    let weak = weak.clone();
-                    move || {
-                        if let Some(this) = weak.upgrade() {
-                            this.clear_history_from_popover();
-                        }
-                    }
-                }),
-            )
-        };
-        history_popover
-            .popover()
-            .set_parent(&inner.header.burger_button);
-        *inner.history_popover.borrow_mut() = Some(history_popover);
-
-        // Initialize app burger menu
-        let app_menu = {
-            let weak = Rc::downgrade(&inner);
-            AppMenu::new(Rc::new(move |action| {
-                if let Some(this) = weak.upgrade() {
-                    this.handle_app_menu_action(action);
-                }
-            }))
-        };
-        inner
-            .header
-            .burger_button
-            .set_popover(Some(&app_menu.popover));
-        *inner.app_menu.borrow_mut() = Some(app_menu);
-
-        // Window-level key events (Escape for fullscreen, Alt/Super to dismiss open popovers on switch)
-        let win_key_ctrl = EventControllerKey::new();
-        win_key_ctrl.set_propagation_phase(gtk4::PropagationPhase::Capture);
-        let weak = Rc::downgrade(&inner);
-        win_key_ctrl.connect_key_pressed(move |_, keyval, _, modifiers| {
-            let Some(this) = weak.upgrade() else {
-                return glib::Propagation::Proceed;
-            };
-            // Alt-Tab, Super (app switcher) or Alt key down closes floating popovers
-            if keyval == Key::Alt_L
-                || keyval == Key::Alt_R
-                || keyval == Key::Super_L
-                || keyval == Key::Super_R
-                || (keyval == Key::Tab && modifiers.contains(gtk4::gdk::ModifierType::ALT_MASK))
-            {
-                this.close_all_popovers();
-            }
-
-            if keyval == Key::Escape {
-                this.close_all_popovers();
-                if this.window.is_fullscreen() {
-                    this.leave_fullscreen();
-                    if let Some(tab) = this.current_tab() {
-                        tab.web_view.evaluate_javascript(
-                            "if (document.fullscreenElement) { document.exitFullscreen(); }",
-                            None::<&str>,
-                            None::<&str>,
-                            None::<&gio::Cancellable>,
-                            |_| (),
-                        );
-                    }
-                    return glib::Propagation::Stop;
-                }
-            }
-            glib::Propagation::Proceed
-        });
-        inner.window.add_controller(win_key_ctrl);
-
-        let weak_active = Rc::downgrade(&inner);
-        inner.window.connect_realize(move |win| {
-            if let Some(surface) = win.surface() {
-                if let Ok(toplevel) = surface.downcast::<gtk4::gdk::Toplevel>() {
-                    let was_focused = std::cell::Cell::new(false);
-                    let weak = weak_active.clone();
-                    toplevel.connect_state_notify(move |tl| {
-                        let is_focused = tl.state().contains(gtk4::gdk::ToplevelState::FOCUSED);
-                        if was_focused.get() && !is_focused {
-                            if let Some(this) = weak.upgrade() {
-                                this.close_all_popovers();
-                            }
-                        }
-                        was_focused.set(is_focused);
-                    });
-                }
-            }
-        });
-
-        let weak_unmap = Rc::downgrade(&inner);
-        inner.window.connect_unmap(move |_| {
-            if let Some(this) = weak_unmap.upgrade() {
-                this.close_all_popovers();
-            }
-        });
-
-        inner.connect_tab_view(&tab_bar);
-        inner.connect_header();
-        inner.connect_sidebar();
-        inner.register_tab_actions();
-        inner.register_window_actions(app);
-
-        let weak_tracker = Rc::downgrade(&inner);
-        inner
-            .engine
-            .borrow()
-            .setup_tracker_block_listener(move |domain, rule| {
-                if let Some(this) = weak_tracker.upgrade() {
-                    this.record_tracker_blocked(domain, rule);
-                    this.privacy_stats_changed();
-                }
-            });
-
-        let weak_fp = Rc::downgrade(&inner);
-        inner
-            .engine
-            .borrow()
-            .setup_fingerprint_listener(move |vector, count| {
-                if let Some(this) = weak_fp.upgrade() {
-                    this.record_fingerprint_defended(vector, count);
-                    this.privacy_stats_changed();
-                }
-            });
-
-        let weak_settings = Rc::downgrade(&inner);
-        inner
-            .engine
-            .borrow()
-            .setup_settings_change_listener(move |key, value| {
-                if let Some(this) = weak_settings.upgrade() {
-                    this.on_setting_changed(key, value);
-                }
-            });
-
-        // Load & apply saved theme setting
-        let saved_theme = inner
-            .db
-            .get_setting("theme")
-            .unwrap_or(None)
-            .unwrap_or_else(|| "dark".to_string());
-        inner.apply_theme_setting(&saved_theme);
-
-        let weak_theme = Rc::downgrade(&inner);
-        adw::StyleManager::default().connect_dark_notify(move |mgr| {
-            if let Some(this) = weak_theme.upgrade() {
-                let is_dark = mgr.is_dark();
-                let theme_str = if is_dark { "dark" } else { "light" };
-                let _ = this.db.set_setting("theme", theme_str);
-                this.sync_theme_classes(is_dark);
-            }
-        });
-
-        // Load and apply persisted browser settings
-        if let Ok(Some(v)) = inner.db.get_setting("omnibox_suggestions") {
-            inner.omnibox_suggestions_enabled.set(v != "false");
-        }
-        if let Ok(Some(v)) = inner.db.get_setting("open_tabs_related") {
-            inner.open_tabs_related.set(v != "false");
-        }
-        if let Ok(Some(v)) = inner.db.get_setting("sidebar_default_visible") {
-            let show = v != "false";
-            inner.sidebar_default_visible.set(show);
-            set_sidebar_visible(&inner.split_view, show);
-        }
-        if let Ok(Some(v)) = inner.db.get_setting("close_window_with_last_tab") {
-            inner.close_window_with_last_tab.set(v != "false");
-        }
-        if let Ok(Some(dir)) = inner.db.get_setting("download_dir") {
-            inner
-                .download_manager
-                .set_download_dir(Some(std::path::PathBuf::from(dir)));
-        }
-        if let Ok(Some(ask)) = inner.db.get_setting("ask_download_location") {
-            inner.download_manager.set_ask_destination(ask == "true");
-        }
-
-        // Apply WebKit engine settings
-        {
-            let engine = inner.engine.borrow();
-            if let Ok(Some(v)) = inner.db.get_setting("hardware_acceleration") {
-                engine.set_hardware_acceleration(v != "false");
-            }
-            if let Ok(Some(v)) = inner.db.get_setting("smooth_scrolling") {
-                engine.set_smooth_scrolling(v != "false");
-            }
-            if let Ok(Some(v)) = inner.db.get_setting("enable_javascript") {
-                engine.set_javascript_enabled(v != "false");
-            }
-            if let Ok(Some(v)) = inner.db.get_setting("block_autoplay") {
-                engine.set_block_autoplay(v == "true");
-            }
-            if let Ok(Some(v)) = inner.db.get_setting("webrtc_protection") {
-                engine.set_webrtc_protection(v == "true");
-            }
-            if let Ok(Some(v)) = inner.db.get_setting("shield_adblock") {
-                engine.set_adblock_enabled(v != "false");
-            }
-            if let Ok(Some(v)) = inner.db.get_setting("shield_fingerprint") {
-                engine.set_anti_fingerprint(v != "false");
-            }
-            if let Ok(Some(v)) = inner.db.get_setting("shield_itp") {
-                engine.network_manager().set_itp_enabled(v != "false");
-            }
-            if let Ok(Some(v)) = inner.db.get_setting("shield_https_only") {
-                engine.set_https_only(v != "false");
-            }
-            if let Ok(Some(v)) = inner.db.get_setting("cookie_policy") {
-                engine.network_manager().set_cookie_policy(&v);
-            }
-        }
-
+        listeners::setup_window_listeners(&inner, &tab_bar, app);
         if !is_empty {
-            let test_url = std::env::var("ECHO_TEST_URL").ok();
+            let test_url = std::env::var("TAKEWEB_TEST_URL").ok();
             let target = start_urls.first().cloned().or(test_url);
             let startup_action = inner
                 .db
@@ -799,7 +521,7 @@ impl BrowserWindow {
                 (None, true) => "take://test-suite".to_string(),
                 (None, false) => match startup_action.as_str() {
                     "blank" => "about:blank".to_string(),
-                    _ => START_URL.to_string(),
+                    _ => inner.effective_start_url(),
                 },
             };
             inner.open_tab(&initial_url, None, true);
@@ -870,7 +592,7 @@ impl BrowserWindow {
         let persistent = if is_test_suite {
             None
         } else {
-            let dir = glib::user_data_dir().join("echo-browser");
+            let dir = glib::user_data_dir().join("takeweb");
             match std::fs::create_dir_all(&dir) {
                 Ok(()) => {
                     let path = dir.join("browser.db");
@@ -920,66 +642,6 @@ impl BrowserWindow {
     }
 }
 
-pub(super) fn host_of(url: &str) -> Option<String> {
-    url::Url::parse(url).ok().and_then(|parsed| {
-        parsed
-            .host_str()
-            .map(|h| h.strip_prefix("www.").unwrap_or(h).to_string())
-    })
-}
-
-pub(super) fn is_web_url(url: &str) -> bool {
-    url.starts_with("http://") || url.starts_with("https://")
-}
-
-pub(super) fn tab_menu(pinned: bool, muted: bool) -> gio::Menu {
-    let menu = gio::Menu::new();
-
-    let closing = gio::Menu::new();
-    closing.append(Some("Закрыть"), Some("tab.close"));
-    closing.append(Some("Закрыть остальные"), Some("tab.close-others"));
-    closing.append(Some("Закрыть вкладки справа"), Some("tab.close-right"));
-    menu.append_section(None, &closing);
-
-    let managing = gio::Menu::new();
-    managing.append(
-        Some(if pinned {
-            "Открепить"
-        } else {
-            "Закрепить"
-        }),
-        Some("tab.pin"),
-    );
-    managing.append(Some("Дублировать"), Some("tab.duplicate"));
-    managing.append(
-        Some(if muted {
-            "Включить звук"
-        } else {
-            "Отключить звук"
-        }),
-        Some("tab.mute"),
-    );
-    managing.append(Some("Скопировать адрес"), Some("tab.copy-url"));
-    menu.append_section(None, &managing);
-
-    menu
-}
-
-/// Returns the window state only when `page` is the tab the user is looking at.
-pub(super) fn if_selected(
-    weak: &Weak<Inner>,
-    page: &glib::WeakRef<adw::TabPage>,
-) -> Option<Rc<Inner>> {
-    let inner = weak.upgrade()?;
-    let page = page.upgrade()?;
-    (inner.tab_view().selected_page().as_ref() == Some(&page)).then_some(inner)
-}
-
-/// Shows or hides the tab sidebar without the 250 ms width animation.
-pub(super) fn set_sidebar_visible(split: &adw::OverlaySplitView, show: bool) {
-    split.set_collapsed(!show);
-}
-
 impl Inner {
     pub(super) fn toast(&self, text: &str) {
         self.toast_overlay.add_toast(adw::Toast::new(text));
@@ -989,13 +651,13 @@ impl Inner {
         match reason {
             Some(WebProcessTerminationReason::ExceededMemoryLimit) => {
                 self.crash_banner
-                    .set_title("Страница была закрыта из-за нехватки оперативной памяти");
+                    .set_title(crate::i18n::tr("app.crash_oom"));
                 self.crash_banner.set_visible(true);
                 self.crash_banner.set_revealed(true);
             }
             Some(WebProcessTerminationReason::Crashed) => {
                 self.crash_banner
-                    .set_title("Процесс веб-страницы неожиданно завершил работу");
+                    .set_title(crate::i18n::tr("app.crash_process"));
                 self.crash_banner.set_visible(true);
                 self.crash_banner.set_revealed(true);
             }
@@ -1005,7 +667,7 @@ impl Inner {
             }
             _ => {
                 self.crash_banner
-                    .set_title("Процесс веб-страницы был принудительно остановлен");
+                    .set_title(crate::i18n::tr("app.crash_killed"));
                 self.crash_banner.set_visible(true);
                 self.crash_banner.set_revealed(true);
             }
@@ -1038,6 +700,14 @@ impl Inner {
             .iter()
             .find(|tab| tab.page == *page)
             .cloned()
+    }
+
+    pub(super) fn refresh_settings_pages(&self) {
+        for tab in self.tabs.borrow().iter() {
+            if tab.logical_url().starts_with(SETTINGS_URL) {
+                self.push_settings_page_data(&tab.web_view);
+            }
+        }
     }
 
     pub(crate) fn is_dangerous_system_dir(p: &std::path::Path) -> bool {

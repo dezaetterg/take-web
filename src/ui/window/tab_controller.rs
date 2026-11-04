@@ -64,8 +64,19 @@ impl Inner {
         tab
     }
 
+    pub(super) fn effective_start_url(&self) -> String {
+        if let Ok(Some(custom)) = self.db.get_setting("custom_start_page_url") {
+            let trimmed = custom.trim();
+            if !trimmed.is_empty() && trimmed != "take://start" {
+                return BrowserEngine::resolve_url(trimmed);
+            }
+        }
+        START_URL.to_string()
+    }
+
     pub(super) fn open_user_tab(self: &Rc<Self>) {
-        self.open_tab(START_URL, None, true);
+        let start = self.effective_start_url();
+        self.open_tab(&start, None, true);
         self.header.focus_address();
     }
 
@@ -172,21 +183,22 @@ impl Inner {
         let was_open = self.tab_overview.borrow().is_open();
         self.is_private_mode.set(true);
         self.tab_bar.set_view(Some(&self.private_tab_view));
-        self.content_overlay.set_child(Some(&self.private_tab_view));
+        self.view_paned
+            .set_start_child(Some(&self.private_tab_view));
         self.rebuild_tab_overview(&self.private_tab_view, was_open);
 
         if self.private_tab_view.n_pages() == 0 {
             self.open_tab(START_URL, None, true);
         }
 
-        self.window.add_css_class("echo-private-mode");
-        self.header.container.add_css_class("echo-private-mode");
+        self.window.add_css_class("take-private-mode");
+        self.header.container.add_css_class("take-private-mode");
         self.overview_dock.set_private_mode(true);
         self.sidebar.set_anonymous_mode(true);
 
         self.sync_chrome();
         self.refresh_tabs_and_groups();
-        self.toast("Режим приватного просмотра: данные изолированы в RAM");
+        self.toast(crate::i18n::tr("app.private_mode_notice"));
     }
 
     pub(super) fn exit_private_browsing(self: &Rc<Self>) {
@@ -203,11 +215,11 @@ impl Inner {
         }
 
         self.tab_bar.set_view(Some(&self.normal_tab_view));
-        self.content_overlay.set_child(Some(&self.normal_tab_view));
+        self.view_paned.set_start_child(Some(&self.normal_tab_view));
         self.rebuild_tab_overview(&self.normal_tab_view, was_open);
 
-        self.window.remove_css_class("echo-private-mode");
-        self.header.container.remove_css_class("echo-private-mode");
+        self.window.remove_css_class("take-private-mode");
+        self.header.container.remove_css_class("take-private-mode");
         self.overview_dock.set_private_mode(false);
         self.sidebar.set_anonymous_mode(false);
 
@@ -236,7 +248,7 @@ impl Inner {
 
         self.engine.borrow().wipe_ephemeral_network();
 
-        self.toast("Приватная сессия завершена. Все временные данные удалены.");
+        self.toast(crate::i18n::tr("app.private_session_ended"));
     }
 
     pub(super) fn register_tab(self: &Rc<Self>, tab: &Rc<BrowserTab>) {
@@ -279,6 +291,37 @@ impl Inner {
         let update = chrome_update;
         view.connect_is_loading_notify(move |_| update());
 
+        let weak_app_title = Rc::downgrade(self);
+        view.connect_title_notify(move |v| {
+            if let Some(this) = weak_app_title.upgrade() {
+                if this.is_app_mode.get() {
+                    let title = v
+                        .title()
+                        .map(|t| t.to_string())
+                        .unwrap_or_else(|| "Take Web".to_string());
+                    this.window.set_title(Some(&title));
+                    this.header.app_title_label.set_label(&title);
+                }
+            }
+        });
+
+        let weak_audio = Rc::downgrade(self);
+        view.connect_is_playing_audio_notify(move |v| {
+            if let Some(this) = weak_audio.upgrade() {
+                if let Some(ref mpris) = *this.mpris_controller.borrow() {
+                    let is_playing = v.is_playing_audio();
+                    let title = v.title().map(|t| t.to_string()).unwrap_or_default();
+                    let url = v.uri().map(|u| u.to_string()).unwrap_or_default();
+                    let status = if is_playing {
+                        mpris_server::PlaybackStatus::Playing
+                    } else {
+                        mpris_server::PlaybackStatus::Paused
+                    };
+                    mpris.update_playback(status, &title, "", &url);
+                }
+            }
+        });
+
         let weak_progress = Rc::downgrade(self);
         let page_progress = page_weak.clone();
         view.connect_estimated_load_progress_notify(move |v| {
@@ -293,6 +336,7 @@ impl Inner {
         view.connect_load_changed(move |view, event| {
             if event == LoadEvent::Started {
                 tab_load.clear_crashed();
+                tab_load.blocked_trackers.borrow_mut().clear();
                 if let Some(this) = weak.upgrade() {
                     let uri_str = view.uri().map(|u| u.to_string()).unwrap_or_default();
                     let effective = if uri_str.is_empty() {
@@ -301,10 +345,15 @@ impl Inner {
                         uri_str
                     };
                     this.engine.borrow().apply_settings_for_uri(view, &effective);
+                    this.refresh_shield_popover();
                 }
+                *tab_load.detected_lang.borrow_mut() = None;
+                *tab_load.auto_translated_for_uri.borrow_mut() = None;
                 if let Some(this) = if_selected(&weak, &page_load) {
                     this.update_crash_banner(None);
                     this.permission_bar.dismiss_all();
+                    this.translate_popover.reset_for_navigation();
+                    this.refresh_shield_popover();
                 }
             }
 
@@ -350,11 +399,11 @@ impl Inner {
                             }
                         }
                     }
-                    if logical == START_URL || logical == "echo://start" {
+                    if logical == START_URL {
                         this.push_start_page_data(view);
-                    } else if logical == TRACKERS_URL || logical == PRIVACY_URL || logical == "echo://trackers" || logical == "echo://privacy" {
+                    } else if logical == TRACKERS_URL || logical == PRIVACY_URL {
                         this.push_trackers_page_data(view);
-                    } else if logical == SETTINGS_URL || logical == "echo://settings" || logical.starts_with("take://settings") || logical.starts_with("echo://settings") {
+                    } else if logical == SETTINGS_URL || logical.starts_with("take://settings") {
                         this.push_settings_page_data(view);
                     } else if logical.starts_with("http://") || logical.starts_with("https://") {
                         let title = view
@@ -366,6 +415,14 @@ impl Inner {
                         if !tab_load.is_private {
                             this.record_history_visit(&title, &logical);
                         }
+                        this.trigger_auto_translate_if_needed(&tab_load, &logical);
+                        tab_load.web_view.evaluate_javascript(
+                            "if (window.__TakeTranslator && window.__TakeTranslator.detectPageLanguage) { window.__TakeTranslator.detectPageLanguage(); }",
+                            None,
+                            None,
+                            None::<&gio::Cancellable>,
+                            |_| {},
+                        );
                     }
                 }
             }
@@ -498,7 +555,7 @@ impl Inner {
                                 }
 
                                 let current_view_uri = view.uri().map(|u| u.to_string()).unwrap_or_default();
-                                let is_from_internal_page = current_view_uri.starts_with("take://") || current_view_uri.starts_with("echo://");
+                                let is_from_internal_page = current_view_uri.starts_with("take://");
 
                                 // 0. Block remote web pages from navigating to local file:// system
                                 if uri.starts_with("file://") && !current_view_uri.is_empty() && !current_view_uri.starts_with("file://") {
@@ -508,13 +565,13 @@ impl Inner {
                                 }
 
                                 // 1. Restrict internal actions to internal origins only
-                                if uri.starts_with("take://action/") || uri.starts_with("echo://action/") {
+                                if uri.starts_with("take://action/") {
                                     if !is_from_internal_page {
                                         log::warn!("SECURITY ALERT: Blocked unauthorized action request from non-internal origin ({current_view_uri}): {uri}");
                                         decision.ignore();
                                         return true;
                                     }
-                                    let action_path = uri.trim_start_matches("take://action/").trim_start_matches("echo://action/");
+                                    let action_path = uri.trim_start_matches("take://action/");
                                     if action_path == "clear-trackers" {
                                         if let Some(this) = weak_policy.upgrade() {
                                             this.clear_tracker_stats();
@@ -544,7 +601,7 @@ impl Inner {
                                 }
 
                                 // 2. Block web pages from navigating to internal scheme via link clicks or form submissions
-                                if uri.starts_with("take://") || uri.starts_with("echo://") {
+                                if uri.starts_with("take://") {
                                     let nav_type = nav_decision.navigation_action().map(|a| a.navigation_type());
                                     let is_external_link = !is_from_internal_page
                                         && !current_view_uri.is_empty()
@@ -558,8 +615,7 @@ impl Inner {
                                     }
                                 }
 
-                                if uri == "take://trackers" || uri == "take://privacy" || uri == "take://start" || uri == "take://settings"
-                                    || uri == "echo://trackers" || uri == "echo://privacy" || uri == "echo://start" || uri == "echo://settings" {
+                                if uri == "take://trackers" || uri == "take://privacy" || uri == "take://start" || uri == "take://settings" {
                                     if let Some(this) = weak_policy.upgrade() {
                                         if let Some(tab) = this.current_tab() {
                                             this.engine.borrow().apply_settings_for_uri(&tab.web_view, &uri);
@@ -732,7 +788,7 @@ impl Inner {
                     });
                     let new_tab_item = ContextMenuItem::from_gaction(
                         &new_tab_action,
-                        "Открыть в новой вкладке",
+                        crate::i18n::tr("tab.open_in_new_tab"),
                         None,
                     );
                     menu.prepend(&new_tab_item);
@@ -743,12 +799,12 @@ impl Inner {
                     copy_link_action.connect_activate(move |_, _| {
                         if let Some(w) = weak_copy.upgrade() {
                             w.window.clipboard().set_text(&link_for_copy);
-                            w.toast("Адрес ссылки скопирован");
+                            w.toast(crate::i18n::tr("app.link_copied"));
                         }
                     });
                     let copy_item = ContextMenuItem::from_gaction(
                         &copy_link_action,
-                        "Копировать адрес ссылки",
+                        crate::i18n::tr("tab.copy_link_address"),
                         None,
                     );
                     menu.insert(&copy_item, 1);
@@ -774,7 +830,7 @@ impl Inner {
                     });
                     let src_item = ContextMenuItem::from_gaction(
                         &view_source_action,
-                        "Открыть исходный код",
+                        crate::i18n::tr("tab.open_source"),
                         None,
                     );
                     menu.append(&src_item);
@@ -809,7 +865,7 @@ impl Inner {
             // Smoothly exit private mode FIRST so overview and tab bar reparent to normal_tab_view
             self.exit_private_browsing();
             self.private_tab_view.close_page_finish(page, true);
-            self.toast("Все приватные вкладки закрыты. Возврат в обычный режим.");
+            self.toast(crate::i18n::tr("app.all_private_tabs_closed"));
             return;
         }
 
@@ -1243,18 +1299,24 @@ impl Inner {
         });
 
         let entry = Entry::builder()
-            .placeholder_text("Работа, Исследования, Личное…")
+            .placeholder_text(crate::i18n::tr("tab_groups.group_name_placeholder"))
             .text(current_name.as_deref().unwrap_or(""))
             .activates_default(true)
             .build();
 
         let (heading, confirm) = if rename.is_some() {
-            ("Переименовать группу", "Переименовать")
+            (
+                crate::i18n::tr("tab_groups.rename_group"),
+                crate::i18n::tr("tab_groups.rename"),
+            )
         } else {
-            ("Новая группа вкладок", "Создать")
+            (
+                crate::i18n::tr("tab_groups.new_group"),
+                crate::i18n::tr("tab_groups.create"),
+            )
         };
         let dialog = adw::AlertDialog::new(Some(heading), None);
-        dialog.add_response("cancel", "Отмена");
+        dialog.add_response("cancel", crate::i18n::tr("private_lock.cancel"));
         dialog.add_response("confirm", confirm);
         dialog.set_response_appearance("confirm", adw::ResponseAppearance::Suggested);
         dialog.set_default_response(Some("confirm"));
@@ -1287,7 +1349,7 @@ impl Inner {
                         Ok(()) => this.switch_group(Some(id)),
                         Err(err) => {
                             log::warn!("cannot create group {name}: {err}");
-                            this.toast("Не удалось создать группу");
+                            this.toast(crate::i18n::tr("tab_groups.create_failed"));
                         }
                     }
                 }
@@ -1304,7 +1366,7 @@ impl Inner {
         }
         if let Err(err) = self.db.delete_tab_group(id) {
             log::warn!("cannot delete group {id}: {err}");
-            self.toast("Не удалось удалить группу");
+            self.toast(crate::i18n::tr("tab_groups.delete_failed"));
         }
         self.refresh_tabs_and_groups();
     }

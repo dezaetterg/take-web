@@ -18,7 +18,7 @@ impl DownloadsPopover {
     pub fn new(manager: Rc<DownloadManager>) -> Rc<Self> {
         let popover = Popover::new();
         popover.set_autohide(true);
-        popover.add_css_class("echo-downloads-popover");
+        popover.add_css_class("take-downloads-popover");
 
         let key_ctrl = gtk4::EventControllerKey::new();
         key_ctrl.set_propagation_phase(gtk4::PropagationPhase::Capture);
@@ -51,8 +51,8 @@ impl DownloadsPopover {
         header.set_hexpand(true);
 
         let title = Label::builder()
-            .label("Загрузки")
-            .css_classes(["echo-downloads-title"])
+            .label(crate::i18n::tr("downloads.title"))
+            .css_classes(["take-downloads-title"])
             .halign(gtk4::Align::Start)
             .hexpand(true)
             .build();
@@ -60,8 +60,8 @@ impl DownloadsPopover {
 
         let open_folder_btn = Button::builder()
             .icon_name("folder-open-symbolic")
-            .tooltip_text("Открыть папку загрузок")
-            .css_classes(["echo-nav-button", "echo-open-folder-btn"])
+            .tooltip_text(crate::i18n::tr("downloads.open_folder"))
+            .css_classes(["take-nav-button", "take-open-folder-btn"])
             .build();
         open_folder_btn.connect_clicked(|_| {
             let dir = DownloadManager::default_download_dir();
@@ -136,7 +136,7 @@ impl DownloadsPopover {
             empty_icon.add_css_class("dim-label");
             empty_box.append(&empty_icon);
 
-            let empty_label = Label::new(Some("Список загрузок пуст"));
+            let empty_label = Label::new(Some(crate::i18n::tr("downloads.empty")));
             empty_label.add_css_class("dim-label");
             empty_box.append(&empty_label);
 
@@ -148,7 +148,7 @@ impl DownloadsPopover {
         for item_rc in items.iter().rev() {
             let item = item_rc.borrow();
             let card = GtkBox::new(Orientation::Horizontal, 8);
-            card.add_css_class("echo-download-card");
+            card.add_css_class("take-download-card");
 
             let icon = Image::from_icon_name(match item.status {
                 DownloadStatus::Finished => "emblem-default-symbolic",
@@ -164,7 +164,7 @@ impl DownloadsPopover {
 
             let name_label = Label::builder()
                 .label(&item.filename)
-                .css_classes(["echo-download-filename"])
+                .css_classes(["take-download-filename"])
                 .ellipsize(gtk4::pango::EllipsizeMode::Middle)
                 .halign(gtk4::Align::Start)
                 .build();
@@ -173,7 +173,7 @@ impl DownloadsPopover {
             if item.status == DownloadStatus::Downloading {
                 let progress = ProgressBar::builder()
                     .fraction(item.progress)
-                    .css_classes(["echo-download-progress"])
+                    .css_classes(["take-download-progress"])
                     .build();
                 info_box.append(&progress);
             }
@@ -183,22 +183,22 @@ impl DownloadsPopover {
                     let rec = Self::format_bytes(item.received_bytes);
                     if item.total_bytes > 0 {
                         let total = Self::format_bytes(item.total_bytes);
-                        format!("{rec} из {total}")
+                        format!("{rec} {} {total}", crate::i18n::tr("downloads.of"))
                     } else {
                         rec
                     }
                 }
-                DownloadStatus::Finished => "Завершено".to_string(),
+                DownloadStatus::Finished => crate::i18n::tr("downloads.finished").to_string(),
                 DownloadStatus::Failed => item
                     .error_message
                     .clone()
-                    .unwrap_or_else(|| "Ошибка".to_string()),
-                DownloadStatus::Cancelled => "Отменено".to_string(),
+                    .unwrap_or_else(|| crate::i18n::tr("downloads.error").to_string()),
+                DownloadStatus::Cancelled => crate::i18n::tr("downloads.cancelled").to_string(),
             };
 
             let status_label = Label::builder()
                 .label(&status_text)
-                .css_classes(["echo-download-status"])
+                .css_classes(["take-download-status"])
                 .halign(gtk4::Align::Start)
                 .build();
             info_box.append(&status_label);
@@ -210,8 +210,8 @@ impl DownloadsPopover {
                 DownloadStatus::Downloading => {
                     let cancel_btn = Button::builder()
                         .icon_name("process-stop-symbolic")
-                        .tooltip_text("Отменить загрузку")
-                        .css_classes(["echo-nav-button", "echo-download-action-btn"])
+                        .tooltip_text(crate::i18n::tr("downloads.cancel"))
+                        .css_classes(["take-nav-button", "take-download-action-btn"])
                         .build();
                     let id = item.id;
                     let mgr = self.manager.clone();
@@ -223,8 +223,8 @@ impl DownloadsPopover {
                 DownloadStatus::Finished => {
                     let folder_btn = Button::builder()
                         .icon_name("folder-open-symbolic")
-                        .tooltip_text("Показать в папке")
-                        .css_classes(["echo-nav-button", "echo-download-action-btn"])
+                        .tooltip_text(crate::i18n::tr("downloads.show_in_folder"))
+                        .css_classes(["take-nav-button", "take-download-action-btn"])
                         .build();
                     let dest_folder = item
                         .destination
@@ -240,8 +240,8 @@ impl DownloadsPopover {
 
                     let open_btn = Button::builder()
                         .icon_name("document-open-symbolic")
-                        .tooltip_text("Открыть файл")
-                        .css_classes(["echo-nav-button", "echo-download-action-btn"])
+                        .tooltip_text(crate::i18n::tr("downloads.open_file"))
+                        .css_classes(["take-nav-button", "take-download-action-btn"])
                         .build();
                     let dest = item.destination.clone();
                     open_btn.connect_clicked(move |_| {
@@ -266,13 +266,25 @@ impl DownloadsPopover {
         const GB: u64 = 1024 * MB;
 
         if bytes >= GB {
-            format!("{:.1} ГБ", bytes as f64 / GB as f64)
+            format!(
+                "{:.1} {}",
+                bytes as f64 / GB as f64,
+                crate::i18n::tr("app.unit_gb")
+            )
         } else if bytes >= MB {
-            format!("{:.1} МБ", bytes as f64 / MB as f64)
+            format!(
+                "{:.1} {}",
+                bytes as f64 / MB as f64,
+                crate::i18n::tr("app.unit_mb")
+            )
         } else if bytes >= KB {
-            format!("{:.1} КБ", bytes as f64 / KB as f64)
+            format!(
+                "{:.1} {}",
+                bytes as f64 / KB as f64,
+                crate::i18n::tr("app.unit_kb")
+            )
         } else {
-            format!("{bytes} Б")
+            format!("{bytes} {}", crate::i18n::tr("app.unit_b"))
         }
     }
 }

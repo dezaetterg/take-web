@@ -17,6 +17,10 @@ pub enum AppMenuAction {
     ZoomReset,
     ToggleFullscreen,
     FindInPage,
+    TranslatePage,
+    ToggleReaderMode,
+    ToggleSplitView,
+    InstallPwa,
     Print,
     ToggleTheme,
     OpenSettings,
@@ -35,7 +39,7 @@ impl AppMenu {
     pub fn new(on_action: AppMenuCallback) -> Rc<Self> {
         let popover = Popover::new();
         popover.set_autohide(true);
-        popover.add_css_class("echo-app-menu-popover");
+        popover.add_css_class("take-app-menu-popover");
 
         let key_ctrl = gtk4::EventControllerKey::new();
         key_ctrl.set_propagation_phase(gtk4::PropagationPhase::Capture);
@@ -66,7 +70,7 @@ impl AppMenu {
         // Section 1: Tabs & Windows
         root.append(&Self::menu_item(
             "tab-new-symbolic",
-            "Новая вкладка",
+            crate::i18n::tr("menu.new_tab"),
             Some("Ctrl+T"),
             AppMenuAction::NewTab,
             &on_action,
@@ -74,7 +78,7 @@ impl AppMenu {
         ));
         root.append(&Self::menu_item(
             "window-new-symbolic",
-            "Новое окно",
+            crate::i18n::tr("menu.new_window"),
             Some("Ctrl+N"),
             AppMenuAction::NewWindow,
             &on_action,
@@ -82,9 +86,17 @@ impl AppMenu {
         ));
         root.append(&Self::menu_item(
             "view-refresh-symbolic",
-            "Восстановить сессию",
+            crate::i18n::tr("menu.restore_session"),
             None,
             AppMenuAction::RestoreSession,
+            &on_action,
+            &popover,
+        ));
+        root.append(&Self::menu_item(
+            "view-dual-symbolic",
+            crate::i18n::tr("menu.split_view"),
+            Some("F3"),
+            AppMenuAction::ToggleSplitView,
             &on_action,
             &popover,
         ));
@@ -94,7 +106,7 @@ impl AppMenu {
         // Section 2: Library
         root.append(&Self::menu_item(
             "view-paged-symbolic",
-            "Закладки",
+            crate::i18n::tr("menu.bookmarks"),
             Some("Ctrl+B"),
             AppMenuAction::OpenBookmarks,
             &on_action,
@@ -102,7 +114,7 @@ impl AppMenu {
         ));
         root.append(&Self::menu_item(
             "document-open-recent-symbolic",
-            "История",
+            crate::i18n::tr("menu.history"),
             Some("Ctrl+H"),
             AppMenuAction::OpenHistory,
             &on_action,
@@ -110,7 +122,7 @@ impl AppMenu {
         ));
         root.append(&Self::menu_item(
             "folder-download-symbolic",
-            "Загрузки",
+            crate::i18n::tr("menu.downloads"),
             Some("Ctrl+J"),
             AppMenuAction::OpenDownloads,
             &on_action,
@@ -118,7 +130,7 @@ impl AppMenu {
         ));
         root.append(&Self::menu_item(
             "bookmark-new-symbolic",
-            "Список для чтения",
+            crate::i18n::tr("menu.reading_list"),
             Some("Ctrl+Shift+D"),
             AppMenuAction::OpenReadingList,
             &on_action,
@@ -136,15 +148,39 @@ impl AppMenu {
         // Section 4: Tools
         root.append(&Self::menu_item(
             "edit-find-symbolic",
-            "Найти на странице…",
+            crate::i18n::tr("menu.find_in_page"),
             Some("Ctrl+F"),
             AppMenuAction::FindInPage,
             &on_action,
             &popover,
         ));
         root.append(&Self::menu_item(
+            "preferences-desktop-locale-symbolic",
+            crate::i18n::tr("translate.menu_item"),
+            Some("Alt+Shift+T"),
+            AppMenuAction::TranslatePage,
+            &on_action,
+            &popover,
+        ));
+        root.append(&Self::menu_item(
+            "open-book-symbolic",
+            crate::i18n::tr("menu.reader_mode"),
+            Some("F9"),
+            AppMenuAction::ToggleReaderMode,
+            &on_action,
+            &popover,
+        ));
+        root.append(&Self::menu_item(
+            "application-x-executable-symbolic",
+            crate::i18n::tr("menu.install_pwa"),
+            None,
+            AppMenuAction::InstallPwa,
+            &on_action,
+            &popover,
+        ));
+        root.append(&Self::menu_item(
             "document-print-symbolic",
-            "Печать…",
+            crate::i18n::tr("menu.print"),
             Some("Ctrl+P"),
             AppMenuAction::Print,
             &on_action,
@@ -152,7 +188,7 @@ impl AppMenu {
         ));
         root.append(&Self::menu_item(
             "security-high-symbolic",
-            "Отчет о трекерах и защите",
+            crate::i18n::tr("menu.trackers_report"),
             None,
             AppMenuAction::OpenPrivacyReport,
             &on_action,
@@ -164,7 +200,7 @@ impl AppMenu {
         // Section 5: Settings & About
         root.append(&Self::menu_item(
             "weather-clear-night-symbolic",
-            "Сменить тему",
+            crate::i18n::tr("menu.toggle_theme"),
             None,
             AppMenuAction::ToggleTheme,
             &on_action,
@@ -172,7 +208,7 @@ impl AppMenu {
         ));
         root.append(&Self::menu_item(
             "preferences-system-symbolic",
-            "Настройки",
+            crate::i18n::tr("menu.settings"),
             Some("Ctrl+,"),
             AppMenuAction::OpenSettings,
             &on_action,
@@ -180,7 +216,7 @@ impl AppMenu {
         ));
         root.append(&Self::menu_item(
             "help-about-symbolic",
-            "О браузере Take Web",
+            crate::i18n::tr("menu.about"),
             None,
             AppMenuAction::OpenAbout,
             &on_action,
@@ -199,7 +235,7 @@ impl AppMenu {
         let sep = Separator::new(Orientation::Horizontal);
         sep.set_margin_top(4);
         sep.set_margin_bottom(4);
-        sep.add_css_class("echo-menu-separator");
+        sep.add_css_class("take-menu-separator");
         sep
     }
 
@@ -215,14 +251,14 @@ impl AppMenu {
         content.set_hexpand(true);
 
         let img = Image::from_icon_name(icon);
-        img.add_css_class("echo-menu-icon");
+        img.add_css_class("take-menu-icon");
         content.append(&img);
 
         let label = Label::builder()
             .label(title)
             .xalign(0.0)
             .hexpand(true)
-            .css_classes(["echo-menu-label"])
+            .css_classes(["take-menu-label"])
             .build();
         content.append(&label);
 
@@ -230,14 +266,14 @@ impl AppMenu {
             let accel_label = Label::builder()
                 .label(acc)
                 .xalign(1.0)
-                .css_classes(["echo-menu-accel", "dim-label"])
+                .css_classes(["take-menu-accel", "dim-label"])
                 .build();
             content.append(&accel_label);
         }
 
         let button = Button::builder()
             .child(&content)
-            .css_classes(["flat", "echo-app-menu-row"])
+            .css_classes(["flat", "take-app-menu-row"])
             .build();
 
         let cb = on_action.clone();
@@ -252,27 +288,27 @@ impl AppMenu {
 
     fn zoom_row(on_action: &AppMenuCallback, popover: &Popover) -> (GtkBox, Label) {
         let root = GtkBox::new(Orientation::Horizontal, 6);
-        root.add_css_class("echo-menu-zoom-row");
+        root.add_css_class("take-menu-zoom-row");
         root.set_margin_start(8);
         root.set_margin_end(8);
         root.set_margin_top(3);
         root.set_margin_bottom(3);
 
         let title = Label::builder()
-            .label("Масштаб")
+            .label(crate::i18n::tr("menu.zoom"))
             .xalign(0.0)
             .hexpand(true)
-            .css_classes(["echo-menu-label"])
+            .css_classes(["take-menu-label"])
             .build();
         root.append(&title);
 
         let controls = GtkBox::new(Orientation::Horizontal, 2);
-        controls.add_css_class("echo-menu-zoom-controls");
+        controls.add_css_class("take-menu-zoom-controls");
 
         let zoom_out_btn = Button::builder()
             .icon_name("zoom-out-symbolic")
-            .tooltip_text("Уменьшить (Ctrl+-)")
-            .css_classes(["flat", "circular", "echo-menu-zoom-btn"])
+            .tooltip_text(crate::i18n::tr("menu.zoom_out"))
+            .css_classes(["flat", "circular", "take-menu-zoom-btn"])
             .build();
         let cb = on_action.clone();
         zoom_out_btn.connect_clicked(move |_| {
@@ -282,14 +318,14 @@ impl AppMenu {
 
         let zoom_label = Label::builder()
             .label("100%")
-            .css_classes(["echo-menu-zoom-label"])
+            .css_classes(["take-menu-zoom-label"])
             .width_chars(5)
             .build();
 
         let reset_btn = Button::builder()
             .child(&zoom_label)
-            .tooltip_text("Сбросить масштаб (Ctrl+0)")
-            .css_classes(["flat", "echo-menu-zoom-reset-btn"])
+            .tooltip_text(crate::i18n::tr("menu.zoom_reset"))
+            .css_classes(["flat", "take-menu-zoom-reset-btn"])
             .build();
         let cb = on_action.clone();
         reset_btn.connect_clicked(move |_| {
@@ -299,8 +335,8 @@ impl AppMenu {
 
         let zoom_in_btn = Button::builder()
             .icon_name("zoom-in-symbolic")
-            .tooltip_text("Увеличить (Ctrl++)")
-            .css_classes(["flat", "circular", "echo-menu-zoom-btn"])
+            .tooltip_text(crate::i18n::tr("menu.zoom_in"))
+            .css_classes(["flat", "circular", "take-menu-zoom-btn"])
             .build();
         let cb = on_action.clone();
         zoom_in_btn.connect_clicked(move |_| {
@@ -310,8 +346,8 @@ impl AppMenu {
 
         let fs_btn = Button::builder()
             .icon_name("view-fullscreen-symbolic")
-            .tooltip_text("Полноэкранный режим (F11)")
-            .css_classes(["flat", "circular", "echo-menu-fullscreen-btn"])
+            .tooltip_text(crate::i18n::tr("menu.fullscreen"))
+            .css_classes(["flat", "circular", "take-menu-fullscreen-btn"])
             .build();
         let cb = on_action.clone();
         let pop = popover.clone();

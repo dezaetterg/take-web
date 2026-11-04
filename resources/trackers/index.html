@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru" data-theme="dark">
+<html lang="{{current_lang}}" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Отчет о защите приватности - Take Web</title>
+    <title>{{trackers.title}}</title>
     <link rel="stylesheet" href="trackers.css">
 </head>
 <body>
@@ -11,12 +11,12 @@
         <!-- Top Navigation / Header -->
         <header class="app-header">
             <div class="header-left">
-                <a href="echo://start" class="back-link" title="На главную">
+                <a href="take://start" class="back-link" title="{{trackers.back_to_start}}">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="19" y1="12" x2="5" y2="12"></line>
                         <polyline points="12 19 5 12 12 5"></polyline>
                     </svg>
-                    <span>Главная</span>
+                    <span>{{trackers.back_to_start}}</span>
                 </a>
                 <div class="brand-divider"></div>
                 <div class="brand-info">
@@ -27,8 +27,8 @@
                         </svg>
                     </div>
                     <div>
-                        <h1 class="page-title">Отчет о защите приватности</h1>
-                        <p class="page-subtitle">Встроенная система конфиденциальности Take Shield</p>
+                        <h1 class="page-title">{{trackers.header}}</h1>
+                        <p class="page-subtitle">{{trackers.subtitle}}</p>
                     </div>
                 </div>
             </div>
@@ -40,14 +40,14 @@
                         <polyline points="7 10 12 15 17 10"></polyline>
                         <line x1="12" y1="15" x2="12" y2="3"></line>
                     </svg>
-                    <span>Экспорт JSON</span>
+                    <span>{{trackers.export_json}}</span>
                 </button>
                 <button class="btn btn-danger" id="clear-stats-btn">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="3 6 5 6 21 6"></polyline>
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                     </svg>
-                    <span>Очистить статистику приватности</span>
+                    <span>{{trackers.clear_stats}}</span>
                 </button>
             </div>
         </header>
@@ -59,44 +59,44 @@
                 <section class="kpi-grid">
                     <div class="kpi-card">
                         <div class="kpi-header">
-                            <span class="kpi-label">За 7 дней</span>
+                            <span class="kpi-label">{{trackers.kpi_7days}}</span>
                         </div>
                         <div class="kpi-value" id="kpi-7d">0</div>
-                        <div class="kpi-subtext">Попыток сбора профиля остановлено</div>
+                        <div class="kpi-subtext">{{trackers.kpi_7days_sub}}</div>
                     </div>
 
                     <div class="kpi-card">
                         <div class="kpi-header">
-                            <span class="kpi-label">Сетевые трекеры</span>
-                            <span class="kpi-badge">Все время</span>
+                            <span class="kpi-label">{{trackers.kpi_network}}</span>
+                            <span class="kpi-badge">{{trackers.kpi_all_time}}</span>
                         </div>
                         <div class="kpi-value" id="kpi-all">0</div>
-                        <div class="kpi-subtext">Заблокировано сетевых запросов</div>
+                        <div class="kpi-subtext">{{trackers.kpi_network_sub}}</div>
                     </div>
 
                     <div class="kpi-card">
                         <div class="kpi-header">
-                            <span class="kpi-label">Фингерпринтинг</span>
+                            <span class="kpi-label">{{trackers.kpi_fingerprint}}</span>
                         </div>
                         <div class="kpi-value" id="kpi-fp">0</div>
-                        <div class="kpi-subtext">Отражено попыток снятия отпечатка</div>
+                        <div class="kpi-subtext">{{trackers.kpi_fingerprint_sub}}</div>
                     </div>
 
                     <div class="kpi-card">
                         <div class="kpi-header">
-                            <span class="kpi-label">Сэкономлено трафика</span>
-                            <span class="kpi-badge">Оценка</span>
+                            <span class="kpi-label">{{trackers.kpi_data_saved}}</span>
+                            <span class="kpi-badge">{{trackers.kpi_estimate}}</span>
                         </div>
-                        <div class="kpi-value" id="kpi-saved">0 КБ</div>
-                        <div class="kpi-subtext">За счет отсечения скриптов и баннеров</div>
+                        <div class="kpi-value" id="kpi-saved">0 KB</div>
+                        <div class="kpi-subtext">{{trackers.kpi_data_saved_sub}}</div>
                     </div>
                 </section>
 
                 <!-- Anti-Fingerprinting Defense Shields Grid -->
                 <section class="dashboard-section">
                     <div class="section-header">
-                        <h2>Щиты защиты от снятия отпечатков</h2>
-                        <span class="section-hint">Изоляция первого лица и нейтрализация векторов фингерпринтинга</span>
+                        <h2>{{trackers.shields_title}}</h2>
+                        <span class="section-hint">{{trackers.shields_subtitle}}</span>
                     </div>
 
                     <div class="shields-grid">
@@ -111,14 +111,14 @@
                                     </svg>
                                 </div>
                                 <div class="shield-card-title-group">
-                                    <span class="shield-title">Canvas Farbling</span>
-                                    <span class="shield-status-pill">Активен</span>
+                                    <span class="shield-title">{{trackers.shield_canvas_title}}</span>
+                                    <span class="shield-status-pill">{{trackers.shield_status_active}}</span>
                                 </div>
                             </div>
-                            <p class="shield-desc">Детерминированный микрошум в 2D и WebGL холстах для изоляции первого лица.</p>
+                            <p class="shield-desc">{{trackers.shield_canvas_desc}}</p>
                             <div class="shield-counter-box">
                                 <span class="shield-counter-num" id="cnt-canvas">0</span>
-                                <span class="shield-counter-label">отраженных попыток</span>
+                                <span class="shield-counter-label">{{trackers.shield_attempts_label}}</span>
                             </div>
                         </div>
 
@@ -133,14 +133,14 @@
                                     </svg>
                                 </div>
                                 <div class="shield-card-title-group">
-                                    <span class="shield-title">WebGL Masking</span>
-                                    <span class="shield-status-pill">Активен</span>
+                                    <span class="shield-title">{{trackers.shield_webgl_title}}</span>
+                                    <span class="shield-status-pill">{{trackers.shield_status_active}}</span>
                                 </div>
                             </div>
-                            <p class="shield-desc">Маскировка вендора и рендерера GPU под типовой стандарт Apple GPU.</p>
+                            <p class="shield-desc">{{trackers.shield_webgl_desc}}</p>
                             <div class="shield-counter-box">
                                 <span class="shield-counter-num" id="cnt-webgl">0</span>
-                                <span class="shield-counter-label">отраженных попыток</span>
+                                <span class="shield-counter-label">{{trackers.shield_attempts_label}}</span>
                             </div>
                         </div>
 
@@ -155,14 +155,14 @@
                                     </svg>
                                 </div>
                                 <div class="shield-card-title-group">
-                                    <span class="shield-title">AudioContext Noise</span>
-                                    <span class="shield-status-pill">Активен</span>
+                                    <span class="shield-title">{{trackers.shield_audio_title}}</span>
+                                    <span class="shield-status-pill">{{trackers.shield_status_active}}</span>
                                 </div>
                             </div>
-                            <p class="shield-desc">Микрофазовый джиттер аудио-буферов против акустического снятия слепка.</p>
+                            <p class="shield-desc">{{trackers.shield_audio_desc}}</p>
                             <div class="shield-counter-box">
                                 <span class="shield-counter-num" id="cnt-audio">0</span>
-                                <span class="shield-counter-label">отраженных попыток</span>
+                                <span class="shield-counter-label">{{trackers.shield_attempts_label}}</span>
                             </div>
                         </div>
 
@@ -177,14 +177,14 @@
                                     </svg>
                                 </div>
                                 <div class="shield-card-title-group">
-                                    <span class="shield-title">Font Probing Shield</span>
-                                    <span class="shield-status-pill">Активен</span>
+                                    <span class="shield-title">{{trackers.shield_font_title}}</span>
+                                    <span class="shield-status-pill">{{trackers.shield_status_active}}</span>
                                 </div>
                             </div>
-                            <p class="shield-desc">Блокировка зондирования локальных системных шрифтов через DOM и Canvas.</p>
+                            <p class="shield-desc">{{trackers.shield_font_desc}}</p>
                             <div class="shield-counter-box">
                                 <span class="shield-counter-num" id="cnt-fonts">0</span>
-                                <span class="shield-counter-label">отраженных попыток</span>
+                                <span class="shield-counter-label">{{trackers.shield_attempts_label}}</span>
                             </div>
                         </div>
 
@@ -199,14 +199,14 @@
                                     </svg>
                                 </div>
                                 <div class="shield-card-title-group">
-                                    <span class="shield-title">WebRTC IP Shield</span>
-                                    <span class="shield-status-pill">Активен</span>
+                                    <span class="shield-title">{{trackers.shield_webrtc_title}}</span>
+                                    <span class="shield-status-pill">{{trackers.shield_status_active}}</span>
                                 </div>
                             </div>
-                            <p class="shield-desc">Скрытие реального LAN IP в SDP и подавление host ICE-кандидатов.</p>
+                            <p class="shield-desc">{{trackers.shield_webrtc_desc}}</p>
                             <div class="shield-counter-box">
                                 <span class="shield-counter-num" id="cnt-webrtc">0</span>
-                                <span class="shield-counter-label">отраженных попыток</span>
+                                <span class="shield-counter-label">{{trackers.shield_attempts_label}}</span>
                             </div>
                         </div>
 
@@ -220,14 +220,14 @@
                                     </svg>
                                 </div>
                                 <div class="shield-card-title-group">
-                                    <span class="shield-title">Precision Timers</span>
-                                    <span class="shield-status-pill">Активен</span>
+                                    <span class="shield-title">{{trackers.shield_timing_title}}</span>
+                                    <span class="shield-status-pill">{{trackers.shield_status_active}}</span>
                                 </div>
                             </div>
-                            <p class="shield-desc">Огрубление таймеров performance.now() до 20 мс против Spectre-атак.</p>
+                            <p class="shield-desc">{{trackers.shield_timing_desc}}</p>
                             <div class="shield-counter-box">
                                 <span class="shield-counter-num" id="cnt-timers">0</span>
-                                <span class="shield-counter-label">отраженных попыток</span>
+                                <span class="shield-counter-label">{{trackers.shield_attempts_label}}</span>
                             </div>
                         </div>
                     </div>
@@ -242,8 +242,8 @@
                                 <polyline points="9 12 11 14 15 10"></polyline>
                             </svg>
                         </div>
-                        <h3>Ваш веб чист. Трекеры не обнаружены</h3>
-                        <p>Все защитные механизмы Take Shield активны. По мере веб-серфинга заблокированные аналитические трекеры и рекламные сети отобразятся здесь.</p>
+                        <h3>{{trackers.empty_clean_title}}</h3>
+                        <p>{{trackers.empty_clean_desc}}</p>
                     </div>
                 </section>
 
@@ -252,12 +252,12 @@
                     <!-- Top Trackers Breakdown Section -->
                     <section class="dashboard-section" id="top-trackers-section">
                         <div class="section-header">
-                            <h2>Основные заблокированные трекеры</h2>
-                            <span class="section-hint">Наиболее частые попытки сбора профиля и сетевой слежки</span>
+                            <h2>{{trackers.top_trackers_title}}</h2>
+                            <span class="section-hint">{{trackers.top_trackers_subtitle}}</span>
                         </div>
 
                         <div class="top-trackers-grid" id="top-trackers-container">
-                            <div class="empty-hint">Данные собираются во время веб-серфинга...</div>
+                            <div class="empty-hint">{{trackers.empty_hint}}</div>
                         </div>
                     </section>
 
@@ -265,15 +265,15 @@
                     <section class="dashboard-section" id="detailed-table-section">
                         <div class="section-header-split">
                             <div>
-                                <h2>Журнал заблокированных попыток</h2>
-                                <span class="section-hint">Полный список нейтрализованных трекеров</span>
+                                <h2>{{trackers.table_title}}</h2>
+                                <span class="section-hint">{{trackers.table_subtitle}}</span>
                             </div>
                             <div class="search-box">
                                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
                                     <circle cx="11" cy="11" r="8"></circle>
                                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                                 </svg>
-                                <input type="text" id="filter-input" placeholder="Поиск по домену или категории..." autocomplete="off">
+                                <input type="text" id="filter-input" placeholder="{{trackers.search_placeholder}}" autocomplete="off">
                             </div>
                         </div>
 
@@ -281,15 +281,15 @@
                             <table class="data-table">
                                 <thead>
                                     <tr>
-                                        <th>Домен трекера</th>
-                                        <th>Категория / Правило</th>
-                                        <th>Блокировок</th>
-                                        <th>Последняя попытка</th>
+                                        <th>{{trackers.table_domain}}</th>
+                                        <th>{{trackers.table_category}}</th>
+                                        <th>{{trackers.table_blocked}}</th>
+                                        <th>{{trackers.table_last_seen}}</th>
                                     </tr>
                                 </thead>
                                 <tbody id="trackers-table-body">
                                     <tr>
-                                        <td colspan="4" class="table-empty">Загрузка данных...</td>
+                                        <td colspan="4" class="table-empty">{{trackers.empty_hint}}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -303,14 +303,14 @@
         <div class="modal-backdrop" id="confirm-modal">
             <div class="modal-window">
                 <div class="modal-header">
-                    <h3>Очистить статистику приватности?</h3>
+                    <h3>{{trackers.modal_clear_title}}</h3>
                 </div>
                 <div class="modal-body">
-                    <p>Вся накопленная статистика заблокированных сетевых трекеров и отраженных попыток фингерпринтинга будет сброшена. Защита продолжит работать в реальном времени.</p>
+                    <p>{{trackers.modal_clear_desc}}</p>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" id="modal-cancel-btn">Отмена</button>
-                    <button class="btn btn-danger" id="modal-confirm-btn">Очистить всё</button>
+                    <button class="btn btn-secondary" id="modal-cancel-btn">{{trackers.modal_cancel_btn}}</button>
+                    <button class="btn btn-danger" id="modal-confirm-btn">{{trackers.modal_confirm_btn}}</button>
                 </div>
             </div>
         </div>

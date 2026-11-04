@@ -2,9 +2,11 @@ use rusqlite::{params, Connection, OptionalExtension, Result};
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+#[cfg(test)]
+use super::models::SitePermissionEntry;
 use super::models::{
     Bookmark, FingerprintStat, GroupTabEntry, HistoryEntry, OmniboxItemType, OmniboxResult,
-    PrivacySummary, ReadingItem, SitePermissionEntry, TabGroup, TrackerStat,
+    PrivacySummary, ReadingItem, TabGroup, TrackerStat,
 };
 
 pub const FAVORITES_FOLDER: &str = "Избранное";
@@ -354,6 +356,7 @@ impl BrowserDatabase {
         rows.collect()
     }
 
+    #[cfg(test)]
     pub fn add_tab_to_group(
         &self,
         group_id: &str,
@@ -369,6 +372,7 @@ impl BrowserDatabase {
         Ok(self.conn.last_insert_rowid())
     }
 
+    #[cfg(test)]
     pub fn delete_tab_from_group(&self, tab_id: i64) -> Result<()> {
         self.conn
             .execute("DELETE FROM tab_group_tabs WHERE id = ?1", params![tab_id])?;
@@ -729,6 +733,7 @@ impl BrowserDatabase {
         Ok(())
     }
 
+    #[cfg(test)]
     pub fn record_fingerprint_defended(&self, vector: &str) -> Result<()> {
         self.record_fingerprint_defended_n(vector, 1)
     }
@@ -797,6 +802,82 @@ impl BrowserDatabase {
         Ok(())
     }
 
+    pub fn get_auto_translate_languages(
+        &self,
+    ) -> Result<std::collections::HashMap<String, String>> {
+        if let Some(json_str) = self.get_setting("translate_auto_languages")? {
+            if let Ok(map) =
+                serde_json::from_str::<std::collections::HashMap<String, String>>(&json_str)
+            {
+                return Ok(map);
+            }
+        }
+        Ok(std::collections::HashMap::new())
+    }
+
+    pub fn is_auto_translate_enabled(&self, source_lang: &str) -> Option<String> {
+        let global_enabled = self
+            .get_setting("translate_auto_enabled")
+            .ok()
+            .flatten()
+            .map(|v| v == "true")
+            .unwrap_or(false);
+
+        let target_lang = self
+            .get_setting("translate_auto_target_lang")
+            .ok()
+            .flatten()
+            .unwrap_or_else(|| "ru".to_string());
+
+        if global_enabled && source_lang != target_lang {
+            return Some(target_lang);
+        }
+
+        let map = self.get_auto_translate_languages().ok()?;
+        if let Some(target) = map.get(source_lang) {
+            if source_lang != target {
+                return Some(target.clone());
+            }
+        }
+        if let Some(target) = map.get("auto") {
+            if source_lang != target {
+                return Some(target.clone());
+            }
+        }
+
+        None
+    }
+
+    pub fn is_any_auto_translate_enabled(&self) -> bool {
+        if let Ok(Some(v)) = self.get_setting("translate_auto_enabled") {
+            if v == "true" {
+                return true;
+            }
+        }
+        if let Ok(map) = self.get_auto_translate_languages() {
+            if !map.is_empty() {
+                return true;
+            }
+        }
+        false
+    }
+
+    pub fn set_auto_translate_language(
+        &self,
+        source_lang: &str,
+        target_lang: Option<&str>,
+    ) -> Result<()> {
+        let mut map = self.get_auto_translate_languages().unwrap_or_default();
+        if let Some(tgt) = target_lang {
+            map.insert(source_lang.to_string(), tgt.to_string());
+        } else {
+            map.remove(source_lang);
+        }
+        let json_str = serde_json::to_string(&map).unwrap_or_else(|_| "{}".to_string());
+        self.set_setting("translate_auto_languages", &json_str)?;
+        Ok(())
+    }
+
     pub fn get_site_permission(&self, origin: &str, perm_type: &str) -> Result<Option<String>> {
         self.conn
             .query_row(
@@ -822,6 +903,7 @@ impl BrowserDatabase {
         Ok(())
     }
 
+    #[cfg(test)]
     pub fn delete_site_permission(&self, origin: &str, perm_type: &str) -> Result<()> {
         self.conn.execute(
             "DELETE FROM site_permissions WHERE origin = ?1 AND permission_type = ?2",
@@ -830,6 +912,7 @@ impl BrowserDatabase {
         Ok(())
     }
 
+    #[cfg(test)]
     pub fn get_all_site_permissions(&self) -> Result<Vec<SitePermissionEntry>> {
         let mut stmt = self.conn.prepare(
             "SELECT origin, permission_type, state, updated_at FROM site_permissions ORDER BY updated_at DESC",
@@ -905,6 +988,7 @@ impl BrowserDatabase {
         }
     }
 
+    #[cfg(test)]
     pub fn clear_domain_zoom(&self) -> Result<()> {
         self.conn.execute("DELETE FROM domain_zoom", [])?;
         Ok(())
@@ -1263,6 +1347,39 @@ mod tests {
 
         db.set_protection_exception(domain, false)?;
         assert!(!db.is_protection_exception(domain)?);
+
+        Ok(())
+    }
+
+    #[test]
+    fn auto_translate_languages_lifecycle() -> Result<()> {
+        let db = BrowserDatabase::in_memory()?;
+        assert!(db.get_auto_translate_languages()?.is_empty());
+        assert_eq!(db.is_auto_translate_enabled("en"), None);
+
+        db.set_auto_translate_language("en", Some("ru"))?;
+        assert_eq!(db.is_auto_translate_enabled("en"), Some("ru".to_string()));
+        assert_eq!(db.is_auto_translate_enabled("de"), None);
+
+        db.set_auto_translate_language("de", Some("ru"))?;
+        let all = db.get_auto_translate_languages()?;
+        assert_eq!(all.len(), 2);
+        assert_eq!(all.get("en").map(String::as_str), Some("ru"));
+        assert_eq!(all.get("de").map(String::as_str), Some("ru"));
+
+        db.set_auto_translate_language("en", None)?;
+        assert_eq!(db.is_auto_translate_enabled("en"), None);
+        assert_eq!(db.is_auto_translate_enabled("de"), Some("ru".to_string()));
+
+        // Test global enable
+        db.set_auto_translate_language("de", None)?;
+        assert!(!db.is_any_auto_translate_enabled());
+
+        db.set_setting("translate_auto_enabled", "true")?;
+        assert!(db.is_any_auto_translate_enabled());
+        assert_eq!(db.is_auto_translate_enabled("en"), Some("ru".to_string()));
+        assert_eq!(db.is_auto_translate_enabled("fr"), Some("ru".to_string()));
+        assert_eq!(db.is_auto_translate_enabled("ru"), None);
 
         Ok(())
     }

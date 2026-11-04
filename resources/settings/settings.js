@@ -3,13 +3,10 @@
 (function () {
     'use strict';
 
-    const TAB_TITLES = {
-        general: 'Основные настройки',
-        privacy: 'Приватность и Защита',
-        appearance: 'Внешний вид',
-        downloads: 'Файлы и Загрузки',
-        about: 'О браузере'
-    };
+    function getTabTitle(tabId) {
+        const item = document.querySelector(`.nav-item[data-tab="${tabId}"] span`);
+        return item ? item.textContent.trim() : '';
+    }
 
     const navItems = document.querySelectorAll('.nav-item');
     const sections = document.querySelectorAll('.settings-section');
@@ -18,7 +15,7 @@
     const toast = document.getElementById('settings-toast');
     let toastTimeout = null;
 
-    const SETTINGS_KEY = 'echo_browser_settings';
+    const SETTINGS_KEY = 'takeweb_settings';
 
     function showToast(message) {
         if (!toast) return;
@@ -34,7 +31,7 @@
 
     function notifySettingChanged(key, value) {
         try {
-            const token = window.__ECHO_IPC_TOKEN__ || '';
+            const token = window.__TAKE_IPC_TOKEN__ || '';
             if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.settingsChange) {
                 window.webkit.messageHandlers.settingsChange.postMessage(JSON.stringify({
                     token: token,
@@ -56,8 +53,9 @@
             sec.classList.toggle('active', sec.id === `${tabId}-section`);
         });
 
-        if (sectionTitle && TAB_TITLES[tabId]) {
-            sectionTitle.textContent = TAB_TITLES[tabId];
+        const title = getTabTitle(tabId);
+        if (sectionTitle && title) {
+            sectionTitle.textContent = title;
         }
 
         // Close any open dropdowns when switching tabs
@@ -71,7 +69,7 @@
 
         try {
             window.location.hash = tabId;
-        } catch (_) {}
+        } catch (_) { }
     }
 
     // Attach tab click events
@@ -86,7 +84,7 @@
 
     // Check initial hash
     const initialHash = (window.location.hash || '').replace('#', '');
-    if (initialHash && TAB_TITLES[initialHash]) {
+    if (initialHash && document.querySelector(`.nav-item[data-tab="${initialHash}"]`)) {
         switchTab(initialHash);
     }
 
@@ -138,9 +136,9 @@
         // User requested removing search engine icons completely
         if (selectEl.id !== 'select-default-search-engine') {
             icon = optionEl.querySelector('.theme-icon') ||
-                   optionEl.querySelector('.startup-icon') ||
-                   optionEl.querySelector('.dns-icon') ||
-                   optionEl.querySelector('.cookie-icon');
+                optionEl.querySelector('.startup-icon') ||
+                optionEl.querySelector('.dns-icon') ||
+                optionEl.querySelector('.cookie-icon');
         }
         const nameEl = optionEl.querySelector('.option-name') || optionEl.querySelector('.option-title');
         const text = nameEl ? nameEl.textContent.trim() : optionEl.textContent.trim();
@@ -175,7 +173,7 @@
                         savedVal = parsed[settingKey] || parsed[selectEl.id];
                     }
                 }
-            } catch (_) {}
+            } catch (_) { }
 
             if (!savedVal) {
                 savedVal = selectEl.dataset.value || (options[0] ? options[0].dataset.value : '');
@@ -262,6 +260,18 @@
                     notifySettingChanged(settingKey, val);
 
                     // Special handlers
+                    if (settingKey === 'ui_language') {
+                        showToast(tr('settings.restart_required', 'Language changed. Please restart TakeWeb for all changes to take full effect.'));
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
+                    }
+                    if (settingKey === 'default_search_engine') {
+                        const customRow = document.getElementById('row-custom-search-url');
+                        if (customRow) {
+                            customRow.style.display = val === 'custom' ? 'flex' : 'none';
+                        }
+                    }
                     if (settingKey === 'theme') {
                         handleThemeChange(val);
                     }
@@ -271,7 +281,8 @@
 
                     const nameEl = opt.querySelector('.option-name') || opt.querySelector('.option-title');
                     const label = nameEl ? nameEl.textContent.trim() : val;
-                    showToast(`Выбрано: ${label}`);
+                    const toastMsg = document.getElementById('settings-toast');
+                    showToast(toastMsg ? `${toastMsg.textContent}: ${label}` : label);
                 });
             });
         });
@@ -318,7 +329,10 @@
     // -------------------------------------------------------------------------
 
     function handleThemeChange(val) {
-        if (val === 'light') {
+        if (val === 'purple') {
+            document.documentElement.setAttribute('data-theme', 'purple');
+            document.body.classList.remove('light-mode');
+        } else if (val === 'light') {
             document.documentElement.setAttribute('data-theme', 'light');
             document.body.classList.add('light-mode');
         } else if (val === 'dark') {
@@ -471,7 +485,7 @@
                         settingsMap['cookie_policy'] = value;
                         settingsMap[id] = value;
                         localStorage.setItem(SETTINGS_KEY, JSON.stringify(settingsMap));
-                    } catch (_) {}
+                    } catch (_) { }
                     notifySettingChanged('cookie_policy', value);
                 }
             } else {
@@ -485,7 +499,7 @@
                         if (raw) settingsMap = JSON.parse(raw);
                         settingsMap[cb.id] = value;
                         localStorage.setItem(SETTINGS_KEY, JSON.stringify(settingsMap));
-                    } catch (_) {}
+                    } catch (_) { }
                     const ipcKey = cb.id.replace(/-/g, '_');
                     notifySettingChanged(ipcKey, value ? 'true' : 'false');
                 }
@@ -500,7 +514,7 @@
             if (raw) settingsMap = JSON.parse(raw);
             settingsMap['privacy_level'] = String(level);
             localStorage.setItem(SETTINGS_KEY, JSON.stringify(settingsMap));
-        } catch (_) {}
+        } catch (_) { }
         notifySettingChanged('privacy_level', String(level));
 
         updatePrivacySliderUI(level, false);
@@ -547,7 +561,7 @@
             if (slider) slider.value = matchedLevel;
             try {
                 localStorage.setItem('privacy_level', String(matchedLevel));
-            } catch (_) {}
+            } catch (_) { }
             notifySettingChanged('privacy_level', String(matchedLevel));
             updatePrivacySliderUI(matchedLevel, false);
         } else {
@@ -571,7 +585,7 @@
             if (slider) slider.value = closest;
             try {
                 localStorage.setItem('privacy_level', 'custom');
-            } catch (_) {}
+            } catch (_) { }
             notifySettingChanged('privacy_level', 'custom');
             updatePrivacySliderUI(closest, true);
         }
@@ -605,7 +619,7 @@
         let savedLevel = null;
         try {
             savedLevel = localStorage.getItem('privacy_level');
-        } catch (_) {}
+        } catch (_) { }
 
         if (savedLevel && savedLevel !== 'custom') {
             const lvl = parseInt(savedLevel, 10);
@@ -658,7 +672,7 @@
                 if (raw) settingsMap = JSON.parse(raw);
                 settingsMap[cb.id] = cb.checked;
                 localStorage.setItem(SETTINGS_KEY, JSON.stringify(settingsMap));
-            } catch (_) {}
+            } catch (_) { }
 
             const ipcKey = cb.id.replace(/-/g, '_');
             notifySettingChanged(ipcKey, cb.checked ? 'true' : 'false');
@@ -684,7 +698,7 @@
                     if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.clearHistory) {
                         window.webkit.messageHandlers.clearHistory.postMessage({});
                     }
-                } catch (_) {}
+                } catch (_) { }
                 showToast('История посещений успешно очищена');
             }
         });
@@ -737,6 +751,77 @@
                 notifySettingChanged('download_dir', path);
                 showToast(`Папка загрузок: ${path}`);
             }
+        });
+    }
+
+    // Bergamot WASM models management
+    const deleteAllBergamotBtn = document.getElementById('delete-all-bergamot-models-btn');
+    if (deleteAllBergamotBtn) {
+        deleteAllBergamotBtn.addEventListener('click', () => {
+            notifySettingChanged('delete_all_bergamot_models', 'true');
+            showToast('Локальные модели перевода Bergamot удалены');
+        });
+    }
+
+    function renderBergamotModels(models, totalSizeText) {
+        const totalEl = document.getElementById('bergamot-total-size');
+        if (totalEl && totalSizeText) {
+            totalEl.textContent = totalSizeText;
+        }
+        const container = document.getElementById('bergamot-models-list');
+        if (!container) return;
+        container.innerHTML = '';
+
+        const list = Array.isArray(models) ? models : [];
+        if (deleteAllBergamotBtn) {
+            deleteAllBergamotBtn.disabled = list.length === 0;
+        }
+
+        if (list.length === 0) {
+            const emptyRow = document.createElement('div');
+            emptyRow.className = 'setting-row';
+            emptyRow.innerHTML = `
+                <div class="setting-info">
+                    <span class="setting-desc">Нет скачанных языковых пакетов. Модели (~16–20 МБ) загружаются автоматически при нажатии «Перевести».</span>
+                </div>
+            `;
+            container.appendChild(emptyRow);
+            return;
+        }
+
+        list.forEach((item) => {
+            const row = document.createElement('div');
+            row.className = 'setting-row';
+
+            const info = document.createElement('div');
+            info.className = 'setting-info';
+
+            const name = document.createElement('span');
+            name.className = 'setting-name';
+            name.textContent = `Языковой пакет ${String(item.pair || '').toUpperCase()}`;
+
+            const desc = document.createElement('span');
+            desc.className = 'setting-desc';
+            desc.textContent = `Локальная нейросетевая модель (${item.size_formatted || ''})`;
+
+            info.appendChild(name);
+            info.appendChild(desc);
+
+            const ctrl = document.createElement('div');
+            ctrl.className = 'setting-control';
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'btn btn-secondary';
+            delBtn.textContent = 'Удалить';
+            delBtn.addEventListener('click', () => {
+                notifySettingChanged('delete_bergamot_model', item.pair);
+                showToast(`Модель ${item.pair} удалена`);
+            });
+
+            ctrl.appendChild(delBtn);
+            row.appendChild(info);
+            row.appendChild(ctrl);
+            container.appendChild(row);
         });
     }
 
@@ -795,11 +880,11 @@
         });
     }
 
-    window.updateSettingsPageData = function(data) {
+    window.updateSettingsPageData = function (data) {
         if (!data || typeof data !== 'object') return;
 
         if (data.ipc_token) {
-            window.__ECHO_IPC_TOKEN__ = data.ipc_token;
+            window.__TAKE_IPC_TOKEN__ = data.ipc_token;
         }
 
         // Custom selects
@@ -850,6 +935,23 @@
             downloadDesc.textContent = data['download_dir'];
         }
 
+        // Text inputs (custom URLs)
+        document.querySelectorAll('input.text-input[data-setting-key]').forEach(input => {
+            const key = input.dataset.settingKey;
+            if (data[key] !== undefined && data[key] !== null) {
+                input.value = data[key];
+            }
+        });
+        if (data['default_search_engine'] === 'custom') {
+            const customRow = document.getElementById('row-custom-search-url');
+            if (customRow) customRow.style.display = 'flex';
+        }
+
+        // Bergamot local translation models
+        if (data.bergamot_models !== undefined || data.bergamot_total_size !== undefined) {
+            renderBergamotModels(data.bergamot_models, data.bergamot_total_size);
+        }
+
         // Privacy Level Slider
         if (data.privacy_level !== undefined && data.privacy_level !== null) {
             if (data.privacy_level === 'custom') {
@@ -869,9 +971,54 @@
         }
     };
 
+    function initCacheClear() {
+        const btn = document.getElementById('btn-clean-cache');
+        if (!btn) return;
+        const originalText = btn.textContent;
+        btn.addEventListener('click', () => {
+            btn.disabled = true;
+            btn.textContent = '...';
+            notifySettingChanged('clear_cache', 'true');
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.textContent = originalText;
+                const toastMsg = document.getElementById('settings-toast');
+                if (toastMsg) showToast(toastMsg.textContent);
+            }, 400);
+        });
+    }
+
+    function initTextInputs() {
+        document.querySelectorAll('input.text-input[data-setting-key]').forEach(input => {
+            const key = input.dataset.settingKey;
+            const saved = localStorage.getItem(key);
+            if (saved !== null) {
+                input.value = saved;
+            }
+            input.addEventListener('change', () => {
+                const val = input.value.trim();
+                localStorage.setItem(key, val);
+                notifySettingChanged(key, val);
+                showToast(val || key);
+            });
+            input.addEventListener('blur', () => {
+                const val = input.value.trim();
+                localStorage.setItem(key, val);
+                notifySettingChanged(key, val);
+            });
+        });
+        const searchSelect = document.getElementById('select-default-search-engine');
+        if (searchSelect && searchSelect.dataset.value === 'custom') {
+            const customRow = document.getElementById('row-custom-search-url');
+            if (customRow) customRow.style.display = 'flex';
+        }
+    }
+
     // Initialize all components
     initTheme();
     initCustomSelects();
+    initTextInputs();
     loadOtherSettings();
     initPrivacySlider();
+    initCacheClear();
 })();

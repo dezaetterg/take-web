@@ -24,42 +24,42 @@ pub struct PermissionBar {
 impl PermissionBar {
     pub fn new() -> Rc<Self> {
         let container = GtkBox::new(Orientation::Horizontal, 10);
-        container.add_css_class("echo-permission-bar");
+        container.add_css_class("take-permission-bar");
 
         let icon = Image::from_icon_name("dialog-question-symbolic");
-        icon.add_css_class("echo-permission-icon");
+        icon.add_css_class("take-permission-icon");
         icon.set_pixel_size(20);
         container.append(&icon);
 
         let label = Label::new(None);
-        label.add_css_class("echo-permission-label");
+        label.add_css_class("take-permission-label");
         label.set_use_markup(true);
         label.set_ellipsize(gtk4::pango::EllipsizeMode::Middle);
         label.set_max_width_chars(65);
         label.set_xalign(0.0);
         container.append(&label);
 
-        let remember_check = CheckButton::with_label("Запомнить выбор");
-        remember_check.add_css_class("echo-permission-check");
+        let remember_check = CheckButton::with_label(crate::i18n::tr("permission_bar.remember"));
+        remember_check.add_css_class("take-permission-check");
         remember_check.set_active(true);
         container.append(&remember_check);
 
         let deny_btn = Button::builder()
-            .label("Заблокировать")
-            .css_classes(["echo-permission-deny-btn", "destructive-action"])
+            .label(crate::i18n::tr("permission_bar.deny"))
+            .css_classes(["take-permission-deny-btn", "destructive-action"])
             .build();
         container.append(&deny_btn);
 
         let allow_btn = Button::builder()
-            .label("Разрешить")
-            .css_classes(["echo-permission-allow-btn", "suggested-action"])
+            .label(crate::i18n::tr("permission_bar.allow"))
+            .css_classes(["take-permission-allow-btn", "suggested-action"])
             .build();
         container.append(&allow_btn);
 
         let close_btn = Button::builder()
             .icon_name("window-close-symbolic")
             .css_classes(["flat"])
-            .tooltip_text("Закрыть")
+            .tooltip_text(crate::i18n::tr("permission_bar.close_tooltip"))
             .build();
         container.append(&close_btn);
 
@@ -142,9 +142,13 @@ impl PermissionBar {
             None => String::new(),
         };
 
-        let markup = format!(
-            "Сайт <b>{}</b> запрашивает {}{}",
-            escaped_origin, info.description, detail_text
+        let markup = crate::i18n::tr_fmt(
+            "permission_bar.prompt",
+            &[
+                ("domain", &escaped_origin),
+                ("permission", &info.description),
+                ("details", &detail_text),
+            ],
         );
         self.label.set_markup(&markup);
         self.remember_check.set_active(true);

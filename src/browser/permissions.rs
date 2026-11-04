@@ -39,6 +39,7 @@ impl PermissionType {
         }
     }
 
+    #[cfg(test)]
     pub fn from_str(s: &str) -> Self {
         match s {
             "geolocation" => Self::Geolocation,
@@ -55,15 +56,15 @@ impl PermissionType {
 
     pub fn description(&self) -> &'static str {
         match self {
-            Self::Geolocation => "доступ к вашему местоположению",
-            Self::Microphone => "доступ к микрофону",
-            Self::Camera => "доступ к веб-камере",
-            Self::CameraAndMicrophone => "доступ к веб-камере и микрофону",
-            Self::Notifications => "отправку системных уведомлений",
-            Self::PointerLock => "захват указателя мыши",
-            Self::WebsiteDataAccess => "доступ к cookie и данным хранилища",
-            Self::MediaKeySystem => "доступ к защищённому DRM-контенту",
-            Self::Unknown => "системное разрешение",
+            Self::Geolocation => crate::i18n::tr("permission_bar.perm_geolocation"),
+            Self::Microphone => crate::i18n::tr("permission_bar.perm_microphone"),
+            Self::Camera => crate::i18n::tr("permission_bar.perm_camera"),
+            Self::CameraAndMicrophone => crate::i18n::tr("permission_bar.perm_camera_microphone"),
+            Self::Notifications => crate::i18n::tr("permission_bar.perm_notifications"),
+            Self::PointerLock => crate::i18n::tr("permission_bar.perm_pointer_lock"),
+            Self::WebsiteDataAccess => crate::i18n::tr("permission_bar.perm_storage"),
+            Self::MediaKeySystem => crate::i18n::tr("permission_bar.perm_media_keys"),
+            Self::Unknown => crate::i18n::tr("permission_bar.perm_unknown"),
         }
     }
 
@@ -152,9 +153,9 @@ pub fn inspect_request(request: &PermissionRequest) -> (PermissionType, Option<S
 pub fn extract_origin_from_uri(uri: &str) -> String {
     let trimmed = uri.trim();
     if let Ok(parsed) = url::Url::parse(trimmed) {
-        if parsed.scheme() == "echo" {
+        if parsed.scheme() == "take" {
             let host = parsed.host_str().unwrap_or("internal");
-            return format!("echo://{host}");
+            return format!("take://{host}");
         }
         let origin = parsed.origin().ascii_serialization();
         if origin != "null" && !origin.is_empty() {
@@ -190,8 +191,8 @@ mod tests {
             "https://vk.com:8443"
         );
         assert_eq!(
-            extract_origin_from_uri("echo://settings"),
-            "echo://settings"
+            extract_origin_from_uri("take://settings"),
+            "take://settings"
         );
     }
 

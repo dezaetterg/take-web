@@ -10,10 +10,10 @@ where
     G: Fn() + 'static,
 {
     let dialog = adw::AlertDialog::new(
-        Some("Защита приватной сессии"),
-        Some("Установите пароль для защиты приватных вкладок при переключении режима или блокировке экрана, либо продолжите без пароля."),
+        Some(crate::i18n::tr("private_lock.dialog_title")),
+        Some(crate::i18n::tr("private_lock.dialog_message")),
     );
-    dialog.add_css_class("echo-password-dialog");
+    dialog.add_css_class("take-password-dialog");
     if parent.has_css_class("light-mode") || !adw::StyleManager::default().is_dark() {
         dialog.add_css_class("light-mode");
     }
@@ -21,14 +21,14 @@ where
     let form = GtkBox::new(Orientation::Vertical, 8);
     let entry = PasswordEntry::builder()
         .show_peek_icon(true)
-        .placeholder_text("Пароль (опционально)")
+        .placeholder_text(crate::i18n::tr("private_lock.password_optional"))
         .activates_default(true)
         .build();
     form.append(&entry);
 
-    dialog.add_response("cancel", "Отмена");
-    dialog.add_response("skip", "Без пароля");
-    dialog.add_response("set", "Установить пароль");
+    dialog.add_response("cancel", crate::i18n::tr("private_lock.cancel"));
+    dialog.add_response("skip", crate::i18n::tr("private_lock.skip"));
+    dialog.add_response("set", crate::i18n::tr("private_lock.set_password"));
     dialog.set_response_appearance("set", adw::ResponseAppearance::Suggested);
     dialog.set_default_response(Some("set"));
     dialog.set_close_response("cancel");
@@ -82,10 +82,10 @@ fn show_unlock_password_dialog_internal(
     error_msg: Option<&str>,
 ) {
     let dialog = adw::AlertDialog::new(
-        Some("Приватная сессия заблокирована"),
-        Some("Введите пароль для доступа к приватным вкладкам."),
+        Some(crate::i18n::tr("private_lock.unlock_title")),
+        Some(crate::i18n::tr("private_lock.unlock_message")),
     );
-    dialog.add_css_class("echo-password-dialog");
+    dialog.add_css_class("take-password-dialog");
     if parent.has_css_class("light-mode") || !adw::StyleManager::default().is_dark() {
         dialog.add_css_class("light-mode");
     }
@@ -93,7 +93,7 @@ fn show_unlock_password_dialog_internal(
     let form = GtkBox::new(Orientation::Vertical, 8);
     let entry = PasswordEntry::builder()
         .show_peek_icon(true)
-        .placeholder_text("Пароль")
+        .placeholder_text(crate::i18n::tr("private_lock.password_required"))
         .activates_default(true)
         .build();
     form.append(&entry);
@@ -104,10 +104,10 @@ fn show_unlock_password_dialog_internal(
         form.append(&err_label);
     }
 
-    dialog.add_response("cancel", "Отмена");
-    dialog.add_response("wipe", "Забыл пароль / Завершить сессию");
+    dialog.add_response("cancel", crate::i18n::tr("private_lock.cancel"));
+    dialog.add_response("wipe", crate::i18n::tr("private_lock.forgot_password"));
     dialog.set_response_appearance("wipe", adw::ResponseAppearance::Destructive);
-    dialog.add_response("unlock", "Разблокировать");
+    dialog.add_response("unlock", crate::i18n::tr("private_lock.unlock"));
     dialog.set_response_appearance("unlock", adw::ResponseAppearance::Suggested);
     dialog.set_default_response(Some("unlock"));
     dialog.set_close_response("cancel");
@@ -130,7 +130,7 @@ fn show_unlock_password_dialog_internal(
                         c,
                         u,
                         w,
-                        Some("Неверный пароль. Попробуйте снова или завершите сессию."),
+                        Some(crate::i18n::tr("private_lock.wrong_password_desc")),
                     );
                 });
             }

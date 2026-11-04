@@ -126,7 +126,30 @@ pub fn trackers_page_payload(db: &BrowserDatabase) -> Value {
 
 pub fn settings_page_payload(db: &BrowserDatabase) -> Value {
     let settings = db.get_all_settings().unwrap_or_default();
-    json!(settings)
+    let mut val = json!(settings);
+    if let Some(map) = val.as_object_mut() {
+        let installed = crate::browser::translator::list_installed_models();
+        let models_json: Vec<Value> = installed
+            .into_iter()
+            .map(|m| {
+                json!({
+                    "pair": m.pair,
+                    "source_lang": m.source_lang,
+                    "target_lang": m.target_lang,
+                    "size_bytes": m.size_bytes,
+                    "size_formatted": crate::browser::translator::format_bytes(m.size_bytes),
+                })
+            })
+            .collect();
+        map.insert("bergamot_models".to_string(), Value::Array(models_json));
+        map.insert(
+            "bergamot_total_size".to_string(),
+            Value::String(crate::browser::translator::format_bytes(
+                crate::browser::translator::total_installed_bytes(),
+            )),
+        );
+    }
+    val
 }
 
 #[cfg(test)]

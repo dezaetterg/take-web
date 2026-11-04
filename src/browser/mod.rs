@@ -3,12 +3,15 @@ pub mod engine;
 pub mod error_page;
 pub mod favicon;
 pub mod memory_manager;
+pub mod mpris;
 pub mod network;
 pub mod performance;
 pub mod permissions;
 pub mod profile;
+pub mod reader;
 pub mod scheme_handler;
 pub mod session_manager;
+pub mod translator;
 
 #[allow(unused_imports)]
 pub use download_manager::DownloadManager;

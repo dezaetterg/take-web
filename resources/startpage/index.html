@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru" data-theme="dark">
+<html lang="{{current_lang}}" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,33 +14,33 @@
         <section class="search-section" id="section-search">
             <form class="search-bar" id="search-form">
                 <div class="search-engine-picker" id="search-engine-picker">
-                    <button type="button" class="search-engine-btn" id="search-engine-btn" aria-label="Выбрать поисковик" title="Выбрать поисковик на один запрос">
+                    <button type="button" class="search-engine-btn" id="search-engine-btn" aria-label="{{startpage.choose_search_engine}}" title="{{startpage.choose_search_engine}}">
                         <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
                     </button>
                     <div class="search-engine-dropdown" id="search-engine-dropdown" hidden>
-                        <div class="search-engine-header">Искать в:</div>
+                        <div class="search-engine-header">{{startpage.search_in}}</div>
                         <div class="search-engine-list">
                             <button type="button" class="search-engine-item" data-engine="google">Google</button>
                             <button type="button" class="search-engine-item" data-engine="yandex">Яндекс</button>
                             <button type="button" class="search-engine-item" data-engine="duckduckgo">DuckDuckGo</button>
                             <button type="button" class="search-engine-item" data-engine="bing">Bing</button>
-                            <button type="button" class="search-engine-item" data-engine="wikipedia">Википедия (ru)</button>
+                            <button type="button" class="search-engine-item" data-engine="wikipedia">Wikipedia</button>
                             <button type="button" class="search-engine-item" data-engine="perplexity">Perplexity</button>
                             <button type="button" class="search-engine-item" data-engine="startpage">Startpage</button>
                             <button type="button" class="search-engine-item" data-engine="brave">Brave</button>
                         </div>
                     </div>
                 </div>
-                <input type="text" class="search-input" id="search-input" placeholder="Введите запрос или адрес" autocomplete="off" spellcheck="false">
+                <input type="text" class="search-input" id="search-input" placeholder="{{startpage.search_placeholder}}" autocomplete="off" spellcheck="false">
             </form>
         </section>
 
         <!-- Favorites Section -->
         <section class="section" id="section-favorites">
-            <h2 class="section-title">Избранное</h2>
+            <h2 class="section-title">{{startpage.favorites}}</h2>
             <div class="favorites-grid" id="favorites-grid">
                 <!-- Apple -->
                 <a class="favorite-item" href="https://apple.com">
@@ -84,12 +84,23 @@
                     </div>
                     <span class="favorite-label">DuckDuckGo</span>
                 </a>
+
+                <!-- Add Favorite Button -->
+                <button class="favorite-item add-favorite-btn" id="add-favorite-btn" type="button" title="{{startpage.add_favorite}}">
+                    <div class="squircle-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </div>
+                    <span class="favorite-label">{{startpage.add_favorite}}</span>
+                </button>
             </div>
         </section>
 
         <!-- Privacy Report Section (Safari style) -->
         <section class="section" id="section-privacy">
-            <h2 class="section-title">Отчет о конфиденциальности</h2>
+            <h2 class="section-title">{{startpage.privacy_report}}</h2>
             <div class="glass-card privacy-card" id="privacy-card">
                 <div class="shield-badge">
                     <svg viewBox="0 0 24 24">
@@ -99,14 +110,14 @@
                     <span id="tracker-count">0</span>
                 </div>
                 <div class="privacy-description" id="privacy-text">
-                    Трекеры пока не блокировались.
+                    {{startpage.privacy_blocked_none}}
                 </div>
             </div>
         </section>
 
         <!-- Reading List Section (Safari style) -->
         <section class="section" id="section-reading">
-            <h2 class="section-title">Список для чтения</h2>
+            <h2 class="section-title">{{startpage.reading_list}}</h2>
             <div class="glass-card reading-item" id="reading-card">
                 <div class="reading-thumb">
                     <svg viewBox="0 0 24 24">
@@ -114,8 +125,8 @@
                     </svg>
                 </div>
                 <div class="reading-details">
-                    <div class="reading-title" id="reading-title">Добро пожаловать в Take Web</div>
-                    <div class="reading-preview" id="reading-preview">Быстрый, приватный и минималистичный веб-браузер для Linux с архитектурой Safari и нативной поддержкой Wayland.</div>
+                    <div class="reading-title" id="reading-title">{{startpage.welcome_title}}</div>
+                    <div class="reading-preview" id="reading-preview">{{startpage.welcome_preview}}</div>
                     <div class="reading-domain" id="reading-domain">takeweb.org</div>
                 </div>
             </div>
@@ -123,7 +134,20 @@
     </div>
 
     <!-- Firefox-style Customization Button (Fixed Top-Right) -->
-    <button class="customize-trigger-btn" id="customize-btn" type="button" title="Настройка начальной страницы">
+    <button class="customize-trigger-btn" id="customize-btn" type="button" title="{{startpage.customize_btn}}">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
+        </svg>
+        <span>{{startpage.customize_btn}}</span>
+    </button>
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="4" y1="21" x2="4" y2="14"></line>
             <line x1="4" y1="10" x2="4" y2="3"></line>
@@ -147,9 +171,9 @@
                     <circle cx="12" cy="12" r="3"></circle>
                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                 </svg>
-                <h3>Персонализация</h3>
+                <h3>{{startpage.customize_title}}</h3>
             </div>
-            <button class="drawer-close-btn" id="drawer-close-btn" type="button" title="Закрыть">
+            <button class="drawer-close-btn" id="drawer-close-btn" type="button" title="{{startpage.customize_close}}">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -161,35 +185,35 @@
             <!-- Wallpapers Section -->
             <div class="drawer-section">
                 <div class="drawer-section-header">
-                    <h4>Обои страницы</h4>
-                    <span class="drawer-section-desc">Выберите тему или добавьте свою фотографию</span>
+                    <h4>{{startpage.wallpapers_title}}</h4>
+                    <span class="drawer-section-desc">{{startpage.wallpapers_desc}}</span>
                 </div>
 
                 <div class="wallpaper-grid" id="wallpaper-grid">
                     <!-- Default Theme Option -->
-                    <button class="wallpaper-card active" data-wallpaper="none" type="button" title="Без обоев">
+                    <button class="wallpaper-card active" data-wallpaper="none" type="button" title="{{startpage.wallpaper_none}}">
                         <div class="wallpaper-thumb default-thumb">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="9"></circle>
                                 <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
                             </svg>
                         </div>
-                        <span class="wallpaper-card-name">Без обоев</span>
+                        <span class="wallpaper-card-name">{{startpage.wallpaper_none}}</span>
                     </button>
 
                     <!-- Custom Photo Upload Option -->
                     <div class="wallpaper-card-wrapper" id="custom-wallpaper-wrapper">
                         <input type="file" id="wallpaper-file-input" accept="image/*" style="display: none;">
-                        <button class="wallpaper-card custom-card" id="upload-custom-btn" data-wallpaper="custom" type="button" title="Загрузить свое фото">
+                        <button class="wallpaper-card custom-card" id="upload-custom-btn" data-wallpaper="custom" type="button" title="{{startpage.wallpaper_custom}}">
                             <div class="wallpaper-thumb upload-thumb" id="custom-thumb">
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <line x1="12" y1="5" x2="12" y2="19"></line>
                                     <line x1="5" y1="12" x2="19" y2="12"></line>
                                 </svg>
                             </div>
-                            <span class="wallpaper-card-name" id="custom-card-label">Свое фото</span>
+                            <span class="wallpaper-card-name" id="custom-card-label">{{startpage.wallpaper_custom}}</span>
                         </button>
-                        <button class="delete-custom-btn" id="delete-custom-btn" type="button" title="Удалить свое фото" style="display: none;">
+                        <button class="delete-custom-btn" id="delete-custom-btn" type="button" title="{{startpage.wallpaper_custom_delete}}" style="display: none;">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                 <line x1="18" y1="6" x2="6" y2="18"></line>
                                 <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -197,35 +221,40 @@
                         </button>
                     </div>
 
-                    <!-- Presets (Zero-network offline high-resolution gradients) -->
-                    <button class="wallpaper-card" data-wallpaper="gradient:linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #00c6ff 100%)" type="button" title="Горное озеро">
+                    <!-- Presets (Zero-network offline high-resolution wallpapers & gradients) -->
+                    <button class="wallpaper-card" data-wallpaper="purple_hills.png" type="button" title="{{startpage.wallpaper_hills}}">
+                        <div class="wallpaper-thumb" style="background: url('purple_hills.png') center/cover no-repeat;"></div>
+                        <span class="wallpaper-card-name">{{startpage.wallpaper_hills}}</span>
+                    </button>
+
+                    <button class="wallpaper-card" data-wallpaper="gradient:linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #00c6ff 100%)" type="button" title="{{startpage.wallpaper_mountains}}">
                         <div class="wallpaper-thumb" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #00c6ff 100%);"></div>
-                        <span class="wallpaper-card-name">Горы</span>
+                        <span class="wallpaper-card-name">{{startpage.wallpaper_mountains}}</span>
                     </button>
 
-                    <button class="wallpaper-card" data-wallpaper="gradient:linear-gradient(135deg, #fa709a 0%, #fee140 100%)" type="button" title="Закат">
+                    <button class="wallpaper-card" data-wallpaper="gradient:linear-gradient(135deg, #fa709a 0%, #fee140 100%)" type="button" title="{{startpage.wallpaper_sunset}}">
                         <div class="wallpaper-thumb" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);"></div>
-                        <span class="wallpaper-card-name">Закат</span>
+                        <span class="wallpaper-card-name">{{startpage.wallpaper_sunset}}</span>
                     </button>
 
-                    <button class="wallpaper-card" data-wallpaper="gradient:linear-gradient(135deg, #134e5e 0%, #71b280 100%)" type="button" title="Туманный лес">
+                    <button class="wallpaper-card" data-wallpaper="gradient:linear-gradient(135deg, #134e5e 0%, #71b280 100%)" type="button" title="{{startpage.wallpaper_forest}}">
                         <div class="wallpaper-thumb" style="background: linear-gradient(135deg, #134e5e 0%, #71b280 100%);"></div>
-                        <span class="wallpaper-card-name">Лес</span>
+                        <span class="wallpaper-card-name">{{startpage.wallpaper_forest}}</span>
                     </button>
 
-                    <button class="wallpaper-card" data-wallpaper="gradient:linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)" type="button" title="Глубокий космос">
+                    <button class="wallpaper-card" data-wallpaper="gradient:linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)" type="button" title="{{startpage.wallpaper_space}}">
                         <div class="wallpaper-thumb" style="background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);"></div>
-                        <span class="wallpaper-card-name">Космос</span>
+                        <span class="wallpaper-card-name">{{startpage.wallpaper_space}}</span>
                     </button>
 
-                    <button class="wallpaper-card" data-wallpaper="gradient:linear-gradient(135deg, #f72585 0%, #7209b7 50%, #4361ee 100%)" type="button" title="Неон">
+                    <button class="wallpaper-card" data-wallpaper="gradient:linear-gradient(135deg, #f72585 0%, #7209b7 50%, #4361ee 100%)" type="button" title="{{startpage.wallpaper_neon}}">
                         <div class="wallpaper-thumb" style="background: linear-gradient(135deg, #f72585 0%, #7209b7 50%, #4361ee 100%);"></div>
-                        <span class="wallpaper-card-name">Неон</span>
+                        <span class="wallpaper-card-name">{{startpage.wallpaper_neon}}</span>
                     </button>
 
-                    <button class="wallpaper-card" data-wallpaper="gradient:linear-gradient(135deg, #00b4db 0%, #0083b0 100%)" type="button" title="Океан">
+                    <button class="wallpaper-card" data-wallpaper="gradient:linear-gradient(135deg, #00b4db 0%, #0083b0 100%)" type="button" title="{{startpage.wallpaper_ocean}}">
                         <div class="wallpaper-thumb" style="background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%);"></div>
-                        <span class="wallpaper-card-name">Океан</span>
+                        <span class="wallpaper-card-name">{{startpage.wallpaper_ocean}}</span>
                     </button>
                 </div>
             </div>
@@ -233,15 +262,15 @@
             <!-- Page Sections Toggle (Firefox style) -->
             <div class="drawer-section">
                 <div class="drawer-section-header">
-                    <h4>Элементы страницы</h4>
-                    <span class="drawer-section-desc">Включение и отключение блоков</span>
+                    <h4>{{startpage.sections_title}}</h4>
+                    <span class="drawer-section-desc">{{startpage.sections_desc}}</span>
                 </div>
 
                 <div class="toggle-list">
                     <label class="toggle-row" for="toggle-search">
                         <div class="toggle-info">
-                            <span class="toggle-title">Строка поиска</span>
-                            <span class="toggle-subtitle">Быстрый поиск в DuckDuckGo или ввод адреса</span>
+                            <span class="toggle-title">{{startpage.section_search_title}}</span>
+                            <span class="toggle-subtitle">{{startpage.section_search_sub}}</span>
                         </div>
                         <div class="switch">
                             <input type="checkbox" id="toggle-search" checked>
@@ -251,8 +280,8 @@
 
                     <label class="toggle-row" for="toggle-favorites">
                         <div class="toggle-info">
-                            <span class="toggle-title">Избранное</span>
-                            <span class="toggle-subtitle">Быстрый доступ к закрепленным сайтам</span>
+                            <span class="toggle-title">{{startpage.section_favorites_title}}</span>
+                            <span class="toggle-subtitle">{{startpage.section_favorites_sub}}</span>
                         </div>
                         <div class="switch">
                             <input type="checkbox" id="toggle-favorites" checked>
@@ -262,8 +291,8 @@
 
                     <label class="toggle-row" for="toggle-privacy">
                         <div class="toggle-info">
-                            <span class="toggle-title">Отчет о конфиденциальности</span>
-                            <span class="toggle-subtitle">Счетчик заблокированных трекеров Take Shield</span>
+                            <span class="toggle-title">{{startpage.section_privacy_title}}</span>
+                            <span class="toggle-subtitle">{{startpage.section_privacy_sub}}</span>
                         </div>
                         <div class="switch">
                             <input type="checkbox" id="toggle-privacy" checked>
@@ -273,8 +302,8 @@
 
                     <label class="toggle-row" for="toggle-reading">
                         <div class="toggle-info">
-                            <span class="toggle-title">Список для чтения</span>
-                            <span class="toggle-subtitle">Сохраненные статьи и материалы</span>
+                            <span class="toggle-title">{{startpage.section_reading_title}}</span>
+                            <span class="toggle-subtitle">{{startpage.section_reading_sub}}</span>
                         </div>
                         <div class="switch">
                             <input type="checkbox" id="toggle-reading" checked>
@@ -285,6 +314,30 @@
             </div>
         </div>
     </aside>
+
+    <!-- Add Favorite Modal Dialog -->
+    <div id="add-favorite-modal" class="modal-backdrop" hidden>
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">{{startpage.add_favorite}}</h3>
+                <button type="button" class="modal-close" id="add-favorite-close">&times;</button>
+            </div>
+            <form id="add-favorite-form" class="modal-form">
+                <div class="modal-field">
+                    <label for="fav-title-input">{{startpage.add_favorite_title}}</label>
+                    <input type="text" id="fav-title-input" class="modal-input" placeholder="YouTube, Reddit, News..." required>
+                </div>
+                <div class="modal-field">
+                    <label for="fav-url-input">{{startpage.add_favorite_url}}</label>
+                    <input type="text" id="fav-url-input" class="modal-input" placeholder="https://..." required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="modal-btn secondary" id="add-favorite-cancel">{{startpage.add_favorite_cancel}}</button>
+                    <button type="submit" class="modal-btn primary">{{startpage.add_favorite_submit}}</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script src="startpage.js"></script>
 </body>

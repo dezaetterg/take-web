@@ -1,7 +1,65 @@
 /// Classifies a resource URL against known tracker patterns and returns (domain, rule_description)
 pub fn classify_tracker(url_str: &str) -> Option<(String, String)> {
-    let parsed = url::Url::parse(url_str).ok()?;
-    let host = parsed.host_str()?.to_lowercase();
+    let trimmed = url_str.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+
+    // Support relative paths (e.g. "/gen_204?...") used by in-page beacons
+    let (host, path) = if let Ok(parsed) = url::Url::parse(trimmed) {
+        let host = parsed.host_str().unwrap_or_default().to_lowercase();
+        let path = parsed.path().to_lowercase();
+        (host, path)
+    } else {
+        let lower = trimmed.to_lowercase();
+        if lower.starts_with('/') {
+            (String::new(), lower)
+        } else {
+            (lower.clone(), lower)
+        }
+    };
+
+    // Google telemetry & tracking endpoints (including relative beacons on google.com)
+    if path.contains("gen_204") {
+        return Some((
+            "google.com/gen_204".to_string(),
+            "Google Telemetry (gen_204)".to_string(),
+        ));
+    }
+    if path.contains("client_204") {
+        return Some((
+            "google.com/client_204".to_string(),
+            "Google Telemetry (client_204)".to_string(),
+        ));
+    }
+    if host.contains("ogads-pa.") || host.starts_with("ogads-pa.clients6.google.") {
+        return Some((
+            "ogads-pa.clients6.google.com".to_string(),
+            "Google Ad Personalization".to_string(),
+        ));
+    }
+    if host.starts_with("play.google.") && path.contains("log") {
+        return Some((
+            "play.google.com/log".to_string(),
+            "Google Play Telemetry".to_string(),
+        ));
+    }
+
+    // Meta Pixel /tr/ endpoint
+    if host.contains("facebook.com") && path.contains("/tr") {
+        return Some((
+            "pixel.facebook.com".to_string(),
+            "Meta Pixel & Social".to_string(),
+        ));
+    }
+
+    // Yandex Click telemetry
+    if host.contains("yandex.") && path.contains("/clck") {
+        return Some((
+            "yandex.ru/clck".to_string(),
+            "Yandex Telemetry (clck)".to_string(),
+        ));
+    }
 
     let trackers: &[(&[&str], &str, &str)] = &[
         (
@@ -14,6 +72,8 @@ pub fn classify_tracker(url_str: &str) -> Option<(String, String)> {
                 "doubleclick.net",
                 "googleadservices.com",
                 "googlesyndication.com",
+                "2mdn.net",
+                "admob.com",
             ],
             "doubleclick.net",
             "Google Advertising",
@@ -24,7 +84,7 @@ pub fn classify_tracker(url_str: &str) -> Option<(String, String)> {
             "Meta Pixel & Social",
         ),
         (
-            &["mc.yandex.ru", "an.yandex.ru"],
+            &["mc.yandex.ru", "an.yandex.ru", "awaps.yandex.net"],
             "mc.yandex.ru",
             "Yandex Metrika",
         ),
@@ -126,6 +186,27 @@ mod tests {
         assert_eq!(
             classify_tracker("https://c.clarity.ms/s/0.7.20/clarity.js"),
             Some(("clarity.ms".to_string(), "Microsoft Clarity".to_string()))
+        );
+        assert_eq!(
+            classify_tracker("/gen_204?s=web&t=42"),
+            Some((
+                "google.com/gen_204".to_string(),
+                "Google Telemetry (gen_204)".to_string()
+            ))
+        );
+        assert_eq!(
+            classify_tracker("https://www.google.com/gen_204?s=web"),
+            Some((
+                "google.com/gen_204".to_string(),
+                "Google Telemetry (gen_204)".to_string()
+            ))
+        );
+        assert_eq!(
+            classify_tracker("https://ogads-pa.clients6.google.com/v1/user"),
+            Some((
+                "ogads-pa.clients6.google.com".to_string(),
+                "Google Ad Personalization".to_string()
+            ))
         );
         assert_eq!(classify_tracker("https://github.com/rust-lang/rust"), None);
     }

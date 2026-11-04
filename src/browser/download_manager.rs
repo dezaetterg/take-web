@@ -67,11 +67,6 @@ impl DownloadManager {
         self.ask_destination.set(ask);
     }
 
-    /// Returns whether to ask for destination location.
-    pub fn ask_destination(&self) -> bool {
-        self.ask_destination.get()
-    }
-
     /// Clears any in-RAM downloads that originated from private (incognito) browsing.
     pub fn clear_private_downloads(&self) {
         self.items.borrow_mut().retain(|it| !it.borrow().is_private);
@@ -323,14 +318,6 @@ impl DownloadManager {
         self.items.borrow().clone()
     }
 
-    /// Checks if any downloads are currently active.
-    pub fn has_active_downloads(&self) -> bool {
-        self.items
-            .borrow()
-            .iter()
-            .any(|item| item.borrow().status == DownloadStatus::Downloading)
-    }
-
     /// Resolves an optimal and safe filename using WebKit's suggested name,
     /// falling back to the URL path or response MIME type if generic.
     pub fn resolve_suggested_filename(
@@ -512,21 +499,21 @@ mod tests {
 
     #[test]
     fn test_unique_destination_non_existent() {
-        let temp_dir = std::env::temp_dir().join("echo_download_test_unique");
+        let temp_dir = std::env::temp_dir().join("take_download_test_unique");
         let dest = DownloadManager::unique_destination(&temp_dir, "archive.tar.gz");
         assert_eq!(dest, temp_dir.join("archive.tar.gz"));
     }
 
     #[test]
     fn test_unique_destination_traversal_prevented() {
-        let temp_dir = std::env::temp_dir().join("echo_download_test_trav");
+        let temp_dir = std::env::temp_dir().join("take_download_test_trav");
         let dest = DownloadManager::unique_destination(&temp_dir, "../../evil.sh");
         assert_eq!(dest, temp_dir.join("evil.sh"));
     }
 
     #[test]
     fn test_unique_destination_handles_collisions() {
-        let temp_dir = std::env::temp_dir().join("echo_download_test_collision");
+        let temp_dir = std::env::temp_dir().join("take_download_test_collision");
         let _ = std::fs::create_dir_all(&temp_dir);
         let first_file = temp_dir.join("document.pdf");
         let _ = std::fs::write(&first_file, b"test");

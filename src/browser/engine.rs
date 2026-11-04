@@ -16,6 +16,10 @@ use super::scheme_handler;
 pub type TrackerCallback = Rc<dyn Fn(&str, &str)>;
 pub type FingerprintCallback = Rc<dyn Fn(&str, u64)>;
 pub type SettingsChangeCallback = Rc<dyn Fn(&str, &str)>;
+pub type TranslateIpcCallback = Rc<dyn Fn(&str)>;
+pub type ReaderModeCallback = Rc<dyn Fn(bool, &str)>;
+pub type ActionCallback = Rc<dyn Fn(&str)>;
+pub type MediaIpcCallback = Rc<dyn Fn(&str, &str, &str, &str)>;
 pub type EphemeralSessionCallback = Rc<dyn Fn(&webkit6::NetworkSession)>;
 
 pub struct BrowserEngine {
@@ -28,12 +32,14 @@ pub struct BrowserEngine {
     work_user_content_manager: UserContentManager,
     hardened_user_content_manager: UserContentManager,
     content_filter: Rc<RefCell<Option<UserContentFilter>>>,
-    /// Only the `--test-suite` run needs the console -> stdout bridge. Injecting it
-    /// into every frame of every site floods the IPC channel on script-heavy pages.
-    test_mode: bool,
     tracker_callback: Rc<RefCell<Option<TrackerCallback>>>,
     fingerprint_callback: Rc<RefCell<Option<FingerprintCallback>>>,
     settings_callback: Rc<RefCell<Option<SettingsChangeCallback>>>,
+    translate_callback: Rc<RefCell<Option<TranslateIpcCallback>>>,
+    translator_host_callback: Rc<RefCell<Option<TranslateIpcCallback>>>,
+    reader_mode_callback: Rc<RefCell<Option<ReaderModeCallback>>>,
+    action_callback: Rc<RefCell<Option<ActionCallback>>>,
+    media_callback: Rc<RefCell<Option<MediaIpcCallback>>>,
     ephemeral_session_callback: Rc<RefCell<Option<EphemeralSessionCallback>>>,
     ipc_token: String,
 }
@@ -46,19 +52,19 @@ impl BrowserEngine {
         // compiled JIT bytecode and decoded images.
         web_context.set_cache_model(CacheModel::WebBrowser);
 
-        // Internal pages are served from memory over `echo://`; no file:// access needed.
+        // Internal pages are served from memory over `take://`; no file:// access needed.
         scheme_handler::register(&web_context);
 
-        // Standardize Accept-Language headers for Hardened profile to match standard Safari
-        if profile.enables_anti_fingerprinting() {
-            web_context.set_preferred_languages(&["en-US", "en"]);
-            web_context.set_spell_checking_languages(&["en_US"]);
-        }
+        // Set WebKit preferred languages according to configured UI language
+        let preferred = crate::i18n::current_language().webkit_preferred_languages();
+        let spell = crate::i18n::current_language().spell_checking_languages();
+        web_context.set_preferred_languages(preferred);
+        web_context.set_spell_checking_languages(spell);
 
         // WebKit Bubblewrap sandbox path configuration for fonts and system resources
         Self::configure_sandbox_paths(&web_context);
 
-        // Persistent NetworkSession with 500 MB disk cache in ~/.cache/echo-browser/http-cache/,
+        // Persistent NetworkSession with 500 MB disk cache in ~/.cache/takeweb/http-cache/,
         // ITP enabled, and HTTPS-Only / strict TLS policy.
         let network_manager = NetworkManager::new();
 
@@ -70,20 +76,53 @@ impl BrowserEngine {
         let hardened_user_content_manager = UserContentManager::new();
         Self::setup_internal_handlers(&hardened_user_content_manager);
 
-        // Inject cryptographic session token strictly into internal echo:// origins
+        // Inject cryptographic session token strictly into internal take:// origins
         let token_js = format!(
-            "window.__ECHO_IPC_TOKEN__ = Object.freeze('{}');",
+            "window.__TAKE_IPC_TOKEN__ = Object.freeze('{}');",
             ipc_token
         );
         let token_script = UserScript::new(
             &token_js,
             UserContentInjectedFrames::AllFrames,
             UserScriptInjectionTime::Start,
-            &["echo://*", "take://*"],
+            &["take://*"],
             &[],
         );
         work_user_content_manager.add_script(&token_script);
         hardened_user_content_manager.add_script(&token_script);
+
+        // Inject local Bergamot WASM page translator & floating selection popup into web pages
+        let translator_script = UserScript::new(
+            crate::browser::translator::PAGE_TRANSLATOR_SCRIPT,
+            UserContentInjectedFrames::TopFrame,
+            UserScriptInjectionTime::End,
+            &[],
+            &["take://*"],
+        );
+        work_user_content_manager.add_script(&translator_script);
+        hardened_user_content_manager.add_script(&translator_script);
+
+        // Inject Reader Mode (DOM article extractor, dark/sepia themes, clean typography)
+        let reader_script = UserScript::new(
+            crate::browser::reader::READER_MODE_SCRIPT,
+            UserContentInjectedFrames::TopFrame,
+            UserScriptInjectionTime::End,
+            &[],
+            &["take://*"],
+        );
+        work_user_content_manager.add_script(&reader_script);
+        hardened_user_content_manager.add_script(&reader_script);
+
+        // Inject MPRIS media playback listener for audio/video media session events
+        let media_script = UserScript::new(
+            crate::browser::mpris::MEDIA_LISTENER_SCRIPT,
+            UserContentInjectedFrames::AllFrames,
+            UserScriptInjectionTime::End,
+            &[],
+            &[],
+        );
+        work_user_content_manager.add_script(&media_script);
+        hardened_user_content_manager.add_script(&media_script);
 
         // Inject stealth Anti-Fingerprinting shield into Hardened profile
         let anti_fp_script = crate::privacy::anti_fingerprint::create_user_script();
@@ -132,7 +171,10 @@ impl BrowserEngine {
         }
 
         let content_filter = Rc::new(RefCell::new(None));
-        Self::init_content_filter(&content_filter, &hardened_user_content_manager);
+        Self::init_content_filter(
+            &content_filter,
+            &[&work_user_content_manager, &hardened_user_content_manager],
+        );
 
         Self {
             web_context,
@@ -144,10 +186,14 @@ impl BrowserEngine {
             work_user_content_manager,
             hardened_user_content_manager,
             content_filter,
-            test_mode,
             tracker_callback: Rc::new(RefCell::new(None)),
             fingerprint_callback: Rc::new(RefCell::new(None)),
             settings_callback: Rc::new(RefCell::new(None)),
+            translate_callback: Rc::new(RefCell::new(None)),
+            translator_host_callback: Rc::new(RefCell::new(None)),
+            reader_mode_callback: Rc::new(RefCell::new(None)),
+            action_callback: Rc::new(RefCell::new(None)),
+            media_callback: Rc::new(RefCell::new(None)),
             ephemeral_session_callback: Rc::new(RefCell::new(None)),
             ipc_token,
         }
@@ -192,10 +238,10 @@ impl BrowserEngine {
 
     fn init_content_filter(
         filter_slot: &Rc<RefCell<Option<UserContentFilter>>>,
-        ucm: &UserContentManager,
+        ucms: &[&UserContentManager],
     ) {
         let mut filter_dir = glib::user_cache_dir();
-        filter_dir.push("echo-browser");
+        filter_dir.push("takeweb");
         filter_dir.push("filters");
         if let Err(err) = std::fs::create_dir_all(&filter_dir) {
             log::warn!("could not create filter cache dir: {err}");
@@ -207,15 +253,17 @@ impl BrowserEngine {
 
         let store = UserContentFilterStore::new(&filter_dir.to_string_lossy());
         let slot = filter_slot.clone();
-        let ucm_clone = ucm.clone();
+        let ucm_clones: Vec<UserContentManager> = ucms.iter().map(|u| (*u).clone()).collect();
         store.save(
-            "echo_default_filters",
+            "take_default_filters",
             &rules_bytes,
             None::<&gio::Cancellable>,
             move |result| match result {
                 Ok(filter) => {
                     log::info!("Compiled and loaded WebKit content blocker rules");
-                    ucm_clone.add_filter(&filter);
+                    for ucm in &ucm_clones {
+                        ucm.add_filter(&filter);
+                    }
                     *slot.borrow_mut() = Some(filter);
                 }
                 Err(err) => {
@@ -272,6 +320,10 @@ impl BrowserEngine {
                             if let Some(host) = parsed_url.host_str() {
                                 cb(host, rule);
                             }
+                        } else if url.contains("gen_204") {
+                            cb("google.com/gen_204", "Google Telemetry (gen_204)");
+                        } else if url.contains("client_204") {
+                            cb("google.com/client_204", "Google Telemetry (client_204)");
                         }
                     }
                 }
@@ -358,6 +410,121 @@ impl BrowserEngine {
         }
     }
 
+    /// Registers the `takeTranslate` IPC handler for the local Bergamot WASM translator.
+    pub fn setup_translate_listener<F: Fn(&str) + 'static>(&self, callback: F) {
+        let callback = Rc::new(callback);
+        *self.translate_callback.borrow_mut() = Some(callback.clone());
+        for ucm in [
+            &self.work_user_content_manager,
+            &self.hardened_user_content_manager,
+        ] {
+            ucm.register_script_message_handler("takeTranslate", None);
+            let cb = callback.clone();
+            ucm.connect_script_message_received(Some("takeTranslate"), move |_, val| {
+                let raw = val.to_str();
+                let json_str = raw.as_str();
+                if json_str.len() <= 262_144 {
+                    cb(json_str);
+                }
+            });
+        }
+    }
+
+    /// Registers the `takeTranslatorHost` IPC handler for the internal Bergamot WASM host WebView.
+    pub fn setup_translator_host_listener<F: Fn(&str) + 'static>(&self, callback: F) {
+        let callback = Rc::new(callback);
+        *self.translator_host_callback.borrow_mut() = Some(callback);
+    }
+
+    /// Registers the `takeReaderMode` IPC handler for Reader Mode status updates.
+    pub fn setup_reader_mode_listener<F: Fn(bool, &str) + 'static>(&self, callback: F) {
+        let callback = Rc::new(callback);
+        *self.reader_mode_callback.borrow_mut() = Some(callback.clone());
+        for ucm in [
+            &self.work_user_content_manager,
+            &self.hardened_user_content_manager,
+        ] {
+            ucm.register_script_message_handler("takeReaderMode", None);
+            let cb = callback.clone();
+            ucm.connect_script_message_received(Some("takeReaderMode"), move |_, val| {
+                let raw = val.to_str();
+                let json_str = raw.as_str();
+                if let Ok(obj) = serde_json::from_str::<serde_json::Value>(json_str) {
+                    let active = obj.get("active").and_then(|v| v.as_bool()).unwrap_or(false);
+                    let url = obj.get("url").and_then(|v| v.as_str()).unwrap_or("");
+                    cb(active, url);
+                }
+            });
+        }
+    }
+
+    /// Registers the `takeAction` IPC handler for internal pages (e.g. adding a favorite from start page).
+    pub fn setup_action_listener<F: Fn(&str) + 'static>(&self, callback: F) {
+        let callback = Rc::new(callback);
+        *self.action_callback.borrow_mut() = Some(callback.clone());
+        for ucm in [
+            &self.work_user_content_manager,
+            &self.hardened_user_content_manager,
+        ] {
+            ucm.register_script_message_handler("takeAction", None);
+            let cb = callback.clone();
+            ucm.connect_script_message_received(Some("takeAction"), move |_, val| {
+                let raw = val.to_str();
+                cb(raw.as_str());
+            });
+        }
+    }
+
+    /// Registers the `takeMedia` IPC handler for WebKit audio/video playback and mediaSession metadata.
+    pub fn setup_media_listener<F: Fn(&str, &str, &str, &str) + 'static>(&self, callback: F) {
+        let callback = Rc::new(callback);
+        *self.media_callback.borrow_mut() = Some(callback.clone());
+        for ucm in [
+            &self.work_user_content_manager,
+            &self.hardened_user_content_manager,
+        ] {
+            ucm.register_script_message_handler("takeMedia", None);
+            let cb = callback.clone();
+            ucm.connect_script_message_received(Some("takeMedia"), move |_, val| {
+                let raw = val.to_str();
+                let json_str = raw.as_str();
+                if let Ok(obj) = serde_json::from_str::<serde_json::Value>(json_str) {
+                    let event = obj.get("event").and_then(|v| v.as_str()).unwrap_or("");
+                    let title = obj.get("title").and_then(|v| v.as_str()).unwrap_or("");
+                    let artist = obj.get("artist").and_then(|v| v.as_str()).unwrap_or("");
+                    let url = obj.get("url").and_then(|v| v.as_str()).unwrap_or("");
+                    cb(event, title, artist, url);
+                }
+            });
+        }
+    }
+
+    /// Creates a dedicated internal WebView running `take://translator/index.html`
+    /// so Bergamot WASM executes in an isolated first-party context immune to website CSP.
+    pub fn create_translator_view(&self) -> WebView {
+        let ucm = UserContentManager::new();
+        ucm.register_script_message_handler("takeTranslatorHost", None);
+        let host_cb_slot = self.translator_host_callback.clone();
+        ucm.connect_script_message_received(Some("takeTranslatorHost"), move |_, val| {
+            let raw = val.to_str();
+            let json_str = raw.as_str();
+            if json_str.len() <= 262_144 {
+                if let Some(ref cb) = *host_cb_slot.borrow() {
+                    cb(json_str);
+                }
+            }
+        });
+
+        let view = WebView::builder()
+            .web_context(&self.web_context)
+            .network_session(self.network_manager.session())
+            .settings(&self.internal_settings)
+            .user_content_manager(&ucm)
+            .build();
+        view.load_uri("take://translator/index.html");
+        view
+    }
+
     /// Test-suite only: forwards `console.log` and test results to stdout.
     pub fn setup_console_interceptor(ucm: &UserContentManager) {
         ucm.register_script_message_handler("consoleMessage", None);
@@ -366,8 +533,8 @@ impl BrowserEngine {
         // Inject script to forward console.log into the Rust WebKit bridge
         let script_source = r#"
         (function() {
-            if (window.__echo_console_hooked__) return;
-            window.__echo_console_hooked__ = true;
+            if (window.__take_console_hooked__) return;
+            window.__take_console_hooked__ = true;
             const origLog = console.log;
             console.log = function(...args) {
                 origLog.apply(console, args);
@@ -508,15 +675,15 @@ impl BrowserEngine {
                 if let Some(uri_gstr) = request.uri() {
                     let uri_str = uri_gstr.to_string();
                     let cb_slot = tracker_cb_slot.clone();
-                    resource.connect_failed(move |_res, error| {
-                        let err_msg = error.message();
-                        if let Some((domain, rule)) =
-                            crate::privacy::tracker_stats::classify_tracker(&uri_str)
-                        {
-                            if let Some(cb) = cb_slot.borrow().as_ref() {
-                                cb(&domain, &rule);
-                            }
-                        } else {
+                    if let Some((domain, rule)) =
+                        crate::privacy::tracker_stats::classify_tracker(&uri_str)
+                    {
+                        if let Some(cb) = cb_slot.borrow().as_ref() {
+                            cb(&domain, &rule);
+                        }
+                    } else {
+                        resource.connect_failed(move |_res, error| {
+                            let err_msg = error.message();
                             let err_lower = err_msg.to_lowercase();
                             if err_lower.contains("cancelled") || err_lower.contains("blocked") {
                                 if let Ok(parsed) = url::Url::parse(&uri_str) {
@@ -535,8 +702,8 @@ impl BrowserEngine {
                                     }
                                 }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
             }
         });
@@ -552,37 +719,14 @@ impl BrowserEngine {
         *self.profile.borrow()
     }
 
-    pub fn user_content_manager(&self) -> &UserContentManager {
-        match *self.profile.borrow() {
-            BrowserProfile::Work => &self.work_user_content_manager,
-            BrowserProfile::Hardened => &self.hardened_user_content_manager,
-        }
-    }
-
     pub fn content_filter(&self) -> Rc<RefCell<Option<UserContentFilter>>> {
         Rc::clone(&self.content_filter)
     }
 
-    pub fn settings(&self) -> &Settings {
-        &self.web_settings
-    }
-
-    pub fn web_settings(&self) -> &Settings {
-        &self.web_settings
-    }
-
-    pub fn internal_settings(&self) -> &Settings {
-        &self.internal_settings
-    }
-
-    /// Checks if a URI represents an internal browser interface (echo:// or about:).
+    /// Checks if a URI represents an internal browser interface (take:// or about:).
     pub fn is_internal_uri(uri: &str) -> bool {
         let logical = Self::logical_url(uri);
-        logical.starts_with("echo://")
-            || logical.starts_with("take://")
-            || uri.starts_with("echo://")
-            || uri.starts_with("take://")
-            || uri.starts_with("about:")
+        logical.starts_with("take://") || uri.starts_with("take://") || uri.starts_with("about:")
     }
 
     /// Dynamically binds either internal_settings (where JS is always enabled for browser UI)
@@ -593,10 +737,6 @@ impl BrowserEngine {
         } else {
             view.set_settings(&self.web_settings);
         }
-    }
-
-    pub fn network_manager_mut(&mut self) -> &mut NetworkManager {
-        &mut self.network_manager
     }
 
     pub fn set_hardware_acceleration(&self, enabled: bool) {
@@ -673,14 +813,6 @@ impl BrowserEngine {
         self.network_manager.set_https_only(enabled);
     }
 
-    pub fn set_profile(&mut self, profile: BrowserProfile) {
-        *self.profile.borrow_mut() = profile;
-        if profile.enables_anti_fingerprinting() {
-            self.web_context.set_preferred_languages(&["en-US", "en"]);
-            self.web_context.set_spell_checking_languages(&["en_US"]);
-        }
-    }
-
     pub fn resolve_url(input: &str) -> String {
         Self::resolve_url_with_engine(input, "duckduckgo")
     }
@@ -695,15 +827,9 @@ impl BrowserEngine {
             return trimmed.to_string();
         }
 
-        if (trimmed.starts_with("echo://") || trimmed.starts_with("take://"))
-            && scheme_handler::canonical_load_url(trimmed).is_some()
-        {
-            // Unify onto take:// and fold aliases such as privacy -> trackers
-            return trimmed.replacen("echo://", "take://", 1).replacen(
-                "take://privacy",
-                "take://trackers",
-                1,
-            );
+        if trimmed.starts_with("take://") && scheme_handler::canonical_load_url(trimmed).is_some() {
+            // Fold aliases such as privacy -> trackers
+            return trimmed.replacen("take://privacy", "take://trackers", 1);
         }
 
         if trimmed.starts_with("http://")
@@ -725,25 +851,48 @@ impl BrowserEngine {
         }
 
         let encoded = urlencoding::encode(trimmed);
+        if engine.contains("%s") {
+            return engine.replace("%s", &encoded);
+        }
+        if engine.starts_with("http://") || engine.starts_with("https://") {
+            if engine.ends_with('=') || engine.ends_with('?') || engine.ends_with('/') {
+                return format!("{}{}", engine, encoded);
+            } else {
+                return format!("{}?q={}", engine, encoded);
+            }
+        }
+
+        let lang = crate::i18n::current_language();
+        let (google_hl, startpage_lang, bing_lang, ddg_kl) = match lang {
+            crate::i18n::UiLanguage::Ru => ("ru", "russian", "ru", "ru-ru"),
+            crate::i18n::UiLanguage::En => ("en", "english", "en", "us-en"),
+        };
+
         match engine.to_lowercase().as_str() {
-            "google" => format!("https://www.google.com/search?q={}", encoded),
+            "google" => format!(
+                "https://www.google.com/search?q={}&hl={}",
+                encoded, google_hl
+            ),
             "startpage" => format!(
-                "https://www.startpage.com/do/dsearch?q={}&cat=web&language=english",
-                encoded
+                "https://www.startpage.com/do/dsearch?q={}&cat=web&language={}",
+                encoded, startpage_lang
             ),
             "yandex" => format!("https://yandex.ru/search/?text={}", encoded),
-            "bing" => format!("https://www.bing.com/search?q={}", encoded),
+            "bing" => format!(
+                "https://www.bing.com/search?q={}&setlang={}",
+                encoded, bing_lang
+            ),
             "brave" => format!("https://search.brave.com/search?q={}", encoded),
             "ecosia" => format!("https://www.ecosia.org/search?q={}", encoded),
             "qwant" => format!("https://www.qwant.com/?q={}", encoded),
-            _ => format!("https://duckduckgo.com/?q={}", encoded),
+            _ => format!("https://duckduckgo.com/?q={}&kl={}", encoded, ddg_kl),
         }
     }
 
     /// Maps the real location of bundled pages back to their take:// address.
     pub fn logical_url(uri: &str) -> String {
         if let Some(logical) = scheme_handler::logical_from_uri(uri) {
-            return if logical == "take://privacy" || logical == "echo://privacy" {
+            return if logical == "take://privacy" {
                 "take://trackers".to_string()
             } else {
                 logical
@@ -784,23 +933,11 @@ mod tests {
             "take://settings"
         );
         assert_eq!(
-            BrowserEngine::resolve_url("echo://settings"),
-            "take://settings"
-        );
-        assert_eq!(
             BrowserEngine::resolve_url("take://trackers"),
             "take://trackers"
         );
         assert_eq!(
-            BrowserEngine::resolve_url("echo://trackers"),
-            "take://trackers"
-        );
-        assert_eq!(
             BrowserEngine::resolve_url("take://privacy"),
-            "take://trackers"
-        );
-        assert_eq!(
-            BrowserEngine::resolve_url("echo://privacy"),
             "take://trackers"
         );
         assert_eq!(
@@ -831,7 +968,7 @@ mod tests {
         );
         assert_eq!(
             BrowserEngine::resolve_url("arch linux rust"),
-            "https://duckduckgo.com/?q=arch+linux+rust"
+            "https://duckduckgo.com/?q=arch+linux+rust&kl=us-en"
         );
     }
 
@@ -843,7 +980,7 @@ mod tests {
         );
         assert_eq!(
             BrowserEngine::resolve_url_with_engine("arch linux", "google"),
-            "https://www.google.com/search?q=arch+linux"
+            "https://www.google.com/search?q=arch+linux&hl=en"
         );
         assert_eq!(
             BrowserEngine::resolve_url_with_engine("arch linux", "yandex"),
@@ -851,7 +988,7 @@ mod tests {
         );
         assert_eq!(
             BrowserEngine::resolve_url_with_engine("arch linux", "bing"),
-            "https://www.bing.com/search?q=arch+linux"
+            "https://www.bing.com/search?q=arch+linux&setlang=en"
         );
         assert_eq!(
             BrowserEngine::resolve_url_with_engine("arch linux", "brave"),
@@ -867,20 +1004,19 @@ mod tests {
         );
         assert_eq!(
             BrowserEngine::resolve_url_with_engine("arch linux", "duckduckgo"),
-            "https://duckduckgo.com/?q=arch+linux"
+            "https://duckduckgo.com/?q=arch+linux&kl=us-en"
+        );
+        assert_eq!(
+            BrowserEngine::resolve_url_with_engine("arch linux", "https://searx.be/search?q=%s"),
+            "https://searx.be/search?q=arch+linux"
         );
     }
 
     #[test]
-    fn test_logical_url_maps_echo_scheme_and_never_spoofs_from_files() {
+    fn test_logical_url_maps_take_scheme_and_never_spoofs_from_files() {
         assert_eq!(BrowserEngine::logical_url("take://start/"), "take://start");
-        assert_eq!(BrowserEngine::logical_url("echo://start/"), "take://start");
         assert_eq!(
             BrowserEngine::logical_url("take://settings/#about"),
-            "take://settings"
-        );
-        assert_eq!(
-            BrowserEngine::logical_url("echo://settings/#about"),
             "take://settings"
         );
         assert_eq!(
@@ -888,15 +1024,7 @@ mod tests {
             "take://trackers"
         );
         assert_eq!(
-            BrowserEngine::logical_url("echo://privacy/"),
-            "take://trackers"
-        );
-        assert_eq!(
             BrowserEngine::logical_url("take://test-suite/"),
-            "take://test-suite"
-        );
-        assert_eq!(
-            BrowserEngine::logical_url("echo://test-suite/"),
             "take://test-suite"
         );
         assert_eq!(
@@ -912,13 +1040,11 @@ mod tests {
 
     #[test]
     fn test_is_internal_uri_and_settings_isolation() {
-        assert!(BrowserEngine::is_internal_uri("echo://start"));
-        assert!(BrowserEngine::is_internal_uri("echo://start/"));
         assert!(BrowserEngine::is_internal_uri("take://start"));
+        assert!(BrowserEngine::is_internal_uri("take://start/"));
         assert!(BrowserEngine::is_internal_uri("take://settings"));
-        assert!(BrowserEngine::is_internal_uri("echo://settings"));
-        assert!(BrowserEngine::is_internal_uri("echo://settings/#about"));
-        assert!(BrowserEngine::is_internal_uri("echo://trackers"));
+        assert!(BrowserEngine::is_internal_uri("take://settings/#about"));
+        assert!(BrowserEngine::is_internal_uri("take://trackers"));
         assert!(BrowserEngine::is_internal_uri("about:blank"));
 
         assert!(!BrowserEngine::is_internal_uri("https://example.com"));

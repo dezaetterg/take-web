@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echo Browser — Test Suite</title>
+    <title>TakeWeb — Test Suite</title>
     <style>
         @font-face {
-            font-family: 'EchoCustomFont';
+            font-family: 'TakeCustomFont';
             /* Embedded minimal valid WOFF font data */
             src: url('data:font/woff2;base64,d09GMgABAAAAAAOEAAwAAAAABuQAAAM0AAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGhwGYAc2BmAaQBZIEAAVCAKBNgwaMgxsAEwABCAFRglUHLkGBhHbsKj22eK+TjZtD2FhO/b8v5577t2ZpAiio03WjS6iEwZtM2kQ2qE4R90+0wz1K/UaWnC6qIe2s9iUe16i2D+Y4H9d/Tszv7dCj0JdQUk6i/QpQf/8+m2N') format('woff2');
             font-display: swap;
@@ -174,7 +174,7 @@
         }
 
         .custom-font-demo {
-            font-family: 'EchoCustomFont', sans-serif;
+            font-family: 'TakeCustomFont', sans-serif;
             font-size: 18px;
             padding: 8px 12px;
             background: rgba(255, 255, 255, 0.04);
@@ -244,7 +244,7 @@
 </head>
 <body>
     <header>
-        <h1>Echo Test Suite <span class="badge">WebKitGTK 6.0</span></h1>
+        <h1>Take Test Suite <span class="badge">WebKitGTK 6.0</span></h1>
         <p class="subtitle">Автоматическое тестирование ключевых подсистем рендеринга и API</p>
     </header>
 
@@ -272,7 +272,7 @@
             <div class="card-body">
                 Проверка загрузки кастомных веб-шрифтов и CSS Font Loading API.
                 <div class="custom-font-demo" id="font-preview">
-                    Echo Browser Custom Typography Test
+                    TakeWeb Custom Typography Test
                 </div>
             </div>
         </div>
@@ -323,9 +323,9 @@
                 Нажмите <code>Ctrl + F</code> для открытия нативной плавающей панели WebKit <code>FindController</code>.
                 <div class="searchable-box">
                     <strong>Фрагмент для поиска совпадений:</strong><br>
-                    Браузер <em>Echo Browser</em> использует нативную подсистему WebKitGTK 6.
-                    Технология аппаратного ускорения Wayland DMA-BUF позволяет <em>Echo Browser</em> рендерить страницы плавно.
-                    Поиск в <em>Echo Browser</em> работает без инъекций в DOM, подсвечивая «3 из 3» совпадений для «Echo Browser».
+                    Браузер <em>TakeWeb</em> использует нативную подсистему WebKitGTK 6.
+                    Технология аппаратного ускорения Wayland DMA-BUF позволяет <em>TakeWeb</em> рендерить страницы плавно.
+                    Поиск в <em>TakeWeb</em> работает без инъекций в DOM, подсвечивая «3 из 3» совпадений для «TakeWeb».
                 </div>
             </div>
         </div>
@@ -340,7 +340,7 @@
                 Перехват сигнала <code>decide-policy</code> при получении бинарного контента и отображение прогресса во всплывающем окне:
                 <br>
                 <button class="test-btn" onclick="downloadTestFile()">
-                    ⬇ Скачать тестовый файл (echo-sample.bin)
+                    ⬇ Скачать тестовый файл (take-sample.bin)
                 </button>
                 <a href="https://speed.hetzner.de/100MB.bin" class="test-btn" style="margin-left: 6px;">
                     ⬇ Скачать Hetzner (100MB.bin)
@@ -395,7 +395,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'echo-sample.bin';
+            a.download = 'take-sample.bin';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -439,8 +439,8 @@
         async function testCustomFonts() {
             try {
                 if (document.fonts && document.fonts.load) {
-                    await document.fonts.load('16px EchoCustomFont');
-                    const loaded = document.fonts.check('16px EchoCustomFont');
+                    await document.fonts.load('16px TakeCustomFont');
+                    const loaded = document.fonts.check('16px TakeCustomFont');
                     suiteResults.custom_fonts = loaded;
                     setStatus('status-font', loaded);
                 } else {
@@ -603,8 +603,8 @@
 
             // Test localStorage
             try {
-                const testKey = '__echo_test_key__';
-                const testVal = 'echo_storage_value_' + Date.now();
+                const testKey = '__take_test_key__';
+                const testVal = 'take_storage_value_' + Date.now();
                 localStorage.setItem(testKey, testVal);
                 const retrieved = localStorage.getItem(testKey);
                 localStorage.removeItem(testKey);
@@ -617,7 +617,7 @@
             // Test IndexedDB
             try {
                 idbOk = await new Promise((resolve) => {
-                    const req = indexedDB.open('__echo_test_db__', 1);
+                    const req = indexedDB.open('__take_test_db__', 1);
                     req.onupgradeneeded = (e) => {
                         const db = e.target.result;
                         if (!db.objectStoreNames.contains('store')) {
@@ -629,10 +629,10 @@
                         try {
                             const tx = db.transaction('store', 'readwrite');
                             const store = tx.objectStore('store');
-                            store.put({ id: 1, name: 'Echo Test Record' });
+                            store.put({ id: 1, name: 'Take Test Record' });
                             tx.oncomplete = () => {
                                 db.close();
-                                indexedDB.deleteDatabase('__echo_test_db__');
+                                indexedDB.deleteDatabase('__take_test_db__');
                                 resolve(true);
                             };
                             tx.onerror = () => {

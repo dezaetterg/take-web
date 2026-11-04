@@ -1,6 +1,30 @@
 [
   {
     "trigger": {
+      "url-filter": ".*google\\.[a-z.]+/gen_204.*"
+    },
+    "action": { "type": "block" }
+  },
+  {
+    "trigger": {
+      "url-filter": ".*google\\.[a-z.]+/client_204.*"
+    },
+    "action": { "type": "block" }
+  },
+  {
+    "trigger": {
+      "url-filter": ".*play\\.google\\.com/log.*"
+    },
+    "action": { "type": "block" }
+  },
+  {
+    "trigger": {
+      "url-filter": ".*ogads-pa\\.clients6\\.google\\.com.*"
+    },
+    "action": { "type": "block" }
+  },
+  {
+    "trigger": {
       "url-filter": ".*doubleclick\\.net.*",
       "load-type": ["third-party"]
     },

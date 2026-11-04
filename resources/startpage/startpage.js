@@ -1,8 +1,8 @@
-// Echo Browser Start Page Controller
+// Take Web Start Page Controller
 
 window.addEventListener('DOMContentLoaded', () => {
-    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.echo) {
-        window.webkit.messageHandlers.echo.postMessage({ type: 'startpage_ready' });
+    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.take) {
+        window.webkit.messageHandlers.take.postMessage({ type: 'startpage_ready' });
     }
 
     const searchForm = document.getElementById('search-form');
@@ -47,7 +47,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     function executeSearch(query, explicitEngine) {
         let target = query;
-        if (/^(https?:\/\/|take:\/\/|echo:\/\/|file:\/\/)/i.test(query)) {
+        if (/^(https?:\/\/|take:\/\/|file:\/\/)/i.test(query)) {
             target = query;
         } else if ((query.includes('.') && !query.includes(' ')) || query.startsWith('localhost')) {
             target = 'https://' + query;
@@ -112,13 +112,83 @@ window.addEventListener('DOMContentLoaded', () => {
     const privacyCard = document.getElementById('privacy-card');
     if (privacyCard) {
         privacyCard.addEventListener('click', () => {
-            window.location.href = 'echo://trackers';
+            window.location.href = 'take://trackers';
         });
     }
 
     // Firefox-style Start Page Customization
     initCustomization();
+    initAddFavoriteModal();
 });
+
+function openAddFavoriteModal() {
+    const modal = document.getElementById('add-favorite-modal');
+    if (!modal) return;
+    const titleInput = document.getElementById('fav-title-input');
+    const urlInput = document.getElementById('fav-url-input');
+    if (titleInput) titleInput.value = '';
+    if (urlInput) urlInput.value = '';
+    modal.removeAttribute('hidden');
+    if (titleInput) titleInput.focus();
+}
+
+function closeAddFavoriteModal() {
+    const modal = document.getElementById('add-favorite-modal');
+    if (modal) modal.setAttribute('hidden', '');
+}
+
+function initAddFavoriteModal() {
+    const initialBtn = document.getElementById('add-favorite-btn');
+    if (initialBtn) {
+        initialBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            openAddFavoriteModal();
+        });
+    }
+
+    const modal = document.getElementById('add-favorite-modal');
+    const closeBtn = document.getElementById('add-favorite-close');
+    const cancelBtn = document.getElementById('add-favorite-cancel');
+    const form = document.getElementById('add-favorite-form');
+
+    if (closeBtn) closeBtn.addEventListener('click', closeAddFavoriteModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeAddFavoriteModal);
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeAddFavoriteModal();
+        });
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal && !modal.hasAttribute('hidden')) {
+            closeAddFavoriteModal();
+        }
+    });
+
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const titleInput = document.getElementById('fav-title-input');
+            const urlInput = document.getElementById('fav-url-input');
+            const title = titleInput ? titleInput.value.trim() : '';
+            let url = urlInput ? urlInput.value.trim() : '';
+            if (!title || !url) return;
+
+            if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(url)) {
+                url = 'https://' + url;
+            }
+
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.takeAction) {
+                window.webkit.messageHandlers.takeAction.postMessage(JSON.stringify({
+                    action: 'add_favorite',
+                    title: title,
+                    url: url
+                }));
+            }
+            closeAddFavoriteModal();
+        });
+    }
+}
 
 function initCustomization() {
     const customizeBtn = document.getElementById('customize-btn');
@@ -226,8 +296,18 @@ function initCustomization() {
     }
 
     // Determine initial wallpaper
+    const isPrivateSession = document.documentElement.getAttribute('data-private') === 'true' ||
+                             document.body.classList.contains('private-session') ||
+                             window.location.search.includes('private=1');
+    if (isPrivateSession) {
+        document.documentElement.setAttribute('data-private', 'true');
+        document.body.classList.add('private-session');
+    }
+
     const savedType = localStorage.getItem('takeweb_wallpaper_type');
-    if (savedType === 'custom' && savedCustomPhoto) {
+    if (isPrivateSession && (!savedType || savedType === 'none')) {
+        applyWallpaper('preset', 'purple_hills.png');
+    } else if (savedType === 'custom' && savedCustomPhoto) {
         applyWallpaper('custom', savedCustomPhoto);
     } else if (savedType === 'preset') {
         const presetUrl = localStorage.getItem('takeweb_wallpaper_preset_url');
@@ -395,6 +475,43 @@ function renderFavorites(favorites) {
         a.appendChild(label);
         grid.appendChild(a);
     }
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'favorite-item add-favorite-btn';
+    addBtn.type = 'button';
+    addBtn.id = 'add-favorite-btn';
+    addBtn.title = tr('startpage.add_favorite', 'Добавить');
+    addBtn.innerHTML = `
+        <div class="squircle-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        </div>
+        <span class="favorite-label">${tr('startpage.add_favorite', 'Добавить')}</span>
+    `;
+    addBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        openAddFavoriteModal();
+    });
+    grid.appendChild(addBtn);
+}
+
+let startpageI18n = null;
+fetch('take://locales/current.json')
+    .then(r => r.json())
+    .then(data => { startpageI18n = data; })
+    .catch(() => {});
+
+function tr(key, fallback) {
+    if (!startpageI18n) return fallback;
+    const parts = key.split('.');
+    let cur = startpageI18n;
+    for (const p of parts) {
+        if (!cur || typeof cur !== 'object') return fallback;
+        cur = cur[p];
+    }
+    return typeof cur === 'string' ? cur : fallback;
 }
 
 // Callback when Rust backend sends updated privacy and favorites data
@@ -407,9 +524,12 @@ window.updateStartPageData = function(data) {
         const total = data.tracker_count;
         if (countEl) countEl.textContent = total;
         if (textEl) {
-            textEl.textContent = total > 0
-                ? `Take Web предотвратил сбор данных (${total} сетевых трекеров за 7 дней). Щиты активны.`
-                : 'Трекеры пока не блокировались. Все щиты защиты активны.';
+            if (total > 0) {
+                const tmpl = tr('startpage.privacy_blocked_some', 'Take Web prevented surveillance ({count} network trackers in 7 days). Shields active.');
+                textEl.textContent = tmpl.replace('{count}', total);
+            } else {
+                textEl.textContent = tr('startpage.privacy_blocked_none', 'No trackers blocked yet. All shields are active.');
+            }
         }
     }
 
@@ -432,8 +552,8 @@ window.updateStartPageData = function(data) {
     } else if (card) {
         card.onclick = null;
         card.style.cursor = '';
-        document.getElementById('reading-title').textContent = 'Список для чтения пуст';
-        document.getElementById('reading-preview').textContent = 'Добавьте страницу через Ctrl+Shift+D.';
+        document.getElementById('reading-title').textContent = tr('startpage.reading_list_empty', 'Reading list is empty');
+        document.getElementById('reading-preview').textContent = tr('startpage.reading_list_empty_hint', 'Add pages via Ctrl+Shift+D.');
         document.getElementById('reading-domain').textContent = '';
     }
 };

@@ -44,11 +44,7 @@ impl Inner {
                 }
                 let text = entry.text();
                 let query = text.trim();
-                let effective_query = if query == START_URL || query == "echo://start" {
-                    ""
-                } else {
-                    query
-                };
+                let effective_query = if query == START_URL { "" } else { query };
                 if effective_query.is_empty() {
                     this.omnibox_popup.close();
                     return;
@@ -137,15 +133,31 @@ impl Inner {
 
         let weak = Rc::downgrade(self);
         header.back_button.connect_clicked(move |_| {
-            if let Some(tab) = weak.upgrade().and_then(|this| this.current_tab()) {
-                tab.web_view.go_back();
+            if let Some(this) = weak.upgrade() {
+                if this.is_split_view.get() && this.is_split_focused.get() {
+                    if let Some(ref view) = *this.split_web_view.borrow() {
+                        view.go_back();
+                        return;
+                    }
+                }
+                if let Some(tab) = this.current_tab() {
+                    tab.web_view.go_back();
+                }
             }
         });
 
         let weak = Rc::downgrade(self);
         header.forward_button.connect_clicked(move |_| {
-            if let Some(tab) = weak.upgrade().and_then(|this| this.current_tab()) {
-                tab.web_view.go_forward();
+            if let Some(this) = weak.upgrade() {
+                if this.is_split_view.get() && this.is_split_focused.get() {
+                    if let Some(ref view) = *this.split_web_view.borrow() {
+                        view.go_forward();
+                        return;
+                    }
+                }
+                if let Some(tab) = this.current_tab() {
+                    tab.web_view.go_forward();
+                }
             }
         });
 
@@ -179,6 +191,31 @@ impl Inner {
     }
 
     pub(super) fn sync_chrome(&self) {
+        if self.is_split_view.get() && self.is_split_focused.get() {
+            if let Some(ref split_view) = *self.split_web_view.borrow() {
+                if let Some(uri) = split_view.uri() {
+                    if !uri.is_empty() && uri != "about:blank" {
+                        let url = uri.to_string();
+                        self.omnibox_popup.close();
+                        self.suppress_omnibox_search.set(true);
+                        self.header.set_address(&url);
+                        self.suppress_omnibox_search.set(false);
+                        self.header
+                            .back_button
+                            .set_sensitive(split_view.can_go_back());
+                        self.header
+                            .forward_button
+                            .set_sensitive(split_view.can_go_forward());
+                        self.header.set_loading(split_view.is_loading());
+                        self.header
+                            .set_progress(split_view.estimated_load_progress());
+                        self.header.set_bookmarked(self.is_bookmarked(&url));
+                        return;
+                    }
+                }
+            }
+        }
+
         let Some(tab) = self.current_tab() else {
             return;
         };
@@ -197,29 +234,30 @@ impl Inner {
         self.header.set_progress(view.estimated_load_progress());
         self.header.set_bookmarked(self.is_bookmarked(&url));
 
-        let title = if url == START_URL || url == "echo://start" {
+        let title = if url == START_URL {
             "Take Web".to_string()
-        } else if url == "take://test-suite" || url == "echo://test-suite" {
-            "Echo Test Suite".to_string()
-        } else if url == TRACKERS_URL
-            || url == PRIVACY_URL
-            || url == "echo://trackers"
-            || url == "echo://privacy"
-        {
-            "Отчет о защите — Take Web".to_string()
-        } else if url == SETTINGS_URL
-            || url == "echo://settings"
-            || url.starts_with("take://settings")
-            || url.starts_with("echo://settings")
-        {
-            "Настройки — Take Web".to_string()
+        } else if url == "take://test-suite" {
+            "Take Test Suite".to_string()
+        } else if url == TRACKERS_URL || url == PRIVACY_URL {
+            format!("{} — Take Web", crate::i18n::tr("tab.trackers_title"))
+        } else if url == SETTINGS_URL || url.starts_with("take://settings") {
+            format!("{} — Take Web", crate::i18n::tr("tab.settings_title"))
         } else {
             match view.title().filter(|t| !t.is_empty()) {
-                Some(title) => format!("{title} — Take Web"),
+                Some(title) => {
+                    if self.is_app_mode.get() {
+                        title.to_string()
+                    } else {
+                        format!("{title} — Take Web")
+                    }
+                }
                 None => "Take Web".to_string(),
             }
         };
         self.window.set_title(Some(&title));
+        if self.is_app_mode.get() {
+            self.header.app_title_label.set_label(&title);
+        }
 
         let domain = url::Url::parse(&url)
             .ok()
@@ -234,37 +272,47 @@ impl Inner {
             false
         };
         let is_protected = !is_exception;
-        let tracker_count = if !domain.is_empty() {
-            self.db
-                .get_all_tracker_stats()
-                .map(|stats| {
-                    stats
-                        .iter()
-                        .find(|s| s.domain == domain)
-                        .map(|s| s.blocked_count as usize)
-                        .unwrap_or(0)
-                })
-                .unwrap_or(0)
+        let tracker_list: Vec<String> = if let Some(tab) = self.current_tab() {
+            tab.blocked_trackers.borrow().clone()
         } else {
-            0
+            Vec::new()
         };
+        let tracker_count = tracker_list.len();
         self.shield_popover
-            .update_state(&url, is_protected, tracker_count);
+            .update_state(&url, is_protected, tracker_count, &tracker_list);
     }
 
     pub(super) fn current_search_engine(&self) -> String {
-        self.db
+        let engine = self
+            .db
             .get_setting("default_search_engine")
             .ok()
             .flatten()
-            .unwrap_or_else(|| "duckduckgo".to_string())
+            .unwrap_or_else(|| "duckduckgo".to_string());
+        if engine == "custom" {
+            if let Ok(Some(custom_url)) = self.db.get_setting("custom_search_engine_url") {
+                let trimmed = custom_url.trim();
+                if !trimmed.is_empty() {
+                    return trimmed.to_string();
+                }
+            }
+        }
+        engine
     }
 
     pub(super) fn navigate_from_entry(&self, entry: &Entry) {
         self.omnibox_popup.close();
+        let engine = self.current_search_engine();
+        let target = BrowserEngine::resolve_url_with_engine(&entry.text(), &engine);
+        if self.is_split_view.get() && self.is_split_focused.get() {
+            if let Some(ref view) = *self.split_web_view.borrow() {
+                self.engine.borrow().apply_settings_for_uri(view, &target);
+                view.load_uri(&target);
+                view.grab_focus();
+                return;
+            }
+        }
         if let Some(tab) = self.current_tab() {
-            let engine = self.current_search_engine();
-            let target = BrowserEngine::resolve_url_with_engine(&entry.text(), &engine);
             self.engine
                 .borrow()
                 .apply_settings_for_uri(&tab.web_view, &target);
@@ -274,6 +322,16 @@ impl Inner {
     }
 
     pub(super) fn toggle_reload(&self) {
+        if self.is_split_view.get() && self.is_split_focused.get() {
+            if let Some(ref view) = *self.split_web_view.borrow() {
+                if view.is_loading() {
+                    view.stop_loading();
+                } else {
+                    view.reload();
+                }
+                return;
+            }
+        }
         if let Some(tab) = self.current_tab() {
             if tab.web_view.is_loading() {
                 tab.web_view.stop_loading();
@@ -284,6 +342,13 @@ impl Inner {
     }
 
     pub(super) fn open_in_current_tab(self: &Rc<Self>, url: &str) {
+        if self.is_split_view.get() && self.is_split_focused.get() {
+            if let Some(ref view) = *self.split_web_view.borrow() {
+                self.engine.borrow().apply_settings_for_uri(view, url);
+                view.load_uri(url);
+                return;
+            }
+        }
         match self.current_tab() {
             Some(tab) => {
                 self.engine
@@ -354,7 +419,7 @@ impl Inner {
         if let Err(err) = self.db.clear_history() {
             log::warn!("failed to clear history: {err}");
         } else {
-            self.toast("История просмотров очищена");
+            self.toast(crate::i18n::tr("app.history_cleared"));
         }
     }
 }

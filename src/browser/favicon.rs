@@ -17,7 +17,7 @@ static INSTANCE: OnceLock<FaviconManager> = OnceLock::new();
 impl FaviconManager {
     pub fn global() -> &'static Self {
         INSTANCE.get_or_init(|| {
-            let dir = glib::user_data_dir().join("echo-browser").join("favicons");
+            let dir = glib::user_data_dir().join("takeweb").join("favicons");
             let _ = fs::create_dir_all(&dir);
             Self {
                 cache: Arc::new(Mutex::new(HashMap::new())),
@@ -71,7 +71,7 @@ impl FaviconManager {
 
     pub fn save_texture(&self, domain: &str, texture: &gdk::Texture) {
         let d = domain.trim_start_matches("www.").to_lowercase();
-        if d.is_empty() || d == "localhost" || d.starts_with("echo:") || d.starts_with("about:") {
+        if d.is_empty() || d == "localhost" || d.starts_with("take:") || d.starts_with("about:") {
             return;
         }
         if let Ok(mut cache) = self.cache.lock() {
@@ -87,7 +87,7 @@ impl FaviconManager {
         let domain = Self::extract_domain(url_or_domain);
         let image = gtk4::Image::new();
         image.set_pixel_size(18);
-        image.add_css_class("echo-favicon-img");
+        image.add_css_class("take-favicon-img");
 
         if let Some(texture) = Self::global().get_cached(&domain) {
             image.set_paintable(Some(&texture));

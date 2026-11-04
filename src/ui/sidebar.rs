@@ -76,25 +76,29 @@ impl BrowserSidebar {
         let handler: Rc<RefCell<Option<ActionHandler>>> = Rc::new(RefCell::new(None));
 
         let root = GtkBox::new(Orientation::Vertical, 4);
-        root.add_css_class("echo-sidebar");
+        root.add_css_class("take-sidebar");
 
         let (_tabs_section, tabs_box, tabs_label) = Self::section(
             &root,
-            "Открытые вкладки",
-            Some(("tab-new-symbolic", "Новая вкладка", SidebarAction::NewTab)),
+            crate::i18n::tr("sidebar.open_tabs"),
+            Some((
+                "tab-new-symbolic",
+                crate::i18n::tr("tab.new_tab_title"),
+                SidebarAction::NewTab,
+            )),
             &handler,
         );
 
         let private_box = GtkBox::new(Orientation::Vertical, 6);
-        private_box.add_css_class("echo-sidebar-private-box");
+        private_box.add_css_class("take-sidebar-private-box");
         private_box.set_visible(false);
 
         let close_session_btn = Button::builder()
             .icon_name("window-close-symbolic")
-            .label("Завершить сессию")
+            .label(crate::i18n::tr("sidebar.end_session"))
             .halign(gtk4::Align::Center)
-            .css_classes(["flat", "echo-sidebar-close-btn"])
-            .tooltip_text("Закрыть все приватные вкладки и стереть данные сессии")
+            .css_classes(["flat", "take-sidebar-close-btn"])
+            .tooltip_text(crate::i18n::tr("sidebar.end_session_tooltip"))
             .build();
         let h_close = handler.clone();
         close_session_btn.connect_clicked(move |_| {
@@ -105,18 +109,26 @@ impl BrowserSidebar {
 
         let (groups_section, groups_box, _) = Self::section(
             &root,
-            "Группы вкладок",
-            Some(("list-add-symbolic", "Новая группа", SidebarAction::NewGroup)),
+            crate::i18n::tr("sidebar.tab_groups"),
+            Some((
+                "list-add-symbolic",
+                crate::i18n::tr("tab_groups.new_group"),
+                SidebarAction::NewGroup,
+            )),
             &handler,
         );
-        let (reading_section, reading_box, _) =
-            Self::section(&root, "Список для чтения", None, &handler);
+        let (reading_section, reading_box, _) = Self::section(
+            &root,
+            crate::i18n::tr("sidebar.reading_list"),
+            None,
+            &handler,
+        );
         let (bookmarks_section, bookmarks_box, _) = Self::section(
             &root,
-            "Закладки",
+            crate::i18n::tr("sidebar.bookmarks"),
             Some((
                 "bookmark-new-symbolic",
-                "Добавить текущую страницу в закладки",
+                crate::i18n::tr("sidebar.add_bookmark"),
                 SidebarAction::AddBookmark,
             )),
             &handler,
@@ -127,7 +139,7 @@ impl BrowserSidebar {
             .vscrollbar_policy(gtk4::PolicyType::Automatic)
             .child(&root)
             .min_content_width(220)
-            .css_classes(["echo-sidebar-container"])
+            .css_classes(["take-sidebar-container"])
             .build();
 
         Self {
@@ -151,9 +163,11 @@ impl BrowserSidebar {
         self.bookmarks_section.set_visible(!anonymous);
         self.private_box.set_visible(anonymous);
         if anonymous {
-            self.tabs_label.set_text("Приватные вкладки");
+            self.tabs_label
+                .set_text(crate::i18n::tr("tab_overview.private_tabs"));
         } else {
-            self.tabs_label.set_text("Открытые вкладки");
+            self.tabs_label
+                .set_text(crate::i18n::tr("sidebar.open_tabs"));
         }
     }
 
@@ -177,10 +191,10 @@ impl BrowserSidebar {
         let section_box = GtkBox::new(Orientation::Vertical, 2);
 
         let header = GtkBox::new(Orientation::Horizontal, 4);
-        header.add_css_class("echo-sidebar-section-header");
+        header.add_css_class("take-sidebar-section-header");
 
         let label = Label::new(Some(title));
-        label.add_css_class("echo-sidebar-section-title");
+        label.add_css_class("take-sidebar-section-title");
         label.set_xalign(0.0);
         label.set_hexpand(true);
         header.append(&label);
@@ -189,7 +203,7 @@ impl BrowserSidebar {
             let button = Button::builder()
                 .icon_name(icon)
                 .tooltip_text(tooltip)
-                .css_classes(["flat", "echo-section-action"])
+                .css_classes(["flat", "take-section-action"])
                 .build();
             let handler = handler.clone();
             button.connect_clicked(move |_| Self::dispatch(&handler, action.clone()));
@@ -197,7 +211,7 @@ impl BrowserSidebar {
         }
 
         let items = GtkBox::new(Orientation::Vertical, 2);
-        items.add_css_class("echo-sidebar-items");
+        items.add_css_class("take-sidebar-items");
 
         section_box.append(&header);
         section_box.append(&items);
@@ -214,7 +228,7 @@ impl BrowserSidebar {
 
     fn empty_state(list: &GtkBox, text: &str) {
         let label = Label::new(Some(text));
-        label.add_css_class("echo-sidebar-empty");
+        label.add_css_class("take-sidebar-empty");
         label.set_xalign(0.0);
         label.set_wrap(true);
         list.append(&label);
@@ -225,20 +239,8 @@ impl BrowserSidebar {
             .icon_name(icon)
             .tooltip_text(tooltip)
             .valign(Align::Center)
-            .css_classes(["flat", "circular", "echo-row-action"])
+            .css_classes(["flat", "circular", "take-row-action"])
             .build()
-    }
-
-    fn letter_avatar(text: &str) -> Label {
-        let letter = text
-            .chars()
-            .find(|c| c.is_alphanumeric())
-            .map(|c| c.to_uppercase().to_string())
-            .unwrap_or_else(|| "•".to_string());
-        let avatar = Label::new(Some(&letter));
-        avatar.add_css_class("echo-letter-avatar");
-        avatar.set_valign(Align::Center);
-        avatar
     }
 
     pub fn render_tabs(&self, entries: &[TabEntry]) {
@@ -287,7 +289,7 @@ impl BrowserSidebar {
             let first_page = group.pages[0].clone();
 
             let row = GtkBox::new(Orientation::Horizontal, 8);
-            row.add_css_class("echo-sidebar-item");
+            row.add_css_class("take-sidebar-item");
             if group.has_selected {
                 row.add_css_class("active");
             }
@@ -298,14 +300,14 @@ impl BrowserSidebar {
             if group.is_loading {
                 let spinner = Spinner::new();
                 spinner.set_spinning(true);
-                spinner.add_css_class("echo-row-icon");
+                spinner.add_css_class("take-row-icon");
                 content.append(&spinner);
             } else {
                 let icon = match &group.icon {
                     Some(gicon) => Image::from_gicon(gicon),
                     None => Image::from_icon_name("web-browser-symbolic"),
                 };
-                icon.add_css_class("echo-row-icon");
+                icon.add_css_class("take-row-icon");
                 content.append(&icon);
             }
 
@@ -317,17 +319,18 @@ impl BrowserSidebar {
 
             if is_duplicate {
                 let counter = Label::new(Some(&group.pages.len().to_string()));
-                counter.add_css_class("echo-duplicate-badge");
-                counter.set_tooltip_text(Some(&format!(
-                    "Открыто {} одинаковых вкладок",
-                    group.pages.len()
+                counter.add_css_class("take-duplicate-badge");
+                let count_str = group.pages.len().to_string();
+                counter.set_tooltip_text(Some(&crate::i18n::tr_fmt(
+                    "sidebar.duplicate_tabs_count",
+                    &[("count", &count_str)],
                 )));
                 content.append(&counter);
             }
 
             if group.is_pinned {
                 let pin = Image::from_icon_name("view-pin-symbolic");
-                pin.add_css_class("echo-pin-mark");
+                pin.add_css_class("take-pin-mark");
                 content.append(&pin);
             }
 
@@ -368,9 +371,9 @@ impl BrowserSidebar {
             row.append(&content);
 
             let close_tooltip = if is_duplicate {
-                "Закрыть одну из вкладок"
+                crate::i18n::tr("sidebar.close_duplicate_tab")
             } else {
-                "Закрыть вкладку"
+                crate::i18n::tr("tab.close")
             };
             let close = Self::row_action_button("window-close-symbolic", close_tooltip);
             let handler = self.handler.clone();
@@ -395,14 +398,14 @@ impl BrowserSidebar {
         Self::clear(&self.groups_box);
 
         let ungrouped = GtkBox::new(Orientation::Horizontal, 8);
-        ungrouped.add_css_class("echo-sidebar-item");
+        ungrouped.add_css_class("take-sidebar-item");
         if active.is_none() {
             ungrouped.add_css_class("active");
         }
         let all_icon = Image::from_icon_name("view-list-symbolic");
-        all_icon.add_css_class("echo-row-icon");
+        all_icon.add_css_class("take-row-icon");
         ungrouped.append(&all_icon);
-        let all_label = Label::new(Some("Все вкладки (без группы)"));
+        let all_label = Label::new(Some(crate::i18n::tr("tab_groups.all_tabs_no_group")));
         all_label.set_xalign(0.0);
         all_label.set_hexpand(true);
         all_label.set_ellipsize(gtk4::pango::EllipsizeMode::End);
@@ -412,7 +415,7 @@ impl BrowserSidebar {
 
         for group in groups {
             let row = GtkBox::new(Orientation::Horizontal, 8);
-            row.add_css_class("echo-sidebar-item");
+            row.add_css_class("take-sidebar-item");
             if active == Some(group.id.as_str()) {
                 row.add_css_class("active");
             }
@@ -421,7 +424,7 @@ impl BrowserSidebar {
             content.set_hexpand(true);
 
             let icon = Image::from_icon_name("folder-symbolic");
-            icon.add_css_class("echo-row-icon");
+            icon.add_css_class("take-row-icon");
             content.append(&icon);
 
             let name = Label::new(Some(&group.name));
@@ -431,7 +434,7 @@ impl BrowserSidebar {
             content.append(&name);
 
             let count = Label::new(Some(&group.tab_count.to_string()));
-            count.add_css_class("echo-count-badge");
+            count.add_css_class("take-count-badge");
             content.append(&count);
 
             self.connect_row_click(
@@ -441,8 +444,10 @@ impl BrowserSidebar {
             );
             row.append(&content);
 
-            let more =
-                Self::row_action_button("view-more-horizontal-symbolic", "Действия с группой");
+            let more = Self::row_action_button(
+                "view-more-horizontal-symbolic",
+                crate::i18n::tr("sidebar.group_actions"),
+            );
             let handler = self.handler.clone();
             let parent = self.container.clone();
             let group_id = group.id.clone();
@@ -480,14 +485,14 @@ impl BrowserSidebar {
         if items.is_empty() {
             Self::empty_state(
                 &self.reading_box,
-                "Пока пусто. Сохраните страницу через Ctrl+Shift+D.",
+                crate::i18n::tr("sidebar.reading_list_empty"),
             );
             return;
         }
 
         for item in items {
             let row = GtkBox::new(Orientation::Horizontal, 8);
-            row.add_css_class("echo-reading-card");
+            row.add_css_class("take-reading-card");
             if item.is_read {
                 row.add_css_class("read");
             }
@@ -505,20 +510,20 @@ impl BrowserSidebar {
             text.set_hexpand(true);
 
             let title = Label::new(Some(&item.title));
-            title.add_css_class("echo-reading-title");
+            title.add_css_class("take-reading-title");
             title.set_xalign(0.0);
             title.set_ellipsize(gtk4::pango::EllipsizeMode::End);
             text.append(&title);
 
             let domain = Label::new(Some(&item.domain));
-            domain.add_css_class("echo-reading-domain");
+            domain.add_css_class("take-reading-domain");
             domain.set_xalign(0.0);
             domain.set_ellipsize(gtk4::pango::EllipsizeMode::End);
             text.append(&domain);
 
             if let Some(preview) = item.preview_text.as_deref().filter(|p| !p.is_empty()) {
                 let preview_label = Label::new(Some(preview));
-                preview_label.add_css_class("echo-reading-preview");
+                preview_label.add_css_class("take-reading-preview");
                 preview_label.set_xalign(0.0);
                 preview_label.set_wrap(true);
                 preview_label.set_lines(2);
@@ -554,9 +559,9 @@ impl BrowserSidebar {
             let toggle = Self::row_action_button(
                 "object-select-symbolic",
                 if item.is_read {
-                    "Отметить непрочитанным"
+                    crate::i18n::tr("sidebar.mark_unread")
                 } else {
-                    "Отметить прочитанным"
+                    crate::i18n::tr("sidebar.mark_read")
                 },
             );
             let handler = self.handler.clone();
@@ -564,7 +569,10 @@ impl BrowserSidebar {
             toggle.connect_clicked(move |_| {
                 Self::dispatch(&handler, SidebarAction::ToggleRead { id, read: !read });
             });
-            let remove = Self::row_action_button("edit-delete-symbolic", "Удалить из списка");
+            let remove = Self::row_action_button(
+                "edit-delete-symbolic",
+                crate::i18n::tr("sidebar.remove_from_list"),
+            );
             let handler = self.handler.clone();
             remove.connect_clicked(move |_| {
                 Self::dispatch(&handler, SidebarAction::DeleteReadingItem(id));
@@ -583,7 +591,7 @@ impl BrowserSidebar {
         if bookmarks.is_empty() {
             Self::empty_state(
                 &self.bookmarks_box,
-                "Закладок нет. Нажмите Ctrl+D, чтобы добавить страницу.",
+                crate::i18n::tr("sidebar.bookmarks_empty"),
             );
             return;
         }
@@ -603,12 +611,13 @@ impl BrowserSidebar {
 
         for (name, entries) in folders {
             let content = GtkBox::new(Orientation::Vertical, 2);
+            content.add_css_class("take-folder-content");
             for bookmark in entries {
                 content.append(&self.bookmark_row(bookmark));
             }
 
             let title = Label::new(Some(name));
-            title.add_css_class("echo-folder-title");
+            title.add_css_class("take-folder-title");
             let folder_icon = Image::from_icon_name("folder-symbolic");
             let label_box = GtkBox::new(Orientation::Horizontal, 6);
             label_box.append(&folder_icon);
@@ -618,7 +627,7 @@ impl BrowserSidebar {
             expander.set_label_widget(Some(&label_box));
             expander.set_child(Some(&content));
             expander.set_expanded(name == crate::storage::database::FAVORITES_FOLDER);
-            expander.add_css_class("echo-folder");
+            expander.add_css_class("take-folder");
             self.bookmarks_box.append(&expander);
         }
 
@@ -629,7 +638,7 @@ impl BrowserSidebar {
 
     fn bookmark_row(&self, bookmark: &Bookmark) -> GtkBox {
         let row = GtkBox::new(Orientation::Horizontal, 8);
-        row.add_css_class("echo-sidebar-item");
+        row.add_css_class("take-sidebar-item");
 
         let content = GtkBox::new(Orientation::Horizontal, 8);
         content.set_hexpand(true);
@@ -659,7 +668,10 @@ impl BrowserSidebar {
         content.add_controller(click);
         row.append(&content);
 
-        let remove = Self::row_action_button("edit-delete-symbolic", "Удалить закладку");
+        let remove = Self::row_action_button(
+            "edit-delete-symbolic",
+            crate::i18n::tr("sidebar.remove_bookmark"),
+        );
         let handler = self.handler.clone();
         let id = bookmark.id;
         remove
@@ -694,24 +706,24 @@ impl BrowserSidebar {
 
         let entries = [
             (
-                "Переименовать",
+                crate::i18n::tr("tab_groups.rename"),
                 false,
                 SidebarAction::RenameGroup(group_id.to_string()),
             ),
             (
-                "Закрыть все вкладки группы",
+                crate::i18n::tr("sidebar.close_all_group_tabs"),
                 false,
                 SidebarAction::CloseGroupTabs(group_id.to_string()),
             ),
             (
-                "Удалить группу",
+                crate::i18n::tr("sidebar.delete_group"),
                 true,
                 SidebarAction::DeleteGroup(group_id.to_string()),
             ),
         ];
 
         let menu = GtkBox::new(Orientation::Vertical, 2);
-        menu.add_css_class("echo-context-menu");
+        menu.add_css_class("take-context-menu");
 
         let popover = Popover::new();
         popover.set_autohide(true);
@@ -744,7 +756,7 @@ impl BrowserSidebar {
             text.set_xalign(0.0);
             let button = Button::builder()
                 .child(&text)
-                .css_classes(["flat", "echo-menu-item"])
+                .css_classes(["flat", "take-menu-item"])
                 .build();
             if destructive {
                 button.add_css_class("destructive");

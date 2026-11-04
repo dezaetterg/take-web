@@ -4,9 +4,13 @@
 # Local scratch & benchmark scripts
 scratch/
 
-# Documentation and plan files (keep only public README.md)
+# Documentation and plan files (keep only public documentation)
 *.md
 !README.md
+!README.ru.md
+!ARCHITECTURE.md
+!ARCHITECTURE.ru.md
+!CONTRIBUTING_TRANSLATIONS.md
 
 # Local browser storage, SQLite databases & journals
 *.db
@@ -48,3 +52,6 @@ perf.data*
 # Environment & local credentials
 .env
 *.local
+
+# Release artifacts (publish through GitHub Releases)
+/dist/

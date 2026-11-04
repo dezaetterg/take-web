@@ -1,4 +1,4 @@
-// Echo Browser Privacy & Trackers Dashboard Controller
+// Take Web Privacy & Trackers Dashboard Controller
 
 let currentData = {
     total_blocked_7d: 0,
@@ -9,6 +9,23 @@ let currentData = {
     fingerprint_stats: {},
     fingerprint_total: 0
 };
+
+let trackersI18n = null;
+fetch('take://locales/current.json')
+    .then(r => r.json())
+    .then(data => { trackersI18n = data; })
+    .catch(() => {});
+
+function tr(key, fallback) {
+    if (!trackersI18n) return fallback;
+    const parts = key.split('.');
+    let cur = trackersI18n;
+    for (const p of parts) {
+        if (!cur || typeof cur !== 'object') return fallback;
+        cur = cur[p];
+    }
+    return typeof cur === 'string' ? cur : fallback;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
@@ -48,7 +65,7 @@ function setupEventListeners() {
         confirmBtn.addEventListener('click', () => {
             modal.classList.remove('open');
             // Trigger internal action intercepted by WebKit decide_policy
-            window.location.href = 'echo://action/clear-trackers';
+            window.location.href = 'take://action/clear-trackers';
         });
     }
 
@@ -79,12 +96,16 @@ window.updateTrackersPageData = function(payload) {
     if (kpiSaved) {
         // Average tracker / ad request saves ~65 KB of network bandwidth
         const totalKb = (payload.total_blocked_all || 0) * 65;
+        const kbUnit = tr('trackers.unit_kb', 'KB');
+        const mbUnit = tr('trackers.unit_mb', 'MB');
+        const gbUnit = tr('trackers.unit_gb', 'GB');
+
         if (totalKb < 1024) {
-            kpiSaved.textContent = `${totalKb} КБ`;
+            kpiSaved.textContent = `${totalKb} ${kbUnit}`;
         } else if (totalKb < 1024 * 1024) {
-            kpiSaved.textContent = `${(totalKb / 1024).toFixed(1)} МБ`;
+            kpiSaved.textContent = `${(totalKb / 1024).toFixed(1)} ${mbUnit}`;
         } else {
-            kpiSaved.textContent = `${(totalKb / (1024 * 1024)).toFixed(2)} ГБ`;
+            kpiSaved.textContent = `${(totalKb / (1024 * 1024)).toFixed(2)} ${gbUnit}`;
         }
     }
 
@@ -123,12 +144,13 @@ window.updateTrackersPageData = function(payload) {
     }
 };
 
-function renderTopTrackers(topTrackers, totalReference) {
+function renderTopTrackers(topTrackers, _totalReference) {
     const container = document.getElementById('top-trackers-container');
     if (!container) return;
 
     if (!topTrackers || topTrackers.length === 0) {
-        container.innerHTML = '<div class="empty-hint">Данные собираются во время веб-серфинга. Переходите по сайтам, и заблокированные трекеры отобразятся здесь.</div>';
+        const hint = tr('trackers.empty_hint', 'Data is collected while browsing the web. Browse sites and blocked trackers will show up here.');
+        container.innerHTML = `<div class="empty-hint">${escapeHtml(hint)}</div>`;
         return;
     }
 
@@ -138,6 +160,8 @@ function renderTopTrackers(topTrackers, totalReference) {
     for (const item of topTrackers) {
         const percent = Math.min(100, Math.round((item.count / maxCount) * 100));
         const category = categorizeDomain(item.domain);
+        const countTmpl = tr('trackers.blocked_times', 'Blocked: {count} times');
+        const countLabel = countTmpl.replace('{count}', item.count.toLocaleString());
 
         const card = document.createElement('div');
         card.className = 'top-tracker-card';
@@ -150,7 +174,7 @@ function renderTopTrackers(topTrackers, totalReference) {
                 <div class="tracker-stats-bar-fill" style="width: ${percent}%;"></div>
             </div>
             <div class="tracker-count-label">
-                Заблокировано: <strong>${item.count.toLocaleString()}</strong> раз
+                ${escapeHtml(countLabel)}
             </div>
         `;
         container.appendChild(card);
@@ -162,7 +186,8 @@ function renderTable(allStats, filterText) {
     if (!tbody) return;
 
     if (!allStats || allStats.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="table-empty">Журнал трекеров пуст. Вы в полной безопасности.</td></tr>';
+        const emptyMsg = tr('trackers.empty_journal', 'Tracker log is empty. You are completely safe.');
+        tbody.innerHTML = `<tr><td colspan="4" class="table-empty">${escapeHtml(emptyMsg)}</td></tr>`;
         return;
     }
 
@@ -175,42 +200,43 @@ function renderTable(allStats, filterText) {
     }
 
     if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="table-empty">Ничего не найдено по вашему запросу.</td></tr>';
+        const notFoundMsg = tr('trackers.empty_search', 'Nothing found for your search query.');
+        tbody.innerHTML = `<tr><td colspan="4" class="table-empty">${escapeHtml(notFoundMsg)}</td></tr>`;
         return;
     }
 
     tbody.innerHTML = '';
     for (const item of filtered) {
-        const tr = document.createElement('tr');
+        const trEl = document.createElement('tr');
         const formattedDate = formatTimestamp(item.last_blocked_at);
 
-        tr.innerHTML = `
+        trEl.innerHTML = `
             <td class="table-domain">${escapeHtml(item.domain)}</td>
             <td><span class="table-rule">${escapeHtml(item.rule || 'url-filter')}</span></td>
             <td><strong>${(item.blocked_count || 1).toLocaleString()}</strong></td>
-            <td style="color: var(--text-secondary);">${formattedDate}</td>
+            <td style="color: var(--text-secondary);">${escapeHtml(formattedDate)}</td>
         `;
-        tbody.appendChild(tr);
+        tbody.appendChild(trEl);
     }
 }
 
 function categorizeDomain(domain) {
-    if (!domain) return 'Слежка';
+    if (!domain) return tr('trackers.cat_tracking', 'Tracking');
     const d = domain.toLowerCase();
     if (d.includes('analytics') || d.includes('metrika') || d.includes('clarity') || d.includes('hotjar') || d.includes('mixpanel') || d.includes('amplitude') || d.includes('segment')) {
-        return 'Аналитика';
+        return tr('trackers.cat_analytics', 'Analytics');
     }
     if (d.includes('doubleclick') || d.includes('adservice') || d.includes('criteo') || d.includes('adnxs') || d.includes('taboola') || d.includes('outbrain') || d.includes('adroll') || d.includes('adsystem')) {
-        return 'Рекламная сеть';
+        return tr('trackers.cat_ad_network', 'Ad Network');
     }
     if (d.includes('facebook') || d.includes('meta') || d.includes('twitter') || d.includes('yandex') || d.includes('google')) {
-        return 'Профилирование';
+        return tr('trackers.cat_fingerprinting', 'Fingerprinting');
     }
-    return 'Трекер';
+    return tr('trackers.cat_tracking', 'Tracking');
 }
 
 function formatTimestamp(timestampSec) {
-    if (!timestampSec) return 'Недавно';
+    if (!timestampSec) return tr('trackers.time_recently', 'Recently');
     const date = new Date(timestampSec * 1000);
     const now = new Date();
     const diffHours = (now - date) / (1000 * 60 * 60);
@@ -219,12 +245,14 @@ function formatTimestamp(timestampSec) {
     const timeStr = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 
     if (diffHours < 24 && date.getDate() === now.getDate()) {
-        return `Сегодня в ${timeStr}`;
+        const tmpl = tr('trackers.time_today_at', 'Today at {time}');
+        return tmpl.replace('{time}', timeStr);
     }
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
     if (date.getDate() === yesterday.getDate() && date.getMonth() === yesterday.getMonth()) {
-        return `Вчера в ${timeStr}`;
+        const tmpl = tr('trackers.time_yesterday_at', 'Yesterday at {time}');
+        return tmpl.replace('{time}', timeStr);
     }
 
     return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()} ${timeStr}`;
@@ -237,7 +265,7 @@ function exportDataAsJson() {
     const a = document.createElement('a');
     const timestamp = new Date().toISOString().slice(0, 10);
     a.href = url;
-    a.download = `echo_privacy_report_${timestamp}.json`;
+    a.download = `takeweb_privacy_report_${timestamp}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
