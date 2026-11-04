@@ -139,6 +139,21 @@ pub fn classify_tracker(url_str: &str) -> Option<(String, String)> {
             "New Relic Telemetry",
         ),
         (&["sentry.io"], "sentry.io", "Sentry Telemetry"),
+        (
+            &["trackersimulator.org"],
+            "trackersimulator.org",
+            "EFF Tracking Ads Simulation",
+        ),
+        (
+            &["eviltracker.net"],
+            "eviltracker.net",
+            "EFF Invisible Tracker Simulation",
+        ),
+        (
+            &["do-not-tracker.org"],
+            "do-not-tracker.org",
+            "EFF DNT Test Simulation",
+        ),
     ];
 
     for (patterns, domain, rule) in trackers {
@@ -206,6 +221,20 @@ mod tests {
             Some((
                 "ogads-pa.clients6.google.com".to_string(),
                 "Google Ad Personalization".to_string()
+            ))
+        );
+        assert_eq!(
+            classify_tracker("https://trackersimulator.org/banner.js"),
+            Some((
+                "trackersimulator.org".to_string(),
+                "EFF Tracking Ads Simulation".to_string()
+            ))
+        );
+        assert_eq!(
+            classify_tracker("https://eviltracker.net/pixel.gif"),
+            Some((
+                "eviltracker.net".to_string(),
+                "EFF Invisible Tracker Simulation".to_string()
             ))
         );
         assert_eq!(classify_tracker("https://github.com/rust-lang/rust"), None);

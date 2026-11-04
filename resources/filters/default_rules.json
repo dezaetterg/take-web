@@ -186,6 +186,115 @@
   },
   {
     "trigger": {
+      "url-filter": ".*ads-twitter\\.com.*",
+      "load-type": ["third-party"]
+    },
+    "action": { "type": "block" }
+  },
+  {
+    "trigger": {
+      "url-filter": ".*pixel\\.facebook\\.com.*",
+      "load-type": ["third-party"]
+    },
+    "action": { "type": "block" }
+  },
+  {
+    "trigger": {
+      "url-filter": ".*awaps\\.yandex\\.net.*",
+      "load-type": ["third-party"]
+    },
+    "action": { "type": "block" }
+  },
+  {
+    "trigger": {
+      "url-filter": ".*appnexus\\.com.*",
+      "load-type": ["third-party"]
+    },
+    "action": { "type": "block" }
+  },
+  {
+    "trigger": {
+      "url-filter": ".*2mdn\\.net.*",
+      "load-type": ["third-party"]
+    },
+    "action": { "type": "block" }
+  },
+  {
+    "trigger": {
+      "url-filter": ".*admob\\.com.*",
+      "load-type": ["third-party"]
+    },
+    "action": { "type": "block" }
+  },
+  {
+    "trigger": {
+      "url-filter": ".*segment\\.com.*",
+      "load-type": ["third-party"]
+    },
+    "action": { "type": "block" }
+  },
+  {
+    "trigger": {
+      "url-filter": ".*top-fwz1\\.mail\\.ru.*",
+      "load-type": ["third-party"]
+    },
+    "action": { "type": "block" }
+  },
+  {
+    "trigger": {
+      "url-filter": ".*analytics\\.tiktok\\.com.*",
+      "load-type": ["third-party"]
+    },
+    "action": { "type": "block" }
+  },
+  {
+    "trigger": {
+      "url-filter": ".*bat\\.bing\\.com.*",
+      "load-type": ["third-party"]
+    },
+    "action": { "type": "block" }
+  },
+  {
+    "trigger": {
+      "url-filter": ".*newrelic\\.com.*",
+      "load-type": ["third-party"]
+    },
+    "action": { "type": "block" }
+  },
+  {
+    "trigger": {
+      "url-filter": ".*nr-data\\.net.*",
+      "load-type": ["third-party"]
+    },
+    "action": { "type": "block" }
+  },
+  {
+    "trigger": {
+      "url-filter": ".*sentry\\.io.*",
+      "load-type": ["third-party"]
+    },
+    "action": { "type": "block" }
+  },
+  {
+    "trigger": {
+      "url-filter": ".*trackersimulator\\.org.*"
+    },
+    "action": { "type": "block" }
+  },
+  {
+    "trigger": {
+      "url-filter": ".*eviltracker\\.net.*"
+    },
+    "action": { "type": "block" }
+  },
+  {
+    "trigger": {
+      "url-filter": ".*do-not-tracker\\.org.*"
+    },
+    "action": { "type": "block" }
+  },
+  {
+    "trigger": {
       "url-filter": ".*",
       "load-type": ["third-party"]
     },
