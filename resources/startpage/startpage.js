@@ -480,7 +480,7 @@ function renderFavorites(favorites) {
     addBtn.className = 'favorite-item add-favorite-btn';
     addBtn.type = 'button';
     addBtn.id = 'add-favorite-btn';
-    addBtn.title = tr('startpage.add_favorite', 'Добавить');
+    addBtn.title = tr('startpage.add_favorite', 'Add');
     addBtn.innerHTML = `
         <div class="squircle-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
@@ -488,7 +488,7 @@ function renderFavorites(favorites) {
                 <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
         </div>
-        <span class="favorite-label">${tr('startpage.add_favorite', 'Добавить')}</span>
+        <span class="favorite-label">${tr('startpage.add_favorite', 'Add')}</span>
     `;
     addBtn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -497,11 +497,13 @@ function renderFavorites(favorites) {
     grid.appendChild(addBtn);
 }
 
-let startpageI18n = null;
-fetch('take://locales/current.json')
-    .then(r => r.json())
-    .then(data => { startpageI18n = data; })
-    .catch(() => {});
+let startpageI18n = (typeof window !== 'undefined' && window.__TAKEWEB_I18N__) || null;
+if (!startpageI18n) {
+    fetch('take://locales/current.json')
+        .then(r => r.json())
+        .then(data => { startpageI18n = data; })
+        .catch(() => {});
+}
 
 function tr(key, fallback) {
     if (!startpageI18n) return fallback;

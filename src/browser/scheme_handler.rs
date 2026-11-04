@@ -254,6 +254,8 @@ pub fn interpolate_html(raw_html: &str) -> String {
             let key = raw_html[abs_start + 2..abs_end].trim();
             if key == "current_lang" {
                 result.push_str(crate::i18n::current_language_code());
+            } else if key == "locales_json" {
+                result.push_str(crate::i18n::get_current_locale_json());
             } else {
                 result.push_str(crate::i18n::tr(key));
             }
@@ -504,10 +506,11 @@ mod tests {
 
     #[test]
     fn test_interpolate_html() {
-        let template = "<html lang=\"{{current_lang}}\"><title>{{app.name}}</title><body>{{settings.header}}</body></html>";
+        let template = "<html lang=\"{{current_lang}}\"><title>{{app.name}}</title><body>{{settings.header}}</body><script>{{locales_json}}</script></html>";
         let rendered = interpolate_html(template);
         assert!(rendered.contains("Take Web"));
         assert!(rendered.contains("<html lang=\""));
+        assert!(rendered.contains("\"app\":"));
     }
 
     #[test]
