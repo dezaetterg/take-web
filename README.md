@@ -31,9 +31,14 @@ Status: Beta. I use it as my daily driver, but it has not been tested widely acr
 **Tabs and Window Management**
 - Vertical sidebar with collapsible tab groups, reading list, and bookmarks.
 - Split View (`F3` or `Ctrl+\`): view two sites side-by-side with separate navigation controls.
+- Tab Overview (`Ctrl+Shift+E`): visual overview grid of normal and private tabs.
 - Reader Mode (`F9`): stripped of images, ads, and tracking scripts, with dark and light theme styles.
 - Web App Mode: `takeweb --app=<URL>` opens sites in standalone windows without address bars and generates desktop shortcuts.
 - Media controls via MPRIS (system tray and media keys).
+
+| Tab Overview (`Ctrl+Shift+E`) | Reader Mode (`F9`) |
+| :---: | :---: |
+| <img src="assets/screenshots/tab_overview.png" width="420" alt="Tab Overview"> | <img src="assets/screenshots/reader_mode.png" width="420" alt="Reader Mode"> |
 
 **Privacy and Security**
 - Ad and tracker blocking via native WebKit content filtering rules (`WebKitUserContentFilter`). Filtering runs before page parsing, without needing third-party extensions. The Take Shield popover displays blocked trackers for the current site.
