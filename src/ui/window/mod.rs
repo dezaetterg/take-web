@@ -460,6 +460,18 @@ impl BrowserWindow {
             mpris_controller: RefCell::new(None),
         });
 
+        // Connect dynamic memory pressure tuning to the engine
+        {
+            let weak_engine = Rc::downgrade(&inner);
+            inner
+                .memory_manager
+                .set_on_low_memory_mode_changed(move |low| {
+                    if let Some(this) = weak_engine.upgrade() {
+                        this.engine.borrow().update_memory_pressure_mode(low);
+                    }
+                });
+        }
+
         // Track focus when clicking left pane in Split View
         for tv in [&inner.normal_tab_view, &inner.private_tab_view] {
             let click_left = gtk4::GestureClick::new();

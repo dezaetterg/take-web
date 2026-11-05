@@ -85,14 +85,14 @@ pub(crate) fn calculate_memory_pressure_plan(
     is_low_mem: bool,
 ) -> (u32, f64, f64, f64) {
     if total_ram_mb <= 4096 || is_low_mem {
-        // Systems with <= 4GB RAM or low available RAM: cap at 768 MB, trim aggressively
-        (768, 0.60, 0.75, 0.90)
+        // Systems with <= 4GB RAM or low available RAM: cap at 384 MB, trim aggressively
+        (384, 0.40, 0.65, 0.85)
     } else if total_ram_mb <= 8192 {
-        // Systems with <= 8GB RAM: cap at 1024 MB
-        (1024, 0.65, 0.80, 0.92)
+        // Systems with <= 8GB RAM: cap at 512 MB
+        (512, 0.45, 0.70, 0.90)
     } else {
-        // High RAM systems (> 8GB): cap at 1536 MB
-        (1536, 0.70, 0.85, 0.95)
+        // High RAM systems (> 8GB): cap at 768 MB
+        (768, 0.50, 0.75, 0.92)
     }
 }
 
@@ -247,7 +247,7 @@ fn detect_vaapi_vendor() -> Option<GpuVendor> {
     None
 }
 
-fn detect_meminfo_ratio() -> Option<f64> {
+pub fn detect_meminfo_ratio() -> Option<f64> {
     let meminfo = std::fs::read_to_string("/proc/meminfo").ok()?;
     parse_meminfo_ratio(&meminfo)
 }
@@ -283,35 +283,18 @@ pub fn apply_tuning() -> bool {
         "performance: cpu={cpu_count} threads={threads} vendor={vendor:?} vaapi_vendor={vaapi_vendor:?} dmabuf_disabled={dmabuf_disabled} vaapi={vaapi} low_mem={low_mem}"
     );
 
-    // Apply environment variables only if not explicitly set by the user
-    if env::var_os("WEBKIT_SKIA_CPU_PAINTING_THREADS").is_none() {
-        unsafe {
-            env::set_var("WEBKIT_SKIA_CPU_PAINTING_THREADS", threads.to_string());
-        }
-    }
-
-    if dmabuf_disabled && env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_none() {
-        unsafe {
-            env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
-        }
-    }
-
-    if vaapi {
-        let current_rank = env::var("GST_PLUGIN_FEATURE_RANK").unwrap_or_default();
-        let vaapi_ranks = "vah264dec:MAX,vaapih264dec:MAX,vavp9dec:MAX,vaapivp9dec:MAX,vaav1dec:MAX,vaapidecodebin:MAX";
-        let new_rank = if current_rank.is_empty() {
-            vaapi_ranks.to_string()
-        } else if !current_rank.contains("vaapih264dec") {
-            format!("{vaapi_ranks},{current_rank}")
-        } else {
-            current_rank
-        };
-        unsafe {
-            env::set_var("GST_PLUGIN_FEATURE_RANK", new_rank);
-        }
-    }
-
     low_mem
+}
+
+/// Calls Linux glibc malloc_trim to return free dynamic heap arenas to the kernel.
+pub fn trim_process_memory() {
+    #[cfg(target_os = "linux")]
+    unsafe {
+        extern "C" {
+            fn malloc_trim(pad: usize) -> std::os::raw::c_int;
+        }
+        malloc_trim(0);
+    }
 }
 
 pub fn is_nvidia() -> bool {
@@ -370,6 +353,13 @@ pub fn is_nvidia() -> bool {
     true
 }
 
+pub fn is_wayland_session() -> bool {
+    env::var_os("WAYLAND_DISPLAY").is_some()
+        || env::var("XDG_SESSION_TYPE")
+            .map(|s| s.eq_ignore_ascii_case("wayland"))
+            .unwrap_or(false)
+}
+
 /// Computes the desired graphics configuration for the current hardware and session.
 pub fn calculate_desired_graphics_config() -> Vec<(String, String)> {
     if env::var("TAKEWEB_GFX_TUNING")
@@ -380,21 +370,57 @@ pub fn calculate_desired_graphics_config() -> Vec<(String, String)> {
     }
 
     let is_nvidia = is_nvidia();
+    let vendor = detect_gpu_vendor();
     let has_x = env::var_os("DISPLAY")
         .map(|v| !v.is_empty())
         .unwrap_or(false);
+    let is_wayland = is_wayland_session();
     let egl_is_wayland =
         env::var_os("EGL_PLATFORM").as_deref() == Some(std::ffi::OsStr::new("wayland"));
+    let is_vm = detect_is_vm();
+    let has_render_node = detect_has_render_node();
+    let force_software = env::var("LIBGL_ALWAYS_SOFTWARE")
+        .map(|v| v == "1")
+        .unwrap_or(false)
+        || env::var("GALLIUM_DRIVER")
+            .map(|v| v == "llvmpipe")
+            .unwrap_or(false);
+    let cpu_count = std::thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(1);
 
-    calculate_desired_graphics_config_internal(is_nvidia, has_x, egl_is_wayland)
+    calculate_desired_graphics_config_internal(
+        is_nvidia,
+        vendor,
+        has_x,
+        is_wayland,
+        egl_is_wayland,
+        is_vm,
+        has_render_node,
+        force_software,
+        cpu_count,
+    )
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn calculate_desired_graphics_config_internal(
     is_nvidia: bool,
+    vendor: Option<GpuVendor>,
     has_x: bool,
+    _is_wayland: bool,
     egl_is_wayland: bool,
+    is_vm: bool,
+    has_render_node: bool,
+    force_software: bool,
+    cpu_count: usize,
 ) -> Vec<(String, String)> {
     let mut config = Vec::new();
+
+    // 0. Glibc Memory Reclamation:
+    // Promptly release unmapped memory arenas back to the Linux kernel via madvise(MADV_DONTNEED)
+    if env::var_os("MALLOC_TRIM_THRESHOLD_").is_none() {
+        config.push(("MALLOC_TRIM_THRESHOLD_".into(), "65536".into()));
+    }
 
     // 1. GDK Backend:
     // User override takes highest priority.
@@ -407,29 +433,24 @@ pub fn calculate_desired_graphics_config_internal(
     }
 
     // 2. GSK Renderer:
-    // In modern GTK4, 'gl' is the stable default; 'ngl' is deprecated and 'vulkan'
-    // encounters stalls with WebKitGTK DMA-BUF on NVIDIA drivers.
+    // In modern GTK4, 'gl' is the stable default on NVIDIA + X11.
+    // On Intel / AMD on native Wayland, do not force 'gl' — allow GTK4 to use its optimal native renderer.
     if let Ok(renderer) = env::var("TAKEWEB_GSK_RENDERER") {
         config.push(("GSK_RENDERER".into(), renderer));
-    } else {
+    } else if is_nvidia && has_x {
         config.push(("GSK_RENDERER".into(), "gl".into()));
     }
 
     // 3. WebKit DMA-BUF:
-    // Only disable if explicitly requested via TAKEWEB_WEBKIT_DMABUF=off or if software rendering is forced.
+    // Only disable if explicitly requested via TAKEWEB_WEBKIT_DMABUF=off, if software rendering is forced,
+    // or if running in a VM / lacking DRM render nodes.
     // On NVIDIA with X11, WebKitGTK falls back to software rendering (Policy: never) unless
     // WEBKIT_FORCE_DMABUF_RENDERER=1 is set, which unlocks hardware DMABUF on /dev/dri/renderD128.
-    let force_software = env::var("LIBGL_ALWAYS_SOFTWARE")
-        .map(|v| v == "1")
-        .unwrap_or(false)
-        || env::var("GALLIUM_DRIVER")
-            .map(|v| v == "llvmpipe")
-            .unwrap_or(false);
-
+    let dmabuf_disabled = force_software || should_disable_dmabuf(has_render_node, is_vm);
     if env::var("TAKEWEB_WEBKIT_DMABUF")
         .map(|v| v == "off")
         .unwrap_or(false)
-        || force_software
+        || dmabuf_disabled
         || env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_some()
     {
         config.push(("WEBKIT_DISABLE_DMABUF_RENDERER".into(), "1".into()));
@@ -438,10 +459,6 @@ pub fn calculate_desired_graphics_config_internal(
     }
 
     // 4. NVIDIA VSync, EGL alignment & Layer Tiling on X11 / Xwayland:
-    // Under Xwayland, Mutter manages final display presentation timing. Setting
-    // __GL_SYNC_TO_VBLANK=0 prevents the client GLX swap buffers call from blocking on
-    // vblank, eliminating double-vsync pipeline stalls and frame quantization on 240Hz displays.
-    // Setting WEBKIT_LAYERS_TILE_SIZE=512 reduces tile count by 4x on 4K+ viewports.
     if is_nvidia && has_x {
         if egl_is_wayland {
             config.push(("EGL_PLATFORM".into(), "x11".into()));
@@ -455,24 +472,43 @@ pub fn calculate_desired_graphics_config_internal(
     }
 
     // 5. Skia Multithreaded Painting and Layer Compositing:
-    // Enables parallel tile rasterization, CPU image decoding worker threads,
-    // and dedicated GPU painting threads to avoid main WebProcess event loop stalls.
+    let cpu_threads = painting_threads_for(cpu_count);
     if env::var_os("WEBKIT_SKIA_CPU_PAINTING_THREADS").is_none() {
-        config.push(("WEBKIT_SKIA_CPU_PAINTING_THREADS".into(), "4".into()));
+        config.push((
+            "WEBKIT_SKIA_CPU_PAINTING_THREADS".into(),
+            cpu_threads.to_string(),
+        ));
     }
-    if env::var_os("WEBKIT_SKIA_GPU_PAINTING_THREADS").is_none() {
-        config.push(("WEBKIT_SKIA_GPU_PAINTING_THREADS".into(), "2".into()));
+
+    if is_vm || force_software || !has_render_node {
+        if env::var_os("WEBKIT_SKIA_GPU_PAINTING_THREADS").is_none() {
+            config.push(("WEBKIT_SKIA_GPU_PAINTING_THREADS".into(), "0".into()));
+        }
+    } else if vendor == Some(GpuVendor::Intel) {
+        // Intel iGPU: Keep GPU painting thread count conservative (1) to prevent EGL lockups on Mesa iris/crocus
+        if env::var_os("WEBKIT_SKIA_GPU_PAINTING_THREADS").is_none() {
+            config.push(("WEBKIT_SKIA_GPU_PAINTING_THREADS".into(), "1".into()));
+        }
+        if env::var_os("WEBKIT_FORCE_COMPOSITING_MODE").is_none() {
+            config.push(("WEBKIT_FORCE_COMPOSITING_MODE".into(), "1".into()));
+        }
+    } else {
+        if env::var_os("WEBKIT_SKIA_GPU_PAINTING_THREADS").is_none() {
+            config.push(("WEBKIT_SKIA_GPU_PAINTING_THREADS".into(), "2".into()));
+        }
+        if env::var_os("WEBKIT_FORCE_COMPOSITING_MODE").is_none() {
+            config.push(("WEBKIT_FORCE_COMPOSITING_MODE".into(), "1".into()));
+        }
     }
-    if env::var_os("WEBKIT_FORCE_COMPOSITING_MODE").is_none() {
-        config.push(("WEBKIT_FORCE_COMPOSITING_MODE".into(), "1".into()));
-    }
-    // High-refresh-rate displays (120Hz, 144Hz, 240Hz): uncap WebKit compositor rate
-    if env::var_os("WEBKIT_DISABLE_FRAME_RATE_LIMIT").is_none() {
+
+    // High-refresh-rate displays: ONLY uncap WebKit compositor rate on NVIDIA
+    // (where Mutter 240Hz fence stalls require it). On Intel/AMD/VMs, keeping default VSync
+    // prevents 100% iGPU spin on spinners and animations.
+    if is_nvidia && env::var_os("WEBKIT_DISABLE_FRAME_RATE_LIMIT").is_none() {
         config.push(("WEBKIT_DISABLE_FRAME_RATE_LIMIT".into(), "1".into()));
     }
 
-    // 6. GStreamer Media Sink & Codec Ranking on NVIDIA:
-    // WebKitGTK's zero-copy GL/DMABuf video sinks fail on NVIDIA drivers under X11/Xwayland.
+    // 6. GStreamer Media Sink & Codec Ranking:
     if is_nvidia {
         if env::var_os("WEBKIT_GST_DISABLE_GL_SINK").is_none() {
             config.push(("WEBKIT_GST_DISABLE_GL_SINK".into(), "1".into()));
@@ -483,6 +519,11 @@ pub fn calculate_desired_graphics_config_internal(
                 "nvh264dec:NONE,nvh265dec:NONE,nvav1dec:NONE,nvvp8dec:NONE,nvvp9dec:NONE".into(),
             ));
         }
+    } else if vaapi_enabled(has_render_node, is_vm, vendor)
+        && env::var_os("GST_PLUGIN_FEATURE_RANK").is_none()
+    {
+        let vaapi_ranks = "vah264dec:MAX,vaapih264dec:MAX,vavp9dec:MAX,vaapivp9dec:MAX,vaav1dec:MAX,vaapidecodebin:MAX";
+        config.push(("GST_PLUGIN_FEATURE_RANK".into(), vaapi_ranks.into()));
     }
 
     config
@@ -627,10 +668,23 @@ mod tests {
     #[test]
     fn test_nvidia_with_x11_requests_x11_and_gl() {
         std::env::remove_var("WEBKIT_DISABLE_DMABUF_RENDERER");
-        let cfg = calculate_desired_graphics_config_internal(true, true, true);
+        std::env::remove_var("MALLOC_TRIM_THRESHOLD_");
+        std::env::remove_var("WEBKIT_DISABLE_FRAME_RATE_LIMIT");
+        let cfg = calculate_desired_graphics_config_internal(
+            true,
+            Some(GpuVendor::Nvidia),
+            true,
+            false,
+            true,
+            false,
+            true,
+            false,
+            8,
+        );
         assert_eq!(
             cfg,
             vec![
+                ("MALLOC_TRIM_THRESHOLD_".to_string(), "65536".to_string()),
                 ("GDK_BACKEND".to_string(), "x11".to_string()),
                 ("GSK_RENDERER".to_string(), "gl".to_string()),
                 ("WEBKIT_FORCE_DMABUF_RENDERER".to_string(), "1".to_string()),
@@ -663,23 +717,62 @@ mod tests {
     #[test]
     fn test_non_nvidia_preserves_native_backend() {
         std::env::remove_var("WEBKIT_DISABLE_DMABUF_RENDERER");
-        let cfg = calculate_desired_graphics_config_internal(false, true, false);
+        std::env::remove_var("MALLOC_TRIM_THRESHOLD_");
+        std::env::remove_var("GST_PLUGIN_FEATURE_RANK");
+        let cfg = calculate_desired_graphics_config_internal(
+            false,
+            Some(GpuVendor::Intel),
+            true,
+            true,
+            false,
+            false,
+            true,
+            false,
+            8,
+        );
         assert_eq!(
             cfg,
             vec![
-                ("GSK_RENDERER".to_string(), "gl".to_string()),
+                ("MALLOC_TRIM_THRESHOLD_".to_string(), "65536".to_string()),
                 (
                     "WEBKIT_SKIA_CPU_PAINTING_THREADS".to_string(),
                     "4".to_string()
                 ),
                 (
                     "WEBKIT_SKIA_GPU_PAINTING_THREADS".to_string(),
-                    "2".to_string()
+                    "1".to_string()
                 ),
                 ("WEBKIT_FORCE_COMPOSITING_MODE".to_string(), "1".to_string()),
                 (
-                    "WEBKIT_DISABLE_FRAME_RATE_LIMIT".to_string(),
+                    "GST_PLUGIN_FEATURE_RANK".to_string(),
+                    "vah264dec:MAX,vaapih264dec:MAX,vavp9dec:MAX,vaapivp9dec:MAX,vaav1dec:MAX,vaapidecodebin:MAX".to_string()
+                ),
+            ]
+        );
+    }
+
+    #[test]
+    fn test_vm_software_rendering() {
+        std::env::remove_var("WEBKIT_DISABLE_DMABUF_RENDERER");
+        std::env::remove_var("MALLOC_TRIM_THRESHOLD_");
+        let cfg = calculate_desired_graphics_config_internal(
+            false, None, true, false, false, true, false, false, 4,
+        );
+        assert_eq!(
+            cfg,
+            vec![
+                ("MALLOC_TRIM_THRESHOLD_".to_string(), "65536".to_string()),
+                (
+                    "WEBKIT_DISABLE_DMABUF_RENDERER".to_string(),
                     "1".to_string()
+                ),
+                (
+                    "WEBKIT_SKIA_CPU_PAINTING_THREADS".to_string(),
+                    "3".to_string()
+                ),
+                (
+                    "WEBKIT_SKIA_GPU_PAINTING_THREADS".to_string(),
+                    "0".to_string()
                 ),
             ]
         );
@@ -688,11 +781,23 @@ mod tests {
     #[test]
     fn test_nvidia_without_x_preserves_wayland() {
         std::env::remove_var("WEBKIT_DISABLE_DMABUF_RENDERER");
-        let cfg = calculate_desired_graphics_config_internal(true, false, false);
+        std::env::remove_var("MALLOC_TRIM_THRESHOLD_");
+        std::env::remove_var("WEBKIT_DISABLE_FRAME_RATE_LIMIT");
+        let cfg = calculate_desired_graphics_config_internal(
+            true,
+            Some(GpuVendor::Nvidia),
+            false,
+            true,
+            false,
+            false,
+            true,
+            false,
+            8,
+        );
         assert_eq!(
             cfg,
             vec![
-                ("GSK_RENDERER".to_string(), "gl".to_string()),
+                ("MALLOC_TRIM_THRESHOLD_".to_string(), "65536".to_string()),
                 (
                     "WEBKIT_SKIA_CPU_PAINTING_THREADS".to_string(),
                     "4".to_string()
@@ -780,26 +885,26 @@ mod tests {
 
     #[test]
     fn test_calculate_memory_pressure_plan() {
-        // <= 4GB RAM or low memory
+        // <= 4GB RAM or low memory: 384 MB
         assert_eq!(
             calculate_memory_pressure_plan(4096, false),
-            (768, 0.60, 0.75, 0.90)
+            (384, 0.40, 0.65, 0.85)
         );
         assert_eq!(
             calculate_memory_pressure_plan(16384, true),
-            (768, 0.60, 0.75, 0.90)
+            (384, 0.40, 0.65, 0.85)
         );
 
-        // <= 8GB RAM
+        // <= 8GB RAM: 512 MB
         assert_eq!(
             calculate_memory_pressure_plan(8192, false),
-            (1024, 0.65, 0.80, 0.92)
+            (512, 0.45, 0.70, 0.90)
         );
 
-        // > 8GB RAM
+        // > 8GB RAM: 768 MB
         assert_eq!(
             calculate_memory_pressure_plan(16384, false),
-            (1536, 0.70, 0.85, 0.95)
+            (768, 0.50, 0.75, 0.92)
         );
     }
 }

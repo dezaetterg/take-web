@@ -122,7 +122,12 @@ impl BrowserTab {
             #[weak]
             page,
             move |view| {
-                let loading = if Self::is_start_page(view) || Self::is_settings_page(view) || Self::is_trackers_page(view) {
+                let is_blank = view.uri().as_deref() == Some("about:blank");
+                let loading = if Self::is_start_page(view)
+                    || Self::is_settings_page(view)
+                    || Self::is_trackers_page(view)
+                    || is_blank
+                {
                     false
                 } else {
                     view.is_loading()
@@ -248,6 +253,9 @@ impl BrowserTab {
             page.set_title(crate::i18n::tr("tab.trackers_title"));
             return;
         }
+        if view.uri().as_deref() == Some("about:blank") {
+            return;
+        }
         if let Some(title) = view.title() {
             if !title.is_empty() {
                 page.set_title(&title);
@@ -256,6 +264,9 @@ impl BrowserTab {
     }
 
     fn sync_icon(page: &adw::TabPage, view: &WebView, is_private: bool) {
+        if view.uri().as_deref() == Some("about:blank") && page.icon().is_some() {
+            return;
+        }
         if let Some(texture) = view.favicon() {
             page.set_icon(Some(&texture));
             if !is_private {

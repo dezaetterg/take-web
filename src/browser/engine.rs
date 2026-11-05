@@ -48,9 +48,17 @@ impl BrowserEngine {
     pub fn new(profile: BrowserProfile, test_mode: bool) -> Self {
         let web_context = WebContext::default().unwrap_or_default();
 
-        // WebBrowser cache model enables full in-memory caching of parsed DOM, CSS,
-        // compiled JIT bytecode and decoded images.
-        web_context.set_cache_model(CacheModel::WebBrowser);
+        let is_low_mem = crate::browser::performance::detect_meminfo_ratio()
+            .map(crate::browser::performance::low_memory)
+            .unwrap_or(false);
+
+        // Under normal memory: WebBrowser cache model enables full in-memory caching.
+        // Under low memory: DocumentBrowser model avoids holding large page trees in RAM.
+        if is_low_mem {
+            web_context.set_cache_model(CacheModel::DocumentBrowser);
+        } else {
+            web_context.set_cache_model(CacheModel::WebBrowser);
+        }
 
         // Internal pages are served from memory over `take://`; no file:// access needed.
         scheme_handler::register(&web_context);
@@ -148,7 +156,7 @@ impl BrowserEngine {
             s.set_enable_developer_extras(true);
             s.set_enable_smooth_scrolling(true);
             s.set_enable_back_forward_navigation_gestures(true);
-            s.set_enable_page_cache(true);
+            s.set_enable_page_cache(!is_low_mem);
             s.set_enable_site_specific_quirks(true);
             s.set_enable_encrypted_media(true);
             s.set_enable_media_capabilities(true);
@@ -271,6 +279,19 @@ impl BrowserEngine {
                 }
             },
         );
+    }
+
+    /// Dynamically updates WebKit cache model and page cache state when host memory pressure changes.
+    pub fn update_memory_pressure_mode(&self, low_mem: bool) {
+        if low_mem {
+            self.web_context
+                .set_cache_model(CacheModel::DocumentBrowser);
+            self.web_settings.set_enable_page_cache(false);
+        } else {
+            self.web_context.set_cache_model(CacheModel::WebBrowser);
+            self.web_settings.set_enable_page_cache(true);
+        }
+        log::info!("engine: cache_model updated (low_mem={low_mem})");
     }
 
     /// Returns the session-scoped secret IPC token required for first-party IPC communications.

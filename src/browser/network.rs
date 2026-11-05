@@ -68,7 +68,7 @@ impl NetworkManager {
 
         // 5. Memory pressure configuration:
         // Dynamically configured according to physical RAM and memory pressure:
-        // <=4GB: 768MB, <=8GB: 1024MB, >8GB: 1536MB with progressive cleanup thresholds.
+        // <=4GB: 384MB, <=8GB: 512MB, >8GB: 768MB with progressive cleanup thresholds.
         let (limit_mb, cons_threshold, strict_threshold, kill_threshold) =
             crate::browser::performance::detect_memory_pressure_plan();
         let mut pressure = MemoryPressureSettings::new();
@@ -78,7 +78,7 @@ impl NetworkManager {
         pressure.set_kill_threshold(kill_threshold);
         pressure.set_strict_threshold(strict_threshold);
         pressure.set_conservative_threshold(cons_threshold);
-        pressure.set_poll_interval(30.0);
+        pressure.set_poll_interval(10.0);
         NetworkSession::set_memory_pressure_settings(&mut pressure);
 
         // 6. Asynchronously prune disk cache off the UI startup critical path
