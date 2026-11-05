@@ -429,8 +429,25 @@ function initCustomization() {
 
 function normalizeUrl(url) {
     try {
-        const u = new URL(url);
+        let raw = (url || '').trim();
+        if (!raw.includes('://')) raw = 'https://' + raw;
+        const u = new URL(raw);
         return (u.origin + u.pathname).replace(/\/$/, '');
+    } catch (_) {
+        return url;
+    }
+}
+
+function getDomainKey(url) {
+    try {
+        let raw = (url || '').trim();
+        if (!raw.includes('://')) raw = 'https://' + raw;
+        const host = new URL(raw).hostname.toLowerCase().replace(/^www\./, '');
+        if (host === 'apple.com' || host.endsWith('.apple.com')) return 'apple.com';
+        if (host === 'google.com' || host.endsWith('.google.com') || host.startsWith('google.')) return 'google.com';
+        if (host === 'github.com' || host.endsWith('.github.com')) return 'github.com';
+        if (host === 'duckduckgo.com' || host.endsWith('.duckduckgo.com') || host === 'ddg.gg') return 'duckduckgo.com';
+        return host;
     } catch (_) {
         return url;
     }
@@ -445,7 +462,11 @@ function renderFavorites(favorites) {
         const templates = {};
         grid.querySelectorAll('a.favorite-item').forEach((a) => {
             const icon = a.querySelector('.squircle-icon');
-            if (icon) templates[normalizeUrl(a.getAttribute('href'))] = icon.outerHTML;
+            if (icon) {
+                const href = a.getAttribute('href');
+                templates[normalizeUrl(href)] = icon.outerHTML;
+                templates[getDomainKey(href)] = icon.outerHTML;
+            }
         });
         window.__favoriteIcons = templates;
         grid.dataset.templates = '1';
@@ -457,7 +478,9 @@ function renderFavorites(favorites) {
         a.className = 'favorite-item';
         a.href = fav.url;
 
-        const known = window.__favoriteIcons ? window.__favoriteIcons[normalizeUrl(fav.url)] : null;
+        const known = window.__favoriteIcons
+            ? (window.__favoriteIcons[normalizeUrl(fav.url)] || window.__favoriteIcons[getDomainKey(fav.url)])
+            : null;
         if (known) {
             a.innerHTML = known;
         } else {
